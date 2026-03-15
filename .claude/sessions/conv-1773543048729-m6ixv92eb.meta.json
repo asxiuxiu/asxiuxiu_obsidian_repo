@@ -1,0 +1,19 @@
+{
+  "id": "conv-1773543048729-m6ixv92eb",
+  "title": "Execute sync pull command",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773543048729,
+  "updatedAt": 1773543556582,
+  "lastResponseAt": 1773543526021,
+  "sessionId": "2b468119-2afd-4ffe-8048-2708ca037b20",
+  "sdkSessionId": "2b468119-2afd-4ffe-8048-2708ca037b20",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 45794,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 45794,
+    "percentage": 23
+  }
+}

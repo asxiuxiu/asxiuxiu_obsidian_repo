@@ -3,17 +3,17 @@
   "title": "Create git skills for Obsidian note management",
   "titleGenerationStatus": "success",
   "createdAt": 1773542498959,
-  "updatedAt": 1773542757606,
-  "lastResponseAt": 1773542757606,
+  "updatedAt": 1773542953542,
+  "lastResponseAt": 1773542938619,
   "sessionId": "f841f73f-0bf4-4789-bc15-17df12e6fd36",
   "sdkSessionId": "f841f73f-0bf4-4789-bc15-17df12e6fd36",
   "usage": {
     "model": "opus",
-    "inputTokens": 20766,
+    "inputTokens": 28624,
     "cacheCreationInputTokens": 0,
     "cacheReadInputTokens": 0,
     "contextWindow": 200000,
-    "contextTokens": 20766,
-    "percentage": 10
+    "contextTokens": 28624,
+    "percentage": 14
   }
 }
