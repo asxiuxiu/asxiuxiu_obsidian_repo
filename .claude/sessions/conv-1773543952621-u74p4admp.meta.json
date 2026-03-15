@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773543952621-u74p4admp",
+  "title": "Rename sync-push and sync-pull skill folders",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773543952621,
+  "updatedAt": 1773544017689,
+  "lastResponseAt": 1773543982988,
+  "sessionId": "150cccea-41a1-49af-8a59-b3cc7f61cdff",
+  "sdkSessionId": "150cccea-41a1-49af-8a59-b3cc7f61cdff",
+  "currentNote": "C++/C++编译选项.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 21144,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 21144,
+    "percentage": 11
+  }
+}
