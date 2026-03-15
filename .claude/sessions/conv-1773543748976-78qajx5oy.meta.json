@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773543748976-78qajx5oy",
+  "title": "Execute sync-pull command",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773543748976,
+  "updatedAt": 1773543780735,
+  "lastResponseAt": 1773543780735,
+  "sessionId": "ba761141-5588-4fd5-a183-5940f7ad4ad6",
+  "sdkSessionId": "ba761141-5588-4fd5-a183-5940f7ad4ad6",
+  "currentNote": "C++/C++编译选项.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 24135,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 24135,
+    "percentage": 12
+  }
+}
