@@ -1,0 +1,247 @@
+# Vault 配置指南
+
+## 目录结构
+
+```
+<vault-root>/
+├── Notes/         # 知识笔记（无数字前缀）
+│   ├── 图形学导读.md  # 图形学概念入口（已归档，不再深入）
+│   ├── 游戏引擎/     # 源码分析（UE/Bevy/游戏引擎杂谈碎片）
+│   ├── C++编程/
+│   ├── 数学基础/
+│   ├── 人工智能/
+│   ├── 构建系统/
+│   ├── 学习计划/
+│   └── 索引/      # MOC、总索引
+├── Assets/        # 图片资源
+│   ├── games/graphics/math/ai/
+├── workspace/     # 代码实践
+├── Game/          # 公司源码分析（不可上传 git）
+└── .agents/       # Agent Skills
+```
+
+| 文件夹 | 权限 | 关键约束 |
+|--------|------|----------|
+| `Notes/` | ✅ 可读写 | **禁止数字序号前缀** |
+| `Assets/` | ✅ 可读写 | 图片统一存此，小写+连字符命名 |
+| `workspace/` | ✅ 可读写 | — |
+| `Game/` | ✅ 可读写 | 源码分析笔记专属，**禁传 git** |
+
+## 跨平台与 Shell
+
+- 编译器 GCC，构建 `cmake --build build`，路径用 `/`，换行 LF
+- 环境：Git Bash（MSYS2），支持 `&&` / `||` 命令链
+- 文件修改优先用 `ReadFile/WriteFile/StrReplaceFile/Glob`
+- 中文路径/读写文件时确保 UTF-8 编码；git 中文报错用 `git restore --source=HEAD -- "path"`
+
+## Obsidian 技能
+
+处理以下任务时**必须读取对应 skill**，禁止跳过：
+
+| Skill | 触发场景 |
+|-------|----------|
+| `obsidian-context` | 用户提到"当前笔记/选中内容"时先注入上下文 |
+| `obsidian-cli` | 与运行中的 Obsidian 交互（读/写/搜索笔记、开发插件） |
+| `obsidian-markdown` | 编写 `.md` 时确保 wikilink、callout、embed、frontmatter 正确 |
+| `obsidian-bases` | 创建/编辑 `.base` 数据库视图 |
+| `json-canvas` | 创建/编辑 `.canvas` 白板 |
+| `study-buddy` | 围绕任何主题讨论学习、交流理解，收尾后把讨论梳理成原子笔记落盘 |
+
+## 笔记规范
+
+笔记规范分为三个层面：**格式规范**（Obsidian 语法、链接、frontmatter）、**内容规范**（知识准确性、网络性）、**叙述原则**（费曼精神）。
+
+### 一、格式规范
+
+格式规范定义 Obsidian 笔记的语法正确性，写笔记时参考 `obsidian-markdown` skill。
+
+- **无数字前缀**：文件夹、文件名不带 `01-`、`1. ` 等前缀，顺序由索引维护。
+- **文件名跨平台兼容**：文件名禁止包含 Windows 非法字符（`< > : " / \ | ? *`），避免在 Windows 上无法检出或同步失败。
+- **索引统一命名**：各分类索引文件名为 `索引.md`。
+- **导航链接**：每篇笔记顶部（frontmatter 后）添加：
+  ```markdown
+  > [[索引|← 返回 xxx索引]]
+  ```
+- **完整路径 wikilink**：跨目录链接必须从 vault root 写完整路径，如 `[[Notes/C++编程/xxx]]`，禁止省略 `Notes/` 前缀。
+- **精确锚点链接**：如果目标笔记中有专门讲解该概念的小节，链接必须指向具体标题（`[[路径#标题|别名]]`），禁止只链接到整篇笔记。
+- **表格内转义**：wikilink 在表格中必须转义管道符，格式为 `[[路径\|别名]]`。
+- **修改前置**：任何对 `.md` 笔记的修改操作**必须先读取 `obsidian-markdown` skill**。
+
+### 二、内容规范
+
+内容规范定义知识网络的基础规则。
+
+- **零假定 + 精确链接（首次出现双义务）**：笔记中首次出现任何概念名词或缩写时，必须同时完成两件事：
+  1. **零假定**：不得假定读者已知——先用 1~2 句人话解释"这是什么东西"，再给正式名称/缩写。
+  2. **精确链接**：如果 vault 中已有其他笔记讲过这个概念，必须添加 wikilink **指向该笔记中讲解此概念的具体标题**（`[[路径#标题|别名]]`）。不要只链接到整篇笔记，也不要只在文中说"前面讲过"却不给链接。
+- **示例**：
+  ```markdown
+  ❌ 操作系统内核中为每个线程维护一个 TCB（Thread Control Block）。
+  ✅ 线程被中断时，操作系统需要把它的执行现场保存下来——程序计数器、寄存器值、栈位置等。这些状态信息被打包存在一个结构体里，叫做 **TCB（Thread Control Block，线程控制块）**。
+  ```
+
+### 三、叙述原则（费曼精神）
+
+> **写笔记的本质是思考，不是记录。**
+>
+> 费曼说："这不是记录，这就是我思考本身。" 你的笔记应该呈现**你真正理解后的语言与逻辑**，而不是对原文的转述或摘抄。
+
+**没有任何强制分段、没有固定标题结构、没有必须遵守的格式模板。** 唯一的要求是：
+
+> **当你写完这篇笔记，一个对此概念零基础的人能否顺畅地读完并理解？**
+>
+> 检验方法：把笔记里的比喻和例子全部删掉，剩下的文字是否还能自洽？如果不能，说明术语没有建立直觉就抛出来了。
+
+**写作策略工具箱**（按内容灵活选用）：Why 先行（引入新概念前先让读者感到"这问题确实需要解决"）、比喻贯穿（直觉先行）、因果推导（讲清演进链条）、场景绑定（绑定具体使用/故障场景）、衔接自然（段落结尾自然引出下一主题）、用自己的话写（拒绝复制粘贴）、原子化（一篇一个核心观点）、渐进式摘要（按笔记目的分层压缩）、有效失败（记录曾经的误解）、表格只用于总结。
+
+**交付前自检清单**（对照以下维度逐一检查）：
+- 零假定：首次出现的术语是否有 1~2 句人话解释，再给正式名称/缩写？
+- Why 先行：每个核心概念的第一次出现前，是否有"为什么需要"的铺垫？
+- 比喻有效：比喻是否贯穿全文，删掉比喻后文字是否仍能自洽？
+- 因果链条：并列内容是否按演进逻辑组织，而不是"第一种…第二种…"分类罗列？
+- 表格合规：表格是否仅用于总结已解释的概念，而不是首次引入概念？
+- 衔接自然：相邻小节之间是否有因果/问答关系？
+- 链接完整：vault 内已讲过的概念是否有指向具体标题的 wikilink？
+
+### 源码分析笔记
+- 涉及 `chaos`/`wolfgang`/`proven_ground` 的笔记**必须放入 `Game/`**。
+- 命名格式：`<模块>-源码解析：<主题>.md`
+
+### 维护 checklist
+1. 去掉新增文件/文件夹的数字前缀
+2. 维护对应 `索引.md` 的学习顺序与返回链接
+3. 同步更新 `索引/知识总索引.md`
+4. 确认源码分析笔记归档在 `Game/`
+
+## 文档规范
+
+- 图表宽 800-1000px，代码示例优先 **C++**，命令跨平台兼容
+- 多行数学公式分开书写，避免 `\\` 换行
+- **表格内 wikilink 转义**：`[[路径\|别名]]`
+
+## Run Code 插件（C++ 代码片段）
+
+本 vault 的 `.obsidian/plugins/obsidian-run-code` 插件用于在 Obsidian 内直接运行 C++ 代码块。代码块语言标签**统一使用 `cpp`**，编译参数通过**顶部注释**控制。
+
+### 编译参数注释格式
+
+在代码块前 20 行内放置 `// flags:` 注释：
+
+```cpp
+// flags: -O0 -g -fsanitize=address
+#include <iostream>
+int main() {
+    // 这段代码会以 -std=c++20 -Wall -O2 -O0 -g -fsanitize=address 编译
+    return 0;
+}
+```
+
+| 注释写法 | 效果 |
+|---------|------|
+| `// flags: -O0 -g` | **追加参数**到默认参数之后（默认：`-std=c++20 -Wall -O2`） |
+| `// flags: override -O3 -DNDEBUG` | **完全替换**默认参数，只用 `-O3 -DNDEBUG` |
+
+### 常用配置示例
+
+| 场景 | 注释 |
+|------|------|
+| 调试模式（无优化 + 调试符号） | `// flags: -O0 -g` |
+| Release 模式 | `// flags: override -O3 -DNDEBUG` |
+| AddressSanitizer | `// flags: -fsanitize=address -fno-omit-frame-pointer` |
+| 严格警告 | `// flags: -Wextra -Werror -pedantic` |
+| 链接外部库 | `// flags: -lSDL2` |
+
+### 规范要点
+
+1. **不加空格**：`flags:` 与参数之间用一个空格分隔，参数之间也用空格分隔。
+2. **放在代码块顶部**：`// flags:` 注释尽量放在 `#include` 之前第一行，便于一眼识别。
+3. **不混用多行**：所有编译参数写在一行 `// flags:` 注释中，不支持多行累积。
+4. **代码块语言保持 `cpp`**：不要使用 `cpp-debug` 等变体，避免代码高亮失效。
+
+## 图片与资源
+
+- 引用格式：`![[Assets/分类/图片名]]`
+- **强制入库**：所有图片必须下载到 `Assets/`，**禁止外部链接**
+- **禁止行为**：不要用 `attachments/` 或 `images/` 子文件夹；不要用时间戳/Pasted image 作为永久文件名
+
+## Git Commit
+
+- 默认格式：`Vault backup: YYYY-MM-DD HH:MM:SS`
+- 禁止总结修改内容；如用户主动传参，仍用传入内容
+- skill `sync-push` 已内置此规范
+
+## Quartz 网站迭代工作流
+
+本 vault 通过 GitHub Pages 发布为 Quartz v5 静态网站。仓库包含两个关键分支：
+
+| 分支 | 作用 | 主要文件 |
+|------|------|----------|
+| `main` | Obsidian vault 源码 | `Notes/`、`Assets/`、`.github/workflows/deploy-notes.yml` |
+| `v5` | Quartz 网站工程 | `quartz.config.yaml`、`quartz.ts`、`quartz/styles/custom.scss` |
+
+### 修改范围
+
+- **站点标题 / 字体 / 配色 / 组件配置** → 改 `v5` 分支的 `quartz.config.yaml`
+- **布局逻辑 / Explorer 排序 / 插件选项覆盖** → 改 `v5` 分支的 `quartz.ts`
+- **样式细节 / 移动端适配 / 设计感** → 改 `v5` 分支的 `quartz/styles/custom.scss`
+- **首页文案 / 部署触发条件** → 改 `main` 分支的 `.github/workflows/deploy-notes.yml`
+
+### 分支切换与并发修改
+
+两个分支都需要改时，优先用 `git worktree` 避免来回切换导致未提交修改冲突：
+
+```bash
+git worktree add ../asxiuxiu_obsidian_repo-v5 v5
+# main 继续留在原仓库根目录操作
+```
+
+### 快速迭代技巧
+
+全量构建（200+ 篇笔记）很慢，调试样式/脚本时应先精简 `content/`：
+
+```bash
+# 保留 1-2 个测试页面即可
+rm -rf content
+mkdir -p content/Notes/xxx
+# 复制一篇测试笔记进去
+npx quartz build
+```
+
+验证没问题后再恢复完整 `content/` 做一次全量构建。
+
+### 本地验证
+
+```bash
+# 1. 起本地服务
+python3 -m http.server 8080 --directory public
+
+# 2. 用 puppeteer + Chrome 截图看移动端效果
+npx puppeteer-core --...  # 或写脚本用 Chrome headless 截图
+```
+
+### 常见坑
+
+1. **`quartz.ts` 中传给插件的回调会序列化到浏览器端执行**。例如 `ExternalPlugin.Explorer({ sortFn: ... })` 的 `sortFn` 会被 `JSON.stringify` 后交给客户端 `eval`，因此：
+   - 不能引用外部作用域的函数/变量
+   - 不能使用命名函数或箭头函数赋值给变量，否则 esbuild 的 `keepNames` 会注入 `__name` 辅助函数，导致客户端 `ReferenceError: __name is not defined`
+   - 解决方案：把逻辑完全内联，只使用原始循环/条件语句
+
+2. **移动端 `.sidebar.left` 默认是 `flex-direction: row`**。如果想让目录、标题、搜索在移动端垂直排列，必须显式覆盖为 `column`。
+
+3. **移动端 Explorer 默认被折叠成 34px 宽的汉堡按钮**。要让目录索引默认可见，需要覆盖 `.explorer.collapsed` 的 `flex` 和 `.explorer-content` 的 `transform/visibility/width`。
+
+### 提交顺序
+
+1. 先提交 `v5` 分支的 Quartz 改动
+2. 再提交 `main` 分支的 workflow 改动
+3. push 后 GitHub Actions 会自动用最新 v5 配置部署网站
+
+## 其他
+
+- 新规则默认添加在 AGENTS.md，添加后自动尝试压缩精简
+- 使用 `workspace-gen` 生成 C++ 工作区时：
+  - 必须同时生成 `.vscode/` 和 `.zed/` 两套编辑器配置；任务必须显式指定运行时 shell（优先 Git Bash 绝对路径），不能依赖编辑器默认终端，并提供让用户按实际安装路径替换的占位符/说明。
+  - C++ CMake 项目必须在 `CMakeLists.txt` 中开启 `CMAKE_EXPORT_COMPILE_COMMANDS ON`，并在构建后把 `build/compile_commands.json` 复制到项目根目录；`.gitignore` 必须忽略 `build/` 和 `compile_commands.json`。
+  - `.vscode/settings.json` 与 `.zed/settings.json` 必须配置 clangd 使用项目根目录的 `compile_commands.json`。
+  - 必须在工作区根目录生成 `.clang-format`：优先复制用户 home 目录的 `~/.clang-format`；不存在时生成最小默认配置（`BasedOnStyle: Microsoft`）。
+  - 编辑器任务中必须包含 `"Format current file"` 任务，调用 `clang-format -i <file>`。
