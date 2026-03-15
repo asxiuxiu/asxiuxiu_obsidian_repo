@@ -11,6 +11,31 @@
 | `utils.h` | 工具函数头文件 |
 | `test_warnings.cpp` | 用于测试警告选项（故意包含一些问题） |
 
+### 中文与编码
+
+源文件为 UTF-8，编译时建议加 `-finput-charset=UTF-8 -fexec-charset=UTF-8`。
+
+**乱码原因**：Windows 系统控制台代码页默认是 936 (GBK)。Cursor/VS Code 集成终端底层走 `conpty`，按此代码页解释输出，而程序输出的是 UTF-8 字节，编码不匹配导致乱码。仅设 `LANG=en_US.UTF-8` 不够，必须切换控制台代码页。
+
+- **Cursor / VS Code 集成终端（Git Bash 或 CMD）**：运行前先切换代码页：
+  ```bash
+  chcp.com 65001        # 整个终端会话期间生效
+  ./myapp
+  ```
+- **Windows CMD（独立窗口）**：同理，先执行 `chcp 65001` 再运行程序。
+- **独立 Git Bash（mintty）**：mintty 不走 conpty，需单独设编码——窗口标题栏 **右键 → Options → Text**，把 **Character set** 设为 **UTF-8**。
+- **VS Code 任务**：`tasks.json` 的 **run** 任务已通过 `chcp 65001` 处理，直接用任务运行即可。
+
+**永久修复（推荐）**
+
+在 `~/.bashrc` 末尾加一行，新开的 Git Bash 终端会自动切换代码页：
+
+```bash
+chcp.com 65001 > /dev/null 2>&1
+```
+
+> 注意：Git Bash 作为登录 shell 会先读 `~/.bash_profile` 而不一定读 `~/.bashrc`。请确保 `~/.bash_profile` 中有 `[ -f ~/.bashrc ] && . ~/.bashrc`，或把上面这行同时加到两个文件中。
+
 ## 实践任务
 
 ### 1. 基础编译
