@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773538380535-ak2akl1ci",
+  "title": "Check and install g++ compiler",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773538380535,
+  "updatedAt": 1773540784676,
+  "lastResponseAt": 1773540781786,
+  "sessionId": "7e2704f0-c948-41be-9d97-028887dda675",
+  "sdkSessionId": "7e2704f0-c948-41be-9d97-028887dda675",
+  "currentNote": "C++/C++编译选项.md",
+  "usage": {
+    "model": "haiku",
+    "inputTokens": 43284,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 43284,
+    "percentage": 22
+  }
+}

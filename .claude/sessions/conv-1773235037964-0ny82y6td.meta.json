@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773235037964-0ny82y6td",
+  "title": "解释编译器为何需要预处理和汇编阶段",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773235037965,
+  "updatedAt": 1773240325951,
+  "lastResponseAt": 1773240246573,
+  "sessionId": "3d485302-8cd4-4de5-b6af-170043decba3",
+  "sdkSessionId": "3d485302-8cd4-4de5-b6af-170043decba3",
+  "currentNote": "C++/C++编译选项.md",
+  "usage": {
+    "model": "haiku",
+    "inputTokens": 27053,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 27053,
+    "percentage": 14
+  }
+}

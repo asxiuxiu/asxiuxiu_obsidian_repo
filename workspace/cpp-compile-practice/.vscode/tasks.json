@@ -1,0 +1,14 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build (g++)",
+            "type": "shell",
+            "command": "g++",
+            "args": ["main.cpp", "utils.cpp", "-o", "myapp", "-Wall"],
+            "group": { "kind": "build", "isDefault": true },
+            "presentation": { "reveal": "silent" },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}

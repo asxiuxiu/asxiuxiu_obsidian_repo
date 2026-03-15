@@ -1,0 +1,22 @@
+{
+  "id": "conv-1773537355385-an9q3ucdf",
+  "title": "Create simple Makefile and CMake practice works...",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773537355386,
+  "updatedAt": 1773537823189,
+  "lastResponseAt": 1773537408447,
+  "sessionId": "aa970ffa-5bbd-43f6-9f08-7cd83b9a1eed",
+  "sdkSessionId": "aa970ffa-5bbd-43f6-9f08-7cd83b9a1eed",
+  "externalContextPaths": [
+    "D:\\workspace"
+  ],
+  "usage": {
+    "model": "haiku",
+    "inputTokens": 23976,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 23976,
+    "percentage": 12
+  }
+}

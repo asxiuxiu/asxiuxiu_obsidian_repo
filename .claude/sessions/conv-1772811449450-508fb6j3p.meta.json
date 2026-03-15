@@ -1,0 +1,20 @@
+{
+  "id": "conv-1772811449450-508fb6j3p",
+  "title": "Refactor document content and improve descriptions",
+  "titleGenerationStatus": "success",
+  "createdAt": 1772811449450,
+  "updatedAt": 1772889777322,
+  "lastResponseAt": 1772811824115,
+  "sessionId": "e4dbf464-4462-4c40-90ff-db4b4cdb31a9",
+  "sdkSessionId": "e4dbf464-4462-4c40-90ff-db4b4cdb31a9",
+  "currentNote": "graphics/6. 光栅化续 (Antialiasing and Z-Buffering).md",
+  "usage": {
+    "model": "sonnet",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}
