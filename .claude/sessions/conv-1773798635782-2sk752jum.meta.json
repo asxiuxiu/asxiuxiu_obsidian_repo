@@ -1,0 +1,19 @@
+{
+  "id": "conv-1773798635782-2sk752jum",
+  "title": "Create GDB learning guide",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773798635782,
+  "updatedAt": 1773800067710,
+  "lastResponseAt": 1773800053825,
+  "sessionId": "ecf0d03a-6dc6-4417-9ce2-0e583728d5bd",
+  "sdkSessionId": "ecf0d03a-6dc6-4417-9ce2-0e583728d5bd",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 37676,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 37676,
+    "percentage": 19
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773836607784-1l91x3zca",
+  "title": "指定生成文件的输出目录",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773836607784,
+  "updatedAt": 1773836863949,
+  "lastResponseAt": 1773836619899,
+  "sessionId": "05c62f0b-ab94-4cb6-a913-6adb6b54683b",
+  "sdkSessionId": "05c62f0b-ab94-4cb6-a913-6adb6b54683b",
+  "currentNote": "C++/C++编译选项.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 21664,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 21664,
+    "percentage": 11
+  }
+}

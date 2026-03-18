@@ -4,3 +4,4 @@
 .obsidian/cache
 .DS_Store
 *.tmp
+**/*/build/*
