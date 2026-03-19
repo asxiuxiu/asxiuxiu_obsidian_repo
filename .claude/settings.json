@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Edit(/Users/asmallgod/.claude/settings.json)",
+      "Bash(ls .claude/skills/sync-push/ && echo \"---\" && cat .claude/skills/sync-push/skill.md)",
+      "Bash(mkdir -p .claude/skills/workspace-gen)",
+      "Write(/Users/asmallgod/Document/asxiuxiu_obsidian_repo/.claude/skills/workspace-gen/SKILL.md)",
+      "Read(//Users/asmallgod/.claude/**)",
+      "Edit(/Users/asmallgod/Document/asxiuxiu_obsidian_repo/.claude/skills/workspace-gen/SKILL.md)",
+      "Bash(git add . && git commit -m \"Vault backup: $\\(date +'%Y-%m-%d %H:%M:%S'\\)\")"
+    ]
+  }
+}

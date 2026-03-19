@@ -3,6 +3,18 @@
   "title": "Execute sync-push command",
   "titleGenerationStatus": "success",
   "createdAt": 1773843706567,
-  "updatedAt": 1773843718305,
-  "sessionId": null
+  "updatedAt": 1773843779313,
+  "lastResponseAt": 1773843741183,
+  "sessionId": "04858362-8a9f-4958-858d-ae88e1a520a6",
+  "sdkSessionId": "04858362-8a9f-4958-858d-ae88e1a520a6",
+  "currentNote": "C++/调试器核心概念与原理.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 20359,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 20359,
+    "percentage": 10
+  }
 }

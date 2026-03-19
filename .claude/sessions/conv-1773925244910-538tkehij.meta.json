@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773925244910-538tkehij",
+  "title": "Explain CMake and Make build system history and...",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773925244910,
+  "updatedAt": 1773926514121,
+  "lastResponseAt": 1773925368178,
+  "sessionId": "499d90e8-067c-451a-b550-67597d1e293e",
+  "sdkSessionId": "499d90e8-067c-451a-b550-67597d1e293e",
+  "currentNote": "C++/静态库与动态库.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}

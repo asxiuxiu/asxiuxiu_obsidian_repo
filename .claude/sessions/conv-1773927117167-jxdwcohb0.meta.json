@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773927117167-jxdwcohb0",
+  "title": "Create workspace generation skill from notes",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773927117167,
+  "updatedAt": 1773928412539,
+  "lastResponseAt": 1773928405485,
+  "sessionId": "147497d4-487d-4854-ad47-600296a50cc7",
+  "sdkSessionId": "147497d4-487d-4854-ad47-600296a50cc7",
+  "currentNote": "C++/构建系统：make 与 CMake.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}

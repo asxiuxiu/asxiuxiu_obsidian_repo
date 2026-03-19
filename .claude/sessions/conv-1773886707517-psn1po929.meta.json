@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773886707517-psn1po929",
+  "title": "Explain symbolic reference resolution",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773886707517,
+  "updatedAt": 1773887211859,
+  "lastResponseAt": 1773887011642,
+  "sessionId": "bcf430bf-9460-4caa-b5be-afa3e1cc8e54",
+  "sdkSessionId": "bcf430bf-9460-4caa-b5be-afa3e1cc8e54",
+  "currentNote": "C++/静态库与动态库.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 34176,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 34176,
+    "percentage": 17
+  }
+}

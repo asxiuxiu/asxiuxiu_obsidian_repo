@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773920161099-mfwa3guo9",
+  "title": "Explain C++ static vs dynamic library usage",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773920161106,
+  "updatedAt": 1773920881985,
+  "lastResponseAt": 1773920772379,
+  "sessionId": "b1b5f4c2-c465-4719-9b27-6cc6bcc03687",
+  "sdkSessionId": "b1b5f4c2-c465-4719-9b27-6cc6bcc03687",
+  "currentNote": "C++/静态库与动态库.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 30776,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 30776,
+    "percentage": 15
+  }
+}

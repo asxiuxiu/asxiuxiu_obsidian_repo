@@ -1,0 +1,19 @@
+{
+  "id": "conv-1773928631859-etvatxtcp",
+  "title": "Update workspace-gen skill with C++ pollution n...",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773928631860,
+  "updatedAt": 1773929281137,
+  "lastResponseAt": 1773929277652,
+  "sessionId": "7ef9e6f5-a50a-4e80-9f05-8d9a40ee42a0",
+  "sdkSessionId": "7ef9e6f5-a50a-4e80-9f05-8d9a40ee42a0",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}
