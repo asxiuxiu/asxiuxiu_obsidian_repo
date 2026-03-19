@@ -38,7 +38,7 @@
       "Remove-Partition"
     ]
   },
-  "permissionMode": "normal",
+  "permissionMode": "yolo",
   "model": "opus",
   "thinkingBudget": "medium",
   "enableAutoTitleGeneration": true,
