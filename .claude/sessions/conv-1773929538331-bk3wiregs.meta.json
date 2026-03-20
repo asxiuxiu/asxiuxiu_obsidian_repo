@@ -3,6 +3,17 @@
   "title": "Sync and push vault changes",
   "titleGenerationStatus": "success",
   "createdAt": 1773929538331,
-  "updatedAt": 1773929543692,
-  "sessionId": null
+  "updatedAt": 1773929587451,
+  "lastResponseAt": 1773929581858,
+  "sessionId": "6f707b47-d8f1-4578-a3e3-8747088b12f8",
+  "sdkSessionId": "6f707b47-d8f1-4578-a3e3-8747088b12f8",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
 }

@@ -1,5 +1,19 @@
 {
   "permissions": {
     "defaultMode": "bypassPermissions"
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/Users/asmallgod/Document/asxiuxiu_obsidian_repo/.claude/hooks/obsidian-context.sh",
+            "timeout": 10,
+            "statusMessage": "读取 Obsidian 激活笔记..."
+          }
+        ]
+      }
+    ]
   }
 }

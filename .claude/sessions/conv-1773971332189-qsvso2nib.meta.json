@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773971332189-qsvso2nib",
+  "title": "Explain pragma once usage in header files",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773971332189,
+  "updatedAt": 1773972615914,
+  "lastResponseAt": 1773972209920,
+  "sessionId": "f55666d2-2020-49f1-af51-54df5c5336f4",
+  "sdkSessionId": "f55666d2-2020-49f1-af51-54df5c5336f4",
+  "currentNote": "C++/C++ inline 关键字.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 24899,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 24899,
+    "percentage": 12
+  }
+}

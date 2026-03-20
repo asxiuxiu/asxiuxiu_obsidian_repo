@@ -1,0 +1,19 @@
+{
+  "id": "conv-1773969961711-300hrthk2",
+  "title": "Explain C++ volatile keyword purpose",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773969961711,
+  "updatedAt": 1773970849961,
+  "lastResponseAt": 1773970749983,
+  "sessionId": "f8dc68bf-4736-41dc-a26e-b2b1e7e896e5",
+  "sdkSessionId": "f8dc68bf-4736-41dc-a26e-b2b1e7e896e5",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}

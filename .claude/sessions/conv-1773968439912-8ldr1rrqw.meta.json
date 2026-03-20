@@ -1,0 +1,20 @@
+{
+  "id": "conv-1773968439912-8ldr1rrqw",
+  "title": "Create CMake static and dynamic library workspace",
+  "titleGenerationStatus": "success",
+  "createdAt": 1773968439912,
+  "updatedAt": 1773969766829,
+  "lastResponseAt": 1773968985987,
+  "sessionId": "201018a4-7b33-4981-a6ab-f89a9b4c53ff",
+  "sdkSessionId": "201018a4-7b33-4981-a6ab-f89a9b4c53ff",
+  "currentNote": "C++/构建系统：make 与 CMake.md",
+  "usage": {
+    "model": "opus",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}
