@@ -2,7 +2,7 @@
 
 > **参考视频**: [Essence of Linear Algebra - YouTube Playlist](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)  
 > **B站中文**: [官方双语/合集]线性代数的本质 - 系列合集  
-> **笔记来源**: 整合 [47saikyo](https://47saikyo.moe/) 和多方学习笔记
+> **笔记来源**: [47saikyo](https://47saikyo.moe/) 的笔记 + 多方学习整理
 
 ---
 
@@ -56,7 +56,7 @@ $$
 
 ### 1.3 向量加法
 
-![向量加法示意图](https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Vector_addition.svg/400px-Vector_addition.svg.png)
+![向量加法示意图](../Assets/linear-algebra/linear-vector-1.png)
 
 **几何理解**: 将 $\vec{v}$ 平移，使其起点对准 $\vec{w}$ 的终点，最终画一条从 $\vec{v}$ 起点指向 $\vec{w}$ 终点的向量。
 
@@ -69,7 +69,7 @@ $$
 
 ### 1.4 向量数乘（缩放）
 
-![向量数乘](https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Scalar_multiplication.svg/400px-Scalar_multiplication.svg.png)
+![向量数乘](../Assets/linear-algebra/linear-vector-2.png)
 
 向量数乘即将原向量延长/缩短为原来的 $n$ 倍：
 
@@ -106,6 +106,8 @@ $$
 \begin{bmatrix} 3 \\ 2 \end{bmatrix} = 3\hat{i} + 2\hat{j} = 3\begin{bmatrix} 1 \\ 0 \end{bmatrix} + 2\begin{bmatrix} 0 \\ 1 \end{bmatrix}
 $$
 
+![向量的线性组合](../Assets/linear-algebra/linear-vector-3.png)
+
 两个数乘向量的和被称作这两个向量的**线性组合**：
 
 $$
@@ -115,8 +117,6 @@ $$
 **重要观察**: 当我们用坐标描述一个向量时，它依赖于我们正在使用的**基向量**。不同的基向量会导致不同的结果。
 
 ### 2.3 张成的空间（Span）
-
-![张成空间](https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Span.svg/500px-Span.svg.png)
 
 对于一对初始向量的线性组合，如果我们让两个标量都自由变化：
 
@@ -131,8 +131,6 @@ $$
 - 加上第三个不共面的向量，就能张成整个三维空间
 
 ### 2.4 线性相关与线性无关
-
-![线性相关与无关](https://miro.medium.com/v2/resize:fit:640/format:webp/1*7eL5bI0Q6yX8z9Z8Y8Y8zQ.png)
 
 **线性相关**（Linearly Dependent）:
 在向量的线性组合中添加了一个向量，但是没有扩展张成的空间。此时存在：
@@ -170,8 +168,6 @@ $$
 
 ### 3.2 用矩阵描述线性变换
 
-![线性变换](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Linear_transformation.svg/500px-Linear_transformations.svg.png)
-
 **关键洞察**: 
 - 变换前：$\vec{v} = x\hat{i} + y\hat{j}$
 - 变换后：$\vec{v}_{new} = x\hat{i}_{new} + y\hat{j}_{new}$
@@ -188,11 +184,15 @@ $$
 - **第一列** $\begin{bmatrix} a \\ c \end{bmatrix}$: 变换后的 $\hat{i}$
 - **第二列** $\begin{bmatrix} b \\ d \end{bmatrix}$: 变换后的 $\hat{j}$
 
+![线性变换](../Assets/linear-algebra/linear-matrix-1.png)
+
 ### 3.3 矩阵与向量相乘
 
 $$
 \begin{bmatrix} a & b \\ c & d \end{bmatrix} \begin{bmatrix} x \\ y \end{bmatrix} = x\begin{bmatrix} a \\ c \end{bmatrix} + y\begin{bmatrix} b \\ d \end{bmatrix} = \begin{bmatrix} ax + by \\ cx + dy \end{bmatrix}
 $$
+
+![矩阵向量乘法](../Assets/linear-algebra/linear-matrix-2.png)
 
 **示例**: 逆时针旋转90°
 
@@ -209,8 +209,6 @@ $$
 ## 四、矩阵乘法与线性变换复合
 
 ### 4.1 复合变换
-
-![矩阵乘法](https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Matrix_multiplication_diagram.svg/500px-Matrix_multiplication_diagram.svg.png)
 
 我们可以对多个线性变换进行累加操作——先进行变换A，再在此基础上进行变换B，称之为**两个线性变换的复合变换**。
 
@@ -249,8 +247,6 @@ $$
 
 ### 5.1 行列式的几何意义
 
-![行列式](https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Determinant.svg/500px-Determinant.svg.png)
-
 **核心定义**: 
 > 行列式描述**线性变换改变面积的比例**。
 
@@ -283,6 +279,8 @@ $$
 - 当 $b=c=0$ 时，矩阵表示对x轴和y轴的独立缩放，面积变换倍率就是 $ad$
 - $ad$ 代表主对角线拉伸后的面积
 - $bc$ 代表副对角线的影响
+
+![行列式计算](../Assets/linear-algebra/linear-determinant-1.png)
 
 **三维矩阵**:
 
@@ -323,8 +321,6 @@ $$
 > 给定一个线性变换 $A$ 和一个向量 $\vec{v}$，找到一个向量 $\vec{x}$，使之经过该线性变换后与 $\vec{v}$ 重合。
 
 ### 6.2 逆矩阵
-
-![逆矩阵](https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Invertible_Matrix.svg/500px-Invertible_Matrix.svg.png)
 
 当 $\det(A) \neq 0$ 时，可以找到唯一的逆向变换 $A^{-1}$：
 
@@ -367,8 +363,6 @@ $$
 
 ### 6.5 零空间（Null Space / Kernel）
 
-![零空间](https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Null_space.svg/500px-Null_space.svg.png)
-
 **定义**: 变换后落在原点的所有向量的集合。
 
 $$
@@ -398,8 +392,6 @@ $$
 
 ### 7.2 点积的几何意义
 
-![点积投影](https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Inner_product.svg/500px-Inner_product.svg.png)
-
 **核心公式**:
 
 $$
@@ -412,10 +404,14 @@ $$
 \vec{a} \cdot \vec{b} = (\vec{a} \text{在} \vec{b} \text{上的投影长度}) × |\vec{b}|
 $$
 
+![点积几何意义](../Assets/linear-algebra/linear-dotproduct-1.png)
+
 **点积的符号含义**:
 - $\vec{a} \cdot \vec{b} > 0$: 两向量方向大致相同（夹角 < 90°）
 - $\vec{a} \cdot \vec{b} = 0$: 两向量垂直
 - $\vec{a} \cdot \vec{b} < 0$: 两向量方向大致相反（夹角 > 90°）
+
+![点积正负值](../Assets/linear-algebra/linear-dotproduct-2.png)
 
 ### 7.3 对偶性（Duality）
 
@@ -429,6 +425,8 @@ $$
 \text{应用线性变换} \Leftrightarrow \text{与对偶向量做点积}
 $$
 
+![对偶性1](../Assets/linear-algebra/linear-dotproduct-3.png)
+
 **几何推导**:
 
 考虑将二维空间投影到一条过原点的直线上：
@@ -439,6 +437,8 @@ $$
    \begin{bmatrix} u_x & u_y \end{bmatrix}
    $$
 3. 这正是向量 $\hat{u}$ "躺下"的样子！
+
+![对偶性2](../Assets/linear-algebra/linear-dotproduct-4.png)
 
 **结论**: 点积可以理解为**将其中一个向量转化为线性变换**，然后应用到另一个向量上。
 
@@ -466,8 +466,6 @@ $$
 
 ### 8.3 三维叉积
 
-![叉积](https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Cross_product.svg/500px-Cross_product.svg.png)
-
 **定义**: 叉积是通过两个三维向量生成一个新三维向量的过程。
 
 **计算公式**:
@@ -482,9 +480,13 @@ $$
 \vec{v} × \vec{w} = \det\begin{bmatrix} \hat{i} & \hat{j} & \hat{k} \\ v_x & v_y & v_z \\ w_x & w_y & w_z \end{bmatrix}
 $$
 
+![叉积](../Assets/linear-algebra/linear-crossproduct-1.png)
+
 **输出向量的性质**:
 - **长度**: $|\vec{v} × \vec{w}| = |\vec{v}| |\vec{w}| \sin\theta$ = 平行四边形面积
 - **方向**: 垂直于 $\vec{v}$ 和 $\vec{w}$ 所在的平面（右手定则）
+
+![叉积2](../Assets/linear-algebra/linear-crossproduct-2.png)
 
 **右手定则**: 
 - 食指指向 $\vec{v}$ 的方向
@@ -520,6 +522,8 @@ $$
 - $\vec{b}_1 = \begin{bmatrix} 2 \\ 1 \end{bmatrix}$ （她眼中的 $\hat{i}$）
 - $\vec{b}_2 = \begin{bmatrix} -1 \\ 1 \end{bmatrix}$ （她眼中的 $\hat{j}$）
 
+![基变换1](../Assets/linear-algebra/linear-basis-1.png)
+
 ### 9.2 基变换矩阵
 
 **问题**: Jennifer用她的坐标 $\begin{bmatrix} -1 \\ 2 \end{bmatrix}_J$ 描述一个向量，这在我们的坐标系中是什么？
@@ -538,6 +542,8 @@ $$
 |---------|------|
 | Jennifer → 我们 | 乘以基变换矩阵 $A$ |
 | 我们 → Jennifer | 乘以基变换矩阵的逆 $A^{-1}$ |
+
+![基变换2](../Assets/linear-algebra/linear-basis-2.png)
 
 ### 9.4 基变换后的线性变换
 
@@ -562,8 +568,6 @@ $$
 
 ### 10.1 定义
 
-![特征向量](https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Eigenvectors.svg/500px-Eigenvectors.svg.png)
-
 **特征向量**: 变换后仍留在其张成空间内的向量（即方向不变，只被拉伸/压缩）。
 
 **特征值**: 衡量特征向量在变换中拉伸或压缩比例的因子。
@@ -577,6 +581,8 @@ $$
 - $\vec{v}$: 特征向量
 - $\lambda$: 特征值
 
+![特征向量1](../Assets/linear-algebra/linear-eigen-1.png)
+
 ### 10.2 几何示例
 
 对于矩阵 $A = \begin{bmatrix} 2 & 0 \\ 0 & 3 \end{bmatrix}$：
@@ -585,6 +591,8 @@ $$
 - y轴上的向量: 特征值 = 3，被拉伸3倍
 
 **旋转变换**: 在三维空间中，旋转轴就是特征向量，特征值为1（长度不变）。
+
+![特征向量2](../Assets/linear-algebra/linear-eigen-2.png)
 
 ### 10.3 特征值与特征向量的计算
 
@@ -631,6 +639,8 @@ $$
 其中：
 - $P$: 特征向量构成的矩阵
 - $D$: 特征值构成的对角矩阵
+
+![特征向量3](../Assets/linear-algebra/linear-eigen-3.png)
 
 **可对角化的条件**: 矩阵有足够多的线性无关特征向量（能张成全空间）。
 
@@ -741,11 +751,37 @@ $$
 
 ---
 
+## 插图清单
+
+本笔记使用的所有插图均来自 [47saikyo](https://47saikyo.moe/) 的原始笔记：
+
+| 插图 | 说明 |
+|------|------|
+| `linear-vector-1.png` | 向量加法示意图 |
+| `linear-vector-2.png` | 向量数乘（缩放）|
+| `linear-vector-3.png` | 向量的线性组合 |
+| `linear-matrix-1.png` | 线性变换的几何表示 |
+| `linear-matrix-2.png` | 矩阵向量乘法 |
+| `linear-determinant-1.png` | 行列式的几何推导 |
+| `linear-dotproduct-1.png` | 点积的几何意义 |
+| `linear-dotproduct-2.png` | 点积的正负值情况 |
+| `linear-dotproduct-3.png` | 对偶性（1）|
+| `linear-dotproduct-4.png` | 对偶性（2）|
+| `linear-crossproduct-1.png` | 叉积的定义 |
+| `linear-crossproduct-2.png` | 叉积的几何意义 |
+| `linear-basis-1.png` | 基变换（1）|
+| `linear-basis-2.png` | 基变换（2）|
+| `linear-eigen-1.png` | 特征向量的定义 |
+| `linear-eigen-2.png` | 特征向量的几何示例 |
+| `linear-eigen-3.png` | 特征基与对角化 |
+
+---
+
 ## 参考资源
 
 - [3Blue1Brown 官方 YouTube 播放列表](https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab)
 - [B站官方双语合集](https://www.bilibili.com/video/BV1ys411472E)
-- [47saikyo 的笔记](https://47saikyo.moe/)
+- [47saikyo 的原始笔记](https://47saikyo.moe/Artificial%20Intelligence/Article/3Blue1Brown%E3%80%8A%E7%BA%BF%E6%80%A7%E4%BB%A3%E6%95%B0%E7%9A%84%E6%9C%AC%E8%B4%A8%E3%80%8B%E7%AC%94%E8%AE%B0/)
 - [知乎专栏 - 3Blue1Brown线性代数的本质学习笔记](https://zhuanlan.zhihu.com/p/6493794974)
 
 ---
