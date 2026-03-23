@@ -42,6 +42,7 @@ description: 根据当前笔记内容，在 vault 的 workspace/ 目录下生成
    - 配置文件使用笔记中提取的项目名、依赖等真实信息
    - 代码文件直接复用笔记中的代码示例（如有）
    - 添加注释说明代码来源（`# From note: <note-title>`）
+   - **例外**：算法练习工作区（`algo-practice`）的 `solution.cpp` 只写函数签名骨架 + `// TODO`，**不复制笔记中的题解代码**
 4. **生成 README.md**：简要说明工作区用途、来源笔记、如何运行
 
 ### 第四步：输出摘要
@@ -129,15 +130,18 @@ cmake --build build
 
 当笔记是算法打卡类（标题含"算法"、"刷题"、"LeetCode"，或目标目录为 `workspace/algo-practice/`）时，适用以下额外规范：
 
-#### solution.cpp 顶部必须包含 LeetCode 链接
+#### solution.cpp 只生成骨架，不填写题解
 
-每道题的 `solution.cpp` 第一行注释必须是对应的 LeetCode 题目链接，方便直接跳转验证：
+**重要**：算法练习工作区的 `solution.cpp` **只能包含函数签名骨架**，不得将笔记中的题解代码复制进去。目的是让用户自己动手写解法。
 
 ```cpp
 // LeetCode: https://leetcode.com/problems/<题目-slug>/
 #include "solution.h"
-// ...
+
+// TODO: 在此实现你的解法
 ```
+
+顶部第一行注释必须是对应的 LeetCode 题目链接，方便直接跳转；函数体只写 `// TODO` 占位，不填入任何解法逻辑。
 
 **常见题目 slug 对照**（遇到列表外的题目，根据题目英文名转为 kebab-case 拼接到 URL）：
 
