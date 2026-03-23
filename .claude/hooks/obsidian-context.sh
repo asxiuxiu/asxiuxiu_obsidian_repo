@@ -24,7 +24,7 @@ export OBS_FILE_NAME="$FILE_NAME"
 export OBS_FILE_CONTENT="$FILE_CONTENT"
 export OBS_SELECTION="$SELECTION"
 
-python3 - <<'PYEOF'
+python - <<'PYEOF'
 import json, os
 
 file_path = os.environ.get("OBS_FILE_PATH", "")
