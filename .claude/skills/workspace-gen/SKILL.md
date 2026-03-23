@@ -104,13 +104,69 @@ workspace/make-cmake/
 └── .gitignore
 ```
 
-**CMakeLists.txt 内容参考笔记中的 CMake 示例，至少包含：**
+**CMakeLists.txt 内容参考笔记中的 CMake 示例，至少包含（统一使用 GCC）：**
 ```cmake
-cmake_minimum_required(VERSION 3.10)
-project(<ProjectName>)
+cmake_minimum_required(VERSION 3.20)
+project(<ProjectName> LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# GCC 警告选项（Windows MSYS2 / macOS 通用）
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -Wshadow -O2)
+endif()
+
 add_executable(<target> src/main.cpp)
 ```
+
+**构建命令（统一使用 GCC + Ninja）：**
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
+cmake --build build
+```
+
+### 算法练习工作区（algo-practice）
+
+当笔记是算法打卡类（标题含"算法"、"刷题"、"LeetCode"，或目标目录为 `workspace/algo-practice/`）时，适用以下额外规范：
+
+#### solution.cpp 顶部必须包含 LeetCode 链接
+
+每道题的 `solution.cpp` 第一行注释必须是对应的 LeetCode 题目链接，方便直接跳转验证：
+
+```cpp
+// LeetCode: https://leetcode.com/problems/<题目-slug>/
+#include "solution.h"
+// ...
+```
+
+**常见题目 slug 对照**（遇到列表外的题目，根据题目英文名转为 kebab-case 拼接到 URL）：
+
+| 题目 | slug |
+|---|---|
+| Two Sum | `two-sum` |
+| Contains Duplicate | `contains-duplicate` |
+| Valid Anagram | `valid-anagram` |
+| Group Anagrams | `group-anagrams` |
+| Top K Frequent Elements | `top-k-frequent-elements` |
+| Reverse Linked List | `reverse-linked-list` |
+| Merge Two Sorted Lists | `merge-two-sorted-lists` |
+
+#### 目录结构模板
+
+```
+workspace/algo-practice/
+├── CMakeLists.txt              # 根构建文件，每道题 add_subdirectory
+├── include/
+│   └── common.h                # 轻量测试宏（EXPECT_EQ / RUN_TEST）
+├── dayXX_<题目名>/
+│   ├── CMakeLists.txt
+│   ├── solution.h              # 函数/类声明
+│   ├── solution.cpp            # ← 顶部含 LeetCode 链接，在此写解法
+│   └── main.cpp                # 本地测试用例
+└── README.md
+```
+
+---
 
 ### C++ 代码规范：宏污染与头文件污染
 
