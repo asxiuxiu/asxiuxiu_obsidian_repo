@@ -8,3 +8,4 @@ Game/
 .DS_Store
 *.tmp
 **/*/build/*
+**/*/.cache/*

@@ -1,74 +1,114 @@
 ---
 name: workspace-gen
-description: 根据当前笔记内容，在 vault 的 workspace/ 目录下生成对应的代码工作区骨架。分析笔记中的技术主题、代码示例、项目结构等，自动创建合适的目录结构、配置文件和示例代码。Use when the user wants to create a workspace, project scaffold, or code directory based on a note's content.
+description: 根据笔记内容，在 vault 的 workspace/ 目录下生成代码工作区骨架。分析技术栈、代码示例，自动创建目录结构、配置文件和示例代码。
 ---
 
 # Workspace Gen
 
-根据笔记内容智能生成本地代码工作区，放置在 vault 内的 `workspace/` 目录下。
+根据笔记内容智能生成代码工作区，放置在 `workspace/<kebab-case-note-title>/` 目录下。
 
 ## 工作流程
 
-### 第一步：分析笔记
+1. **分析笔记** - 提取技术栈(tags/标题/正文)、代码块、文件名提示
+2. **推断类型** - 根据技术栈选择模板（见下表）
+3. **生成工作区** - 创建目录结构，填充配置文件和代码骨架
+4. **输出摘要** - 告知工作区路径、文件列表、运行命令
 
-读取当前笔记（通过 `<current_note>` 或 `$ARGUMENTS` 指定路径），提取以下信息：
+### 技术栈与模板对应
 
-- **技术栈**：笔记 frontmatter 的 `tags`、标题、正文中出现的语言/框架/工具关键词
-- **代码示例**：笔记中的代码块（提取语言类型和内容）
-- **项目结构提示**：笔记中明确提到的文件名、目录名、配置文件名
-- **主题名称**：用于命名工作区目录（从笔记标题提取，转为 kebab-case）
-
-### 第二步：推断工作区类型
-
-根据检测到的技术栈，选择对应的工作区模板：
-
-| 检测到的关键词 | 工作区类型 | 生成的核心文件 |
-|---|---|---|
-| `cmake`, `CMakeLists`, `c++`, `cpp` | C++ CMake 项目 | `CMakeLists.txt`, `src/main.cpp`, `include/`, `build/` |
-| `makefile`, `make` + C/C++ | C++ Make 项目 | `Makefile`, `src/main.cpp`, `include/` |
-| `python`, `pip`, `.py` | Python 项目 | `main.py`, `requirements.txt`, `venv/`（说明）, `.gitignore` |
-| `rust`, `cargo`, `.rs` | Rust 项目 | `Cargo.toml`, `src/main.rs` |
-| `javascript`, `node`, `npm`, `typescript` | Node.js 项目 | `package.json`, `src/index.js` 或 `index.ts`, `.gitignore` |
-| `go`, `golang` | Go 项目 | `go.mod`, `main.go` |
-| `java`, `maven`, `gradle` | Java 项目 | `pom.xml` 或 `build.gradle`, `src/main/java/Main.java` |
-| `shell`, `bash`, `sh` | Shell 脚本项目 | `main.sh`, `lib/`, `README.md` |
-| 其他/通用 | 通用项目 | `README.md`, `notes/`, `.gitignore` |
-
-### 第三步：生成工作区
-
-1. **确定目录名**：`workspace/<note-title-in-kebab-case>/`
-2. **创建目录结构**：根据工作区类型创建对应目录和文件
-3. **填充内容**：
-   - 配置文件使用笔记中提取的项目名、依赖等真实信息
-   - 代码文件直接复用笔记中的代码示例（如有）
-   - 添加注释说明代码来源（`# From note: <note-title>`）
-   - **例外**：算法练习工作区（`algo-practice`）的 `solution.cpp` 只写函数签名骨架 + `// TODO`，**不复制笔记中的题解代码**
-4. **生成 README.md**：简要说明工作区用途、来源笔记、如何运行
-
-### 第四步：输出摘要
-
-告知用户：
-- 工作区路径（可点击的 wikilink）
-- 生成了哪些文件
-- 如何开始使用（编译/运行命令）
-
----
+| 关键词 | 类型 | 核心文件 |
+|--------|------|----------|
+| cmake, c++, cpp | C++ CMake | `CMakeLists.txt`, `src/main.cpp` |
+| make, makefile | C++ Make | `Makefile`, `src/main.cpp` |
+| python, .py | Python | `main.py`, `requirements.txt` |
+| rust, cargo | Rust | `Cargo.toml`, `src/main.rs` |
+| javascript, typescript, node | Node.js | `package.json`, `src/index.ts` |
+| go, golang | Go | `go.mod`, `main.go` |
+| java, maven, gradle | Java | `pom.xml`/`build.gradle` |
+| shell, bash, sh | Shell | `main.sh`, `lib/` |
+| 算法, 刷题, LeetCode | 算法练习 | 见下方特殊规范 |
+| 其他 | 通用 | `README.md`, `notes/` |
 
 ## 执行规范
 
-### 目录命名规则
+### 目录命名
+笔记标题 → kebab-case → `workspace/<name>/`
 
-```
-笔记标题 → kebab-case → workspace/<name>/
 例：
-  "构建系统：make 与 CMake"  →  workspace/make-cmake/
-  "Python 异步编程"          →  workspace/python-async/
-  "React Hooks 实践"         →  workspace/react-hooks/
+- "构建系统：make 与 CMake" → `workspace/make-cmake/`
+- "Python 异步编程" → `workspace/python-async/`
+
+### 算法练习工作区（algo-practice）
+
+当标题含"算法"、"LeetCode"或目标目录为 `algo-practice/` 时：
+
+**solution.cpp 规则（重要）**：
+- 只生成函数签名骨架 + `// TODO`，**不复制题解代码**
+- 顶部必须包含 LeetCode 题目链接：`// LeetCode: https://leetcode.com/problems/<slug>/`
+
+```cpp
+// LeetCode: https://leetcode.com/problems/two-sum/
+#include "solution.h"
+
+// TODO: 在此实现你的解法
 ```
+
+**目录结构**：
+```
+workspace/algo-practice/
+├── CMakeLists.txt          # 根构建文件
+├── include/common.h        # 轻量测试宏
+├── dayXX_<题目名>/
+│   ├── CMakeLists.txt
+│   ├── solution.h          # 函数/类声明
+│   ├── solution.cpp        # ← 在此写解法
+│   └── main.cpp            # 本地测试
+└── README.md
+```
+
+### C++ CMake 项目规范
+
+**CMakeLists.txt 最小配置**（统一使用 GCC + Ninja）：
+```cmake
+cmake_minimum_required(VERSION 3.20)
+project(<name> LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options(-Wall -Wextra -Wshadow -O2)
+endif()
+
+add_executable(<target> src/main.cpp)
+```
+
+**构建命令**：
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
+cmake --build build
+```
+
+### C++ 代码规范（防污染）
+
+**宏污染**：
+- 头文件中用 `constexpr` 替代 `#define` 常量
+- 头文件中用 `inline` 函数替代宏函数
+- 必须用宏时加项目前缀（如 `MYPROJECT_DEBUG`），用完 `#undef`
+
+**头文件污染**：
+- 所有头文件必须 `#pragma once`
+- 头文件中禁止 `using namespace`
+- 最小化 `#include`，能用前向声明的绝不包含
+- 实现细节放 `.cpp`，不暴露到头文件
+- 包含顺序：对应.h → C库 → C++库 → 第三方库 → 项目内头文件
+
+**符号命名污染**：
+- 所有代码放在具名 namespace 中
+- 禁止与标准库/POSIX 重名（如 `read`, `write`, `max`, `min`, `strlen` 等）
+- 禁止使用保留标识符（`__foo`, `_Foo`, `_foo`）
+- 类型别名不得遮蔽 `size_t`, `uint32_t` 等标准类型
 
 ### README.md 模板
-
-每个工作区必须包含 `README.md`：
 
 ```markdown
 # <工作区名称>
@@ -77,249 +117,28 @@ description: 根据当前笔记内容，在 vault 的 workspace/ 目录下生成
 > 📅 生成时间：<date>
 
 ## 简介
-
-<从笔记标题和一句话总结提取>
+<一句话描述>
 
 ## 快速开始
-
-<根据技术栈填写编译/运行命令>
+<编译/运行命令>
 
 ## 文件结构
-
-<tree 格式展示>
+<tree>
 ```
-
-### C++ CMake 工作区示例
-
-当检测到 C++/CMake 相关笔记时，生成：
-
-```
-workspace/make-cmake/
-├── README.md
-├── CMakeLists.txt        # 基于笔记内容的最小可用配置
-├── Makefile              # 如笔记同时讲了 make，也生成
-├── src/
-│   └── main.cpp          # 包含笔记中的示例代码片段
-├── include/
-│   └── .gitkeep
-└── .gitignore
-```
-
-**CMakeLists.txt 内容参考笔记中的 CMake 示例，至少包含（统一使用 GCC）：**
-```cmake
-cmake_minimum_required(VERSION 3.20)
-project(<ProjectName> LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# GCC 警告选项（Windows MSYS2 / macOS 通用）
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-Wall -Wextra -Wshadow -O2)
-endif()
-
-add_executable(<target> src/main.cpp)
-```
-
-**构建命令（统一使用 GCC + Ninja）：**
-```bash
-cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
-cmake --build build
-```
-
-### 算法练习工作区（algo-practice）
-
-当笔记是算法打卡类（标题含"算法"、"刷题"、"LeetCode"，或目标目录为 `workspace/algo-practice/`）时，适用以下额外规范：
-
-#### solution.cpp 只生成骨架，不填写题解
-
-**重要**：算法练习工作区的 `solution.cpp` **只能包含函数签名骨架**，不得将笔记中的题解代码复制进去。目的是让用户自己动手写解法。
-
-```cpp
-// LeetCode: https://leetcode.com/problems/<题目-slug>/
-#include "solution.h"
-
-// TODO: 在此实现你的解法
-```
-
-顶部第一行注释必须是对应的 LeetCode 题目链接，方便直接跳转；函数体只写 `// TODO` 占位，不填入任何解法逻辑。
-
-**常见题目 slug 对照**（遇到列表外的题目，根据题目英文名转为 kebab-case 拼接到 URL）：
-
-| 题目 | slug |
-|---|---|
-| Two Sum | `two-sum` |
-| Contains Duplicate | `contains-duplicate` |
-| Valid Anagram | `valid-anagram` |
-| Group Anagrams | `group-anagrams` |
-| Top K Frequent Elements | `top-k-frequent-elements` |
-| Reverse Linked List | `reverse-linked-list` |
-| Merge Two Sorted Lists | `merge-two-sorted-lists` |
-
-#### 目录结构模板
-
-```
-workspace/algo-practice/
-├── CMakeLists.txt              # 根构建文件，每道题 add_subdirectory
-├── include/
-│   └── common.h                # 轻量测试宏（EXPECT_EQ / RUN_TEST）
-├── dayXX_<题目名>/
-│   ├── CMakeLists.txt
-│   ├── solution.h              # 函数/类声明
-│   ├── solution.cpp            # ← 顶部含 LeetCode 链接，在此写解法
-│   └── main.cpp                # 本地测试用例
-└── README.md
-```
-
----
-
-### C++ 代码规范：宏污染与头文件污染
-
-生成 C++ 代码时，必须遵守以下规范，防止宏污染和头文件污染：
-
-#### 宏定义污染（Macro Pollution）
-
-- **禁止在头文件中使用 `#define` 定义常量**，改用 `constexpr` 或 `inline constexpr`：
-  ```cpp
-  // ❌ 错误
-  #define MAX_SIZE 1024
-  // ✅ 正确
-  inline constexpr int kMaxSize = 1024;
-  ```
-- **禁止用宏定义函数**，改用 `inline` 函数或模板：
-  ```cpp
-  // ❌ 错误
-  #define MAX(a, b) ((a) > (b) ? (a) : (b))
-  // ✅ 正确
-  template<typename T>
-  inline T Max(T a, T b) { return a > b ? a : b; }
-  ```
-- **宏名必须加项目前缀**，若无法避免使用宏，必须加唯一前缀防止冲突：
-  ```cpp
-  // ❌ 错误
-  #define DEBUG 1
-  // ✅ 正确
-  #define MYPROJECT_DEBUG 1
-  ```
-- **使用完后立即 `#undef`**，局部宏用完即清除：
-  ```cpp
-  #define MYPROJECT_TEMP_HELPER(x) ...
-  // ... 使用 ...
-  #undef MYPROJECT_TEMP_HELPER
-  ```
-
-#### 头文件污染（Header Pollution）
-
-- **所有头文件必须有 Include Guard 或 `#pragma once`**（优先用 `#pragma once`）：
-  ```cpp
-  #pragma once
-  // 或
-  #ifndef MYPROJECT_FOO_H_
-  #define MYPROJECT_FOO_H_
-  // ...
-  #endif  // MYPROJECT_FOO_H_
-  ```
-- **头文件中禁止 `using namespace`**，避免污染所有引用该头文件的翻译单元：
-  ```cpp
-  // ❌ 头文件中绝对禁止
-  using namespace std;
-  // ✅ 在 .cpp 实现文件中可以使用（仅限局部作用域）
-  ```
-- **最小化头文件 `#include`**，头文件只包含其声明所必须的依赖；能前向声明（forward declaration）的绝不 `#include`：
-  ```cpp
-  // ❌ 头文件中不必要的包含
-  #include <vector>
-  #include <string>
-  // ✅ 如果只用到指针/引用，用前向声明
-  class Foo;  // 替代 #include "foo.h"
-  ```
-- **实现细节放 `.cpp`，不暴露到头文件**：内部使用的 `#include`、辅助类、匿名 namespace 统一放在 `.cpp` 文件中。
-- **头文件包含顺序**（防止隐式依赖）：
-  1. 对应的 `.h` 文件（`foo.cpp` 先包含 `foo.h`）
-  2. C 标准库头文件
-  3. C++ 标准库头文件
-  4. 第三方库头文件
-  5. 项目内其他头文件
-
-#### 符号命名污染（Symbol Name Pollution）
-
-- **禁止与系统库、标准库重名**，不得定义与 C/C++ 标准库、POSIX、常见系统库中已有的函数名、类型名、全局变量同名的符号：
-  ```cpp
-  // ❌ 危险：与 <string.h> 中的 strlen、<math.h> 中的 max、POSIX 的 read 等重名
-  int read(const char* buf);
-  double max(double a, double b);
-  size_t strlen(const char* s);
-
-  // ✅ 加项目命名空间或前缀
-  namespace myproject {
-      int read(const char* buf);
-      double max(double a, double b);
-  }
-  ```
-
-- **所有项目代码放在具名 namespace 中**，避免全局命名空间污染：
-  ```cpp
-  // ❌ 直接暴露在全局命名空间
-  class Parser { ... };
-  void init();
-
-  // ✅ 包裹在项目 namespace 内
-  namespace myproject {
-      class Parser { ... };
-      void init();
-  }
-  ```
-
-- **禁止使用保留标识符**，以下命名模式由 C/C++ 标准保留，不得使用：
-  - 双下划线开头：`__foo`
-  - 下划线 + 大写字母开头：`_Foo`
-  - 全局作用域下单下划线开头：`_foo`
-  ```cpp
-  // ❌ 全部属于保留标识符，行为未定义
-  int __buffer;
-  class _Handler;
-  void _init();
-  ```
-
-- **类型别名不得遮蔽标准类型**，`typedef` / `using` 不得与 `size_t`、`uint8_t`、`int32_t` 等标准类型同名：
-  ```cpp
-  // ❌ 遮蔽标准类型，引发隐蔽 bug
-  typedef unsigned int size_t;
-  using int32_t = int;
-
-  // ✅ 使用项目专属名称
-  using MySize = std::size_t;
-  ```
-
-- **常见高危重名清单**（生成代码时自动规避）：
-
-  | 危险名称 | 来源 | 替代建议 |
-  |---|---|---|
-  | `read` / `write` / `open` / `close` | POSIX `<unistd.h>` | 加 namespace 或前缀 |
-  | `max` / `min` / `abs` | `<algorithm>` / `<cmath>` | 加 namespace |
-  | `printf` / `scanf` | `<cstdio>` | 不重名，直接用标准版 |
-  | `error` / `errno` | `<cerrno>` | 加 namespace |
-  | `index` / `rindex` | POSIX `<strings.h>` | 改名为 `find_index` 等 |
-  | `toupper` / `tolower` | `<cctype>` | 加 namespace |
-  | `assert` | `<cassert>` | 改名或用宏前缀 |
-  | `TRUE` / `FALSE` / `NULL` | C 宏 | 使用 `true`/`false`/`nullptr` |
 
 ### 冲突处理
 
-- 若 `workspace/<name>/` 已存在：**询问用户**是否覆盖、跳过或使用新名称（加 `-2` 后缀）
-- 不覆盖任何已有文件，除非用户明确同意
-
----
+若目录已存在，**询问用户**是否覆盖、跳过或加后缀（如 `-2`）。
 
 ## 调用方式
 
 ```
-/workspace-gen                    # 对当前笔记生成工作区
-/workspace-gen path/to/note.md    # 对指定笔记生成工作区
+/workspace-gen                   # 对当前笔记生成
+/workspace-gen path/to/note.md   # 对指定笔记生成
 ```
 
 ## 注意事项
 
-- 工作区目录 `workspace/` 在 vault 根目录下，已在 `.gitignore` 排除（如有 git）
-- 代码文件只是**骨架**，用户需要自行完善业务逻辑
-- 如果笔记没有明显技术内容，生成通用项目结构并提示用户
-- 始终在生成前展示计划，让用户确认后再执行
+- 工作区目录在 vault 根目录，已加入 `.gitignore`
+- 代码文件只是**骨架**，需用户自行完善逻辑
+- 生成前展示计划，用户确认后执行

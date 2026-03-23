@@ -159,6 +159,56 @@ graph TD
     G --> H
 ```
 
+## CMake 生成器的本质
+
+> [!important] 核心概念：CMake 本身不编译代码
+> CMake 是**元构建系统（Meta Build System）**，它只生成「构建描述文件」，再由**另一种工具**去实际调用 g++ 进行编译。
+
+### 完整工具链组合
+
+当你说"用 GCC + CMake"时，工程上实际是：
+
+```
+CMake + 某个生成器 + 实际编译工具(g++)
+```
+
+**生成器（Generator）**决定了输出什么格式的构建描述，以及后续用什么工具执行：
+
+| 生成器 | 输出文件 | 实际构建工具 | 典型场景 |
+|--------|----------|--------------|----------|
+| `Ninja` | `build.ninja` | `ninja` | 极速构建，CI/CD 首选 |
+| `Unix Makefiles` | `Makefile` | `make` | Linux/macOS 默认 |
+| `MinGW Makefiles` | `Makefile` | `mingw32-make` | Windows + MinGW/GCC 经典组合 |
+| `Visual Studio 17 2022` | `.sln/.vcxproj` | `MSBuild` 或 VS IDE | Windows 开发 |
+
+### Windows + MinGW 的特殊说明
+
+在 Windows 上使用 GCC（通过 MinGW/MSYS2）时，你**不一定非要 Ninja**。
+
+使用 `MinGW Makefiles` 生成器配合 `mingw32-make` 是完全合理的：
+
+```powershell
+# 配置：指定 MinGW Makefiles 生成器
+cmake -S . -B build -G "MinGW Makefiles"
+
+# 构建：调用 mingw32-make（不是 make！）
+cmake --build build
+# 或直接用：
+mingw32-make -C build
+```
+
+> [!tip] 为什么叫 mingw32-make？
+> 这是 MinGW 项目提供的 GNU make 的 Windows 移植版，与 MinGW 工具链配套使用。虽然名字里有"32"，但它支持 64 位编译。
+
+### 选择合适的生成器
+
+- **追求速度** → 用 Ninja（跨平台，最快）
+- **Windows + GCC/MinGW 且不想装 Ninja** → 用 `MinGW Makefiles` + `mingw32-make`
+- **需要 Visual Studio IDE** → 用 `Visual Studio 17 2022` 等
+- **Linux/macOS 简单项目** → 用默认的 `Unix Makefiles`
+
+---
+
 ### CMakeLists.txt 基本写法
 
 ```cmake
@@ -299,6 +349,7 @@ cmake --build . --config Release
 | `"Visual Studio 16 2019" -A x64` | VS 2019，x64 架构 |
 | `"Ninja"` | Ninja 构建（快速，常用于 CI） |
 | `"Unix Makefiles"` | 标准 Makefile（Linux/macOS 默认） |
+| `"MinGW Makefiles"` | MinGW + GCC 在 Windows 上的经典组合 |
 | `"Xcode"` | macOS Xcode 项目 |
 
 ### 配置类型：Debug vs Release

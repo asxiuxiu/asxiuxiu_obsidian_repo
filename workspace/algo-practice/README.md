@@ -8,8 +8,8 @@
 
 **Windows（MSYS2 ucrt64）**
 ```bash
-# 在 MSYS2 ucrt64 终端中运行
-pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake ninja
+# 在 MSYS2 ucrt64 终端中运行（含 Ninja，推荐作生成器）
+pacman -S mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
 ```
 
 **macOS**
@@ -21,18 +21,49 @@ brew install gcc cmake ninja
 
 > 以下命令在 **MSYS2 ucrt64 终端**（Windows）或普通终端（macOS）中运行。
 
-```bash
-# 配置（Ninja + GCC，两端通用）
-cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
+### 生成器（GCC）
 
-# 编译
+本仓库按 **GCC + 单配置生成器** 使用（例如 **Ninja** 或 **Unix Makefiles**）。这样可执行文件在 `build/<练习目录>/` 下，**不会**再套一层 `Debug/` / `Release/`（那是 Visual Studio 等多配置生成器的习惯）。
+
+首次配置示例（推荐 Ninja + Debug，便于日常改题）：
+
+```bash
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
+```
+
+若本机未装 Ninja，可改用 Makefiles：
+
+```bash
+cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
+```
+
+> 若 `build/` 曾用其它生成器配置过，换生成器前请删除 `build` 目录后重新执行 `cmake`。
+
+### 编译与测试
+
+```bash
+# 全量编译
 cmake --build build
 
 # 运行所有测试
 ctest --test-dir build --output-on-failure
 ```
 
-### 单独运行某一天
+**只编 / 只测当前这一题**（日常改 `solution.cpp` 或 `main.cpp` 时最省事）：
+
+```bash
+# 只编译 day01_two_sum 这一目标（把名字换成当天的 target）
+cmake --build build --target day01_two_sum
+
+# 只跑该目标的测试（-R 为正则，可写成 day01、two_sum 等）
+ctest --test-dir build -R day01_two_sum --output-on-failure
+```
+
+`add_test` 的名字与可执行目标一致，因此 **不必手抄 exe 路径**，`ctest -R` 会找到对应程序。
+
+### 单独运行某一天（直接跑可执行文件）
+
+在 GCC + 单配置下，可执行文件路径形如 `build/<练习目录>/<目标名>`（Windows 带 `.exe`）：
 
 ```bash
 # Windows (MSYS2)
