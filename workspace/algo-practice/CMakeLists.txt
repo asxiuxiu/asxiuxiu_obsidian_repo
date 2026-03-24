@@ -27,4 +27,5 @@ enable_testing()
 # ============================================================
 add_subdirectory(day01_two_sum)
 add_subdirectory(day02_contains_duplicate)
-# add_subdirectory(day03_valid_anagram)
+add_subdirectory(day03_valid_anagram)
+# add_subdirectory(day04_group_anagrams)
