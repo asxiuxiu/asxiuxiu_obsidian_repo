@@ -4,36 +4,44 @@
 
 ```
 <vault-root>/
-├── Game/          # 公司游戏项目分析笔记（保密，已加入 .gitignore）
+├── Game/          # 公司游戏项目笔记（保密，已.gitignore）
 ├── GameLearn/     # 从 Game/ 提炼的通用工程知识（可公开）
-│   # 规则：只能由 Game/ 提炼总结，不能直接添加
 ├── workspace/     # 代码工作区
 ├── AI/            # AI 相关笔记
 ├── C++/           # 通用技术知识
-└── .claude/       # Claude 配置
-    ├── skills/    # Vault 级 skills
-    └── hooks/     # Vault 级 hooks
+└── .claude/       # Claude 配置（skills、hooks）
 ```
+
+**GameLearn 提炼规则**：
+1. 严禁包含公司源代码敏感信息（代码片段、API、密钥等）
+2. 仅提炼通用工程知识、设计思想、最佳实践
+3. 建议从 Game/ 提炼总结，而非直接创建
 
 ## Skill 与 Hooks
 
-- **存放位置**：统一放在 `<vault-root>/.claude/` 目录，随仓库管理
-- **查找优先级**：Vault 级 > 用户级 (`~/.claude/`)
-- **常用 Skill**：`/sync-gamelearn` —— 当 Game/ 有变更时，更新 GameLearn/
+- **存放位置**：`<vault-root>/.claude/`
+- **优先级**：Vault 级 > 用户级 (`~/.claude/`)
+- **常用**：`/sync-gamelearn` — Game/ 变更时更新 GameLearn/
 
 ## 跨平台兼容
 
-此 vault 在 Windows 和 macOS 双环境使用：
-
-| 场景 | 规范 |
+| 项目 | 规范 |
 |------|------|
 | 编译器 | GCC (g++) |
-| 构建工具 | `cmake --build build`（避免平台专属脚本）|
-| 路径分隔符 | 正斜杠 `/` |
-| 换行符 | LF（.gitattributes 控制）|
-| 路径示例 | 用 `<vault-root>` 占位 |
+| 构建 | `cmake --build build` |
+| 路径 | 正斜杠 `/`，用 `<vault-root>` 占位 |
+| 换行 | LF（.gitattributes 控制）|
 
 ## 文档规范
 
-- 图表控制在 800-1000px 宽度，避免横向滚动
-- 命令示例同时给出双平台版本或使用跨平台写法
+- 图表宽度 800-1000px
+- 命令示例跨平台兼容
+
+## 交互偏好
+
+- **忽略未提及的 Obsidian 上下文**：用户未提及笔记、选中文本、文件名时，忽略 hook 注入的上下文
+
+## 规则管理
+
+- **默认位置**：新规则默认添加在 CLAUDE.md，除非用户明确指定其他位置
+- **自动压缩**：添加规则后自动尝试压缩精简
