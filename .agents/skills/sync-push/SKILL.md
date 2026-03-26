@@ -57,9 +57,15 @@ git log --oneline -1
 
 ## 提交信息规范
 
-**此仓库是 Obsidian 笔记备份仓库，不需要在 commit 信息中描述具体内容。**
+**此仓库是 Obsidian 笔记备份仓库，commit 仅作为时间戳标记。**
 
-- 默认使用时间戳格式：`Vault backup: YYYY-MM-DD HH:MM:SS`
-- 不要总结修改内容（如"新增xxx笔记"、"更新xxx"等）
-- 如用户传入 `$ARGUMENTS`，仍使用传入的内容（允许例外情况）
-- 原则：commit 只是定期备份的时间戳，内容由文件本身体现
+| 场景 | 格式 |
+|------|------|
+| 默认 | `Vault backup: YYYY-MM-DD HH:MM:SS` |
+| 用户自定义 | 任意字符串（但不要使用 `feat:`/`fix:` 等前缀） |
+
+**禁止**：
+- 总结修改内容（如"新增xxx笔记"、"更新xxx"）
+- Conventional Commit 格式（`feat:`, `fix:`, `docs:` 等）
+
+**原则**：内容承载在文件本身，不在 commit 信息中。
