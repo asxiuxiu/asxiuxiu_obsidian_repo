@@ -1,7 +1,7 @@
 ---
 name: sync-push
 description: 提交本地更改并推送到远程仓库，备份 Obsidian vault。
-disable-model-invocation: false
+disable-model-invocation: true
 ---
 
 # Sync Push
