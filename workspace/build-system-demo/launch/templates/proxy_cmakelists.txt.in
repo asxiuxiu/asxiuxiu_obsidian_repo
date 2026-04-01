@@ -1,0 +1,8 @@
+# 代理 CMakeLists.txt
+# 这是"传菜窗口"：包含真实源码目录的 CMakeLists.txt
+
+set(REAL_SOURCE_PATH @REAL_SOURCE_PATH@)
+message(STATUS "[Proxy] Including: ${REAL_SOURCE_PATH}")
+
+# 包含真实源码的构建配置
+include(${REAL_SOURCE_PATH}/CMakeLists.txt)

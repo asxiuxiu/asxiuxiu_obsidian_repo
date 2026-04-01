@@ -1,0 +1,55 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug pixel-demo",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/pixel-demo/pixel-demo",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "为 gdb 启用整齐打印",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "CMake: Build",
+      "windows": {
+        "program": "${workspaceFolder}/build/pixel-demo/pixel-demo.exe",
+        "miDebuggerPath": "gdb.exe"
+      }
+    },
+    {
+      "name": "Debug rasterization",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/rasterization/rasterization",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "description": "为 gdb 启用整齐打印",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "CMake: Build",
+      "windows": {
+        "program": "${workspaceFolder}/build/rasterization/rasterization.exe",
+        "miDebuggerPath": "gdb.exe"
+      }
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Algo: day01_two_sum",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/algo-practice/build/day01_two_sum/day01_two_sum",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}/algo-practice",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "gdb",
+      "miDebuggerPath": "gdb",
+      "setupCommands": [
+        {
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ],
+      "preLaunchTask": "cmake: build day01_two_sum",
+      "windows": {
+        "program": "${workspaceFolder}/algo-practice/build/day01_two_sum/day01_two_sum.exe",
+        "miDebuggerPath": "gdb.exe"
+      },
+      "osx": {
+        "MIMode": "lldb"
+      }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+/* Quick Terminal Plugin Styles */
+
+.quick-terminal-setting-hint {
+    color: var(--text-muted);
+    font-size: var(--font-smaller);
+    margin-top: 4px;
+}

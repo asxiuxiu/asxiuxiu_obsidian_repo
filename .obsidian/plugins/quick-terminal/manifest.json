@@ -1,0 +1,9 @@
+{
+  "id": "quick-terminal",
+  "name": "Quick Terminal",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "快速打开外部终端，可配置终端路径",
+  "author": "Custom",
+  "isDesktopOnly": true
+}

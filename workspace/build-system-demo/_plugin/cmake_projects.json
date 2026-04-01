@@ -1,0 +1,11 @@
+{
+    "name": "Plugins",
+    "root_path": "_plugin",
+    "modules": [
+        {
+            "name": "physics",
+            "path": "source/physics",
+            "enabled": true
+        }
+    ]
+}
