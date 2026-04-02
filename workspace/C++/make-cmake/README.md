@@ -138,14 +138,59 @@ make-cmake/
 
 动态库在**运行时**才加载，操作系统按固定路径搜索（`/usr/lib` 等）。我们自己的 `libmystr.dylib` 不在系统路径里，所以要用环境变量临时指定搜索目录。
 
-**`PUBLIC` vs `PRIVATE` 的区别？**
+**`PUBLIC` / `PRIVATE` / `INTERFACE` 的区别？**
+
+这三个关键字控制**编译属性/依赖的传递方向**。简单说：
+
+| 关键字 | 自己用 | 链接我的目标也用 | 典型场景 |
+|--------|--------|------------------|----------|
+| `PRIVATE` | ✅ | ❌ | 内部实现细节（如 `.cpp` 里用的第三方库） |
+| `INTERFACE` | ❌ | ✅ | 纯头文件库；我本身不用，但调用方需要 |
+| `PUBLIC` | ✅ | ✅ | 接口的一部分（头文件路径、公共链接库） |
+
+**例子 1：`PRIVATE` 用于内部实现**
 
 ```cmake
-target_include_directories(mymath PUBLIC include/)
-#  ↑ PUBLIC：mymath 自己用，链接 mymath 的目标（如 my_app）也自动继承
+# mymath 内部用 fmt 库打印日志，但调用方不需要知道 fmt
+add_library(mymath STATIC mymath.cpp)
+target_link_libraries(mymath PRIVATE fmt::fmt)
 
 target_link_libraries(my_app PRIVATE mymath)
-#  ↑ PRIVATE：my_app 自己链接 mymath，但 my_app 的调用方不会传递这个依赖
+# my_app 只需要链接 mymath，fmt 不会暴露给 my_app
+```
+
+**例子 2：`INTERFACE` 用于纯头文件库**
+
+```cmake
+# header-only 库：库本身没有 .cpp，调用方包含头文件即可
+add_library(my_utils INTERFACE)
+target_include_directories(my_utils INTERFACE include/)
+
+target_link_libraries(my_app PRIVATE my_utils)
+# my_app 自动获得 include/ 路径，但 my_utils 没有独立的二进制
+```
+
+**例子 3：`PUBLIC` 用于公共接口**
+
+```cmake
+# mymath 的头文件放在了 include/ 里，调用方必须包含它才能编译
+add_library(mymath STATIC mymath.cpp)
+target_include_directories(mymath PUBLIC include/)
+
+target_link_libraries(my_app PRIVATE mymath)
+# my_app 会自动继承 include/ 路径，不需要再写一遍
+```
+
+**例子 4：链接库时的传递**
+
+```cmake
+add_library(core_lib STATIC core.cpp)
+target_link_libraries(core_lib PUBLIC networking)   # core 的 API 依赖 networking
+
+target_link_libraries(editor PRIVATE core_lib)
+# editor 也会自动链接 networking，因为 core_lib 对它用了 PUBLIC
+
+# 如果把上面改成 PRIVATE networking，editor 就不会自动获得 networking
 ```
 
 **静态库编译进去了，动态库没有**

@@ -1,4 +1,4 @@
-﻿---
+---
 title: 构建系统：make 与 CMake
 tags:
   - cpp
@@ -239,6 +239,313 @@ target_include_directories(my_app PRIVATE include/)
 # target_link_libraries(my_app PRIVATE some_lib)
 ```
 
+#### `PUBLIC` / `PRIVATE` / `INTERFACE` 是什么？
+
+这三个关键字控制**编译属性/依赖的传递方向**。
+
+| 关键字 | 自己用 | 链接我的目标也用 | 典型场景 |
+|--------|--------|------------------|----------|
+| `PRIVATE` | ✅ | ❌ | 内部实现细节（如 `.cpp` 里用的第三方库） |
+| `INTERFACE` | ❌ | ✅ | 纯头文件库；我本身不用，但调用方需要 |
+| `PUBLIC` | ✅ | ✅ | 接口的一部分（头文件路径、公共链接库） |
+
+> [!tip] 快速判断口诀
+> 看**头文件**就够了：
+> 1. 头文件里出现了第三方库的类型 → 用 `PUBLIC`
+> 2. 头文件里完全没出现 → 用 `PRIVATE`
+> 3. 库只有头文件，没有 `.cpp` → 用 `INTERFACE`
+
+---
+
+##### 基础示例
+
+**示例 1：`PRIVATE` —— 内部实现细节**
+
+假设你写了一个数学库，内部用 `fmt` 库打印调试日志，但头文件里完全不暴露 `fmt`：
+
+```cmake
+# mymath/CMakeLists.txt
+add_library(mymath STATIC mymath.cpp)
+
+# fmt 只在 mymath.cpp 内部使用，头文件里没有任何 fmt 的类型
+target_link_libraries(mymath PRIVATE fmt::fmt)
+target_include_directories(mymath PUBLIC include/)  # 调用方需要 include/
+```
+
+```cpp
+// mymath/include/mymath.h
+#pragma once
+// 头文件里完全没有 fmt 的痕迹
+namespace mymath {
+    double add(double a, double b);
+    double multiply(double a, double b);
+}
+
+// mymath/src/mymath.cpp
+#include "mymath.h"
+#include <fmt/format.h>  // 只在 .cpp 里用 fmt
+
+namespace mymath {
+    double add(double a, double b) {
+        fmt::print("add called: {} + {}\n", a, b);  // 内部日志
+        return a + b;
+    }
+    // ...
+}
+```
+
+```cmake
+# 主项目 CMakeLists.txt
+add_subdirectory(mymath)
+add_executable(my_app main.cpp)
+
+# my_app 只链接 mymath，不需要知道 fmt 的存在
+target_link_libraries(my_app PRIVATE mymath)
+# 等价于：g++ main.cpp -lmymath -o my_app
+# fmt 不会出现在链接命令中
+```
+
+---
+
+**示例 2：`PUBLIC` —— 公共接口依赖**
+
+假设 `core_lib` 的头文件里直接使用了 `networking` 的类型，调用方必须也能访问 `networking`：
+
+```cmake
+# networking/CMakeLists.txt
+add_library(networking STATIC socket.cpp)
+target_include_directories(networking PUBLIC include/)
+
+# core/CMakeLists.txt
+add_library(core_lib STATIC core.cpp)
+
+# PUBLIC：core_lib 的头文件里引用了 networking 的头文件
+target_link_libraries(core_lib PUBLIC networking)
+target_include_directories(core_lib PUBLIC include/)
+```
+
+```cpp
+// core/include/core.h
+#pragma once
+#include <networking/socket.h>  // 头文件里直接用了 networking!
+
+namespace core {
+    class Server {
+        networking::Socket socket_;  // 成员变量暴露 networking 类型
+    public:
+        void start(int port);
+    };
+}
+```
+
+```cmake
+# 主项目 CMakeLists.txt
+add_subdirectory(networking)
+add_subdirectory(core)
+add_executable(editor main.cpp)
+
+# editor 会自动获得 networking 的链接和头文件路径！
+target_link_libraries(editor PRIVATE core_lib)
+# 等价于：g++ main.cpp -lcore_lib -lnetworking -Icore/include -Inetworking/include
+```
+
+**如果改成 `PRIVATE` 会怎样？**
+
+```cmake
+target_link_libraries(core_lib PRIVATE networking)  # 改成 PRIVATE
+```
+
+```cpp
+// editor/main.cpp
+#include <core.h>
+// 编译错误：找不到 networking/socket.h！
+// 因为 networking 的 include 路径没有传递给 editor
+```
+
+---
+
+**示例 3：`INTERFACE` —— 纯头文件库**
+
+纯头文件库只有 `.h` 文件，没有 `.cpp` 文件，本身不需要编译：
+
+```cmake
+# utils/CMakeLists.txt
+add_library(my_utils INTERFACE)  # 没有源文件！
+
+# INTERFACE：设置传给调用方的属性，自己不用编译
+target_include_directories(my_utils INTERFACE include/)
+target_compile_definitions(my_utils INTERFACE USE_UTILS)
+```
+
+```cpp
+// utils/include/utils/helpers.h
+#pragma once
+#include <vector>
+#include <algorithm>
+
+namespace utils {
+    // 全是模板函数，头文件内实现
+    template<typename T>
+    void sort_unique(std::vector<T>& vec) {
+        std::sort(vec.begin(), vec.end());
+        vec.erase(std::unique(vec.begin(), vec.end()), vec.end());
+    }
+}
+```
+
+```cmake
+# 主项目 CMakeLists.txt
+add_subdirectory(utils)
+add_executable(my_app main.cpp)
+
+# my_app 自动获得 include/ 路径和 USE_UTILS 宏定义
+target_link_libraries(my_app PRIVATE my_utils)
+# 等价于：g++ -DUSE_UTILS -Iutils/include main.cpp -o my_app
+```
+
+---
+
+##### 进阶示例
+
+**示例 4：混合使用 `PUBLIC` + `PRIVATE`**
+
+实际项目中，一个库往往既有公共接口也有内部实现：
+
+```cmake
+# game_engine/CMakeLists.txt
+add_library(game_engine STATIC
+    src/engine.cpp
+    src/renderer.cpp
+    src/physics.cpp
+)
+
+# 公共头文件：调用方需要知道
+target_include_directories(game_engine PUBLIC include/)
+
+# 内部实现用的第三方库：调用方不需要知道
+target_link_libraries(game_engine
+    PUBLIC glfw           # 头文件暴露了 GLFWwindow* 类型
+    PUBLIC glm            # 头文件使用了 glm::vec3 等类型
+    PRIVATE glad          # 只在 .cpp 里加载 OpenGL 函数指针
+    PRIVATE stb_image     # 只在 .cpp 里加载纹理
+    PRIVATE fmt           # 只在 .cpp 里打印日志
+)
+```
+
+```cpp
+// game_engine/include/engine.h
+#pragma once
+#include <GLFW/glfw3.h>      // PUBLIC 依赖，调用方需要
+#include <glm/glm.hpp>       // PUBLIC 依赖，调用方需要
+
+namespace engine {
+    class GameEngine {
+        GLFWwindow* window_;             // 暴露 GLFW 类型
+        glm::vec3 clear_color_ = {0, 0, 0};
+    public:
+        bool init(int width, int height);
+        void run();
+    };
+}
+```
+
+---
+
+**示例 5：多层库的传递链**
+
+```cmake
+# 底层库：只依赖系统库
+add_library(base_io STATIC io.cpp)
+target_link_libraries(base_io PRIVATE Threads::Threads)
+
+# 中间层：PUBLIC 继承 base_io
+target_link_libraries(network_lib PUBLIC base_io)  
+# 使用 network_lib 的代码会自动链接 base_io
+
+# 上层库：可以选择性暴露
+target_link_libraries(game_network PRIVATE network_lib)
+# game_network 内部用 network_lib，但不暴露给最终用户
+```
+
+传递效果：
+```
+my_game
+    └── game_network (PRIVATE network_lib)
+            └── network_lib (PUBLIC base_io)
+                    └── base_io (PRIVATE Threads::Threads)
+
+最终链接：my_game → game_network → network_lib → base_io
+（注意：Threads::Threads 不会传给 my_game，因为 base_io 用 PRIVATE）
+```
+
+---
+
+**示例 6：`target_include_directories` 的不同用法**
+
+```cmake
+add_library(my_lib STATIC my_lib.cpp)
+
+# 这3行对应不同的使用场景：
+target_include_directories(my_lib
+    PUBLIC 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>    # 安装后的路径
+    PRIVATE 
+        src/internal                    # 内部实现用的私有头文件
+    INTERFACE 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/compat>
+        # 纯兼容性头文件，库本身不用，调用方可能需要
+)
+```
+
+**目录结构对应：**
+```
+my_lib/
+├── CMakeLists.txt
+├── include/my_lib/
+│   ├── api.h          # PUBLIC：调用方必须包含
+│   └── types.h        # PUBLIC：调用方必须包含
+├── src/
+│   ├── my_lib.cpp
+│   └── internal/
+│       └── helper.h   # PRIVATE：只在 .cpp 里用
+└── compat/
+    └── legacy.h       # INTERFACE：库本身不用，兼容旧代码用
+```
+
+---
+
+**示例 7：错误对比 —— `PRIVATE` vs `PUBLIC`**
+
+```cmake
+# 错误写法 ❌
+add_library(json_parser STATIC parser.cpp)
+target_include_directories(json_parser PRIVATE include/)
+# 头文件 parser.h 里 #include "nlohmann/json.hpp"
+
+target_link_libraries(json_parser PUBLIC nlohmann_json::nlohmann_json)
+```
+
+问题：`include/` 是 `PRIVATE` 的，调用方找不到头文件！
+
+```cmake
+# 正确写法 ✅
+add_library(json_parser STATIC parser.cpp)
+# 头文件路径必须是 PUBLIC，因为 parser.h 在 include/ 里
+target_include_directories(json_parser PUBLIC include/)
+target_link_libraries(json_parser PUBLIC nlohmann_json::nlohmann_json)
+```
+
+---
+
+##### 总结表
+
+| 关键字 | 适用场景 | 典型例子 |
+|--------|----------|----------|
+| `PRIVATE` | 只在 `.cpp` 用的实现细节 | 日志库、单元测试框架、内部工具函数 |
+| `PUBLIC` | 头文件暴露的依赖 | OpenGL 窗口库、数学库、序列化库 |
+| `INTERFACE` | 纯头文件、编译开关、兼容性层 | 工具函数头文件、配置宏定义 |
+
 ### 典型目录结构
 
 ```
@@ -370,92 +677,185 @@ cmake --build . --config Release  # Release 版本
 
 ---
 
-## 五、CMake 进阶用法速查
+## 五、CMake 核心指令速查
 
-### 查找和链接第三方库
+按照**工程化使用 CMake** 的实际流程组织：先定义目标 → 配置属性 → 引入依赖 → 打包安装。
+
+### 1. 定义目标（Target）
+
+目标（Target）是 CMake 的核心概念，指**最终要构建的东西**。
 
 ```cmake
-# 查找系统已安装的库（如 OpenSSL）
+# 可执行文件
+add_executable(my_app src/main.cpp src/utils.cpp)
+
+# 静态库（.a / .lib）
+add_library(mymath STATIC src/mymath.cpp)
+
+# 动态库（.so / .dylib / .dll）
+add_library(mystr SHARED src/mystr.cpp)
+
+# 纯头文件库（无 .cpp 文件）
+add_library(my_utils INTERFACE)
+```
+
+### 2. 配置目标属性
+
+为已定义的目标添加编译选项、头文件路径等。
+
+```cmake
+# 添加头文件搜索路径（相对于 CMakeLists.txt 的路径）
+target_include_directories(my_app PRIVATE include/)
+target_include_directories(mymath PUBLIC include/)  # PUBLIC：调用方自动继承
+
+# 添加编译选项
+target_compile_options(my_app PRIVATE -Wall -O2)
+
+# 添加宏定义
+target_compile_definitions(my_app PRIVATE DEBUG_MODE)
+
+# 设置 C++ 标准（推荐在根 CMakeLists.txt 中全局设置）
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+### 3. 处理依赖关系
+
+#### 3.1 链接库（Linking）
+
+```cmake
+# 链接自定义子模块
+target_link_libraries(my_app PRIVATE mymath mystr)
+
+# 链接第三方库（通过 find_package 查找）
 find_package(OpenSSL REQUIRED)
 target_link_libraries(my_app PRIVATE OpenSSL::SSL OpenSSL::Crypto)
 
-# 使用 vcpkg / conan 等包管理器时，通过 toolchain file 集成
-# cmake .. -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
+# 链接多个库（fmt + spdlog，通过 Conan/vcpkg 管理）
+target_link_libraries(myapp PRIVATE fmt::fmt spdlog::spdlog)
 ```
 
-### 子目录 / 子模块
+#### 3.2 引入子目录（Subdirectory）
 
 ```cmake
-# 根 CMakeLists.txt 中引入子目录
+# 将子目录纳入构建，子目录必须有 CMakeLists.txt
 add_subdirectory(libs/mathlib)
+add_subdirectory(libs/mystr)
 
-# my_app 链接子模块提供的库
-target_link_libraries(my_app PRIVATE mathlib)
+# 然后链接子目录定义的目标
+target_link_libraries(my_app PRIVATE mathlib mystr)
 ```
 
 > [!info] `add_subdirectory()` 的限制
-> 该命令要求引入的目录必须是**当前目录的子目录**（相对路径），无法直接引用外部路径。
+> 只能引入**当前目录的子目录**（相对路径），无法直接引用外部路径。
 
-### `include()` —— 突破目录限制
+#### 3.3 引入外部 CMake 文件（Include）
 
-当需要引入**非子目录**的 CMake 文件时，使用 `include()`：
+当需要引入**非子目录**的 CMake 文件时使用：
 
 ```cmake
 # 直接包含任意路径的 CMake 文件
 include(/absolute/path/to/config.cmake)
 
-# 或通过变量指定路径
-set(EXTERNAL_CMAKE "E:/engine/source/base/CMakeLists.txt")
-include(${EXTERNAL_CMAKE})
-```
-
-#### 与 `add_subdirectory()` 的区别
-
-| 特性    | `add_subdirectory()`             | `include()`      |
-| ----- | -------------------------------- | ---------------- |
-| 目录要求  | 必须是当前目录的子目录                      | 可以是任意绝对或相对路径     |
-| 执行效果  | 进入新目录，独立处理该目录的 CMakeLists.txt    | 在当前作用域内执行指定文件的内容 |
-| 变量作用域 | 子目录有独立的变量作用域（可用 PARENT_SCOPE 传递） | 在当前作用域内执行，变量直接可见 |
-| 典型用途  | 子模块构建、项目分层                       | 加载通用配置、复用代码、代理文件 |
-
-#### 典型使用场景：代理 CMakeLists.txt
-
-游戏引擎常用此技巧解决源码分散问题：
-
-```cmake
-# build/sourcetree/base/CMakeLists.txt（代理文件）
-set(REAL_SOURCE_DIR "E:/chaos/_source/_engine/source/base")
+# 典型场景：游戏引擎的代理 CMakeLists.txt
+set(REAL_SOURCE_DIR "E:/engine/source/base")
 include(${REAL_SOURCE_DIR}/CMakeLists.txt)
 ```
 
-这样 CMake 可以以 `build/sourcetree/CMakeLists.txt` 为入口，间接调用分散在各处的源码目录。
+| 特性 | `add_subdirectory()` | `include()` |
+|------|----------------------|-------------|
+| 目录要求 | 必须是当前目录的子目录 | 可以是任意绝对/相对路径 |
+| 变量作用域 | 子目录独立作用域 | 在当前作用域执行 |
+| 典型用途 | 子模块构建、项目分层 | 加载配置、代理文件 |
 
-### 安装规则
+### 4. 查找系统库（Find Package）
 
 ```cmake
-install(TARGETS my_app DESTINATION bin)
-install(FILES include/utils.h DESTINATION include)
+# 查找系统已安装的库
+find_package(Threads REQUIRED)          # 线程库
+find_package(OpenSSL REQUIRED)          # OpenSSL
+find_package(Boost COMPONENTS filesystem REQUIRED)
+
+# 使用查找结果
+target_link_libraries(my_app PRIVATE 
+    Threads::Threads 
+    OpenSSL::SSL 
+    Boost::filesystem
+)
 ```
+
+### 5. 安装与打包（Install）
+
+```cmake
+# 安装可执行文件
+install(TARGETS my_app DESTINATION bin)
+
+# 安装库文件
+install(TARGETS mymath 
+    ARCHIVE DESTINATION lib      # 静态库
+    LIBRARY DESTINATION lib      # 动态库
+    RUNTIME DESTINATION bin      # Windows DLL
+)
+
+# 安装头文件
+install(FILES include/utils.h DESTINATION include)
+
+# 安装整个目录
+install(DIRECTORY include/ DESTINATION include)
+```
+
+构建后执行安装：
 
 ```bash
-cmake --install . --prefix /usr/local
+cmake --install . --prefix /usr/local    # 指定安装路径
+cmake --install .                        # 使用默认路径（CMAKE_INSTALL_PREFIX）
 ```
 
-### 常用 CMake 命令速查
+### 6. 测试（Testing）
 
-| 命令 | 作用 |
-|------|------|
-| `cmake .. -G "..."` | 配置，指定生成器 |
-| `cmake .. -DCMAKE_BUILD_TYPE=Release` | 配置，设置构建类型（单配置生成器） |
-| `cmake --build .` | 构建 |
-| `cmake --build . --config Release` | 构建指定配置（多配置生成器） |
-| `cmake --install .` | 安装 |
-| `cmake -LAH ..` | 列出所有可配置选项 |
-| `ctest` | 运行测试（需要配合 `enable_testing()`） |
+```cmake
+enable_testing()
+
+# 添加测试可执行文件
+add_executable(test_math tests/test_math.cpp)
+target_link_libraries(test_math PRIVATE mymath)
+
+# 注册测试
+add_test(NAME MathTest COMMAND test_math)
+```
+
+运行测试：
+
+```bash
+ctest           # 运行所有测试
+ctest -V        # 显示详细输出
+ctest -R Math   # 只运行名称匹配 "Math" 的测试
+```
 
 ---
 
-## 六、总结：三者关系一览
+## 六、CMake 命令行速查
+
+| 阶段 | 命令 | 说明 |
+|------|------|------|
+| **配置** | `cmake -S . -B build` | 源码在当前目录，构建目录为 build/ |
+| | `cmake .. -G "Ninja"` | 指定生成器为 Ninja |
+| | `cmake .. -DCMAKE_BUILD_TYPE=Release` | 设置构建类型（单配置生成器） |
+| | `cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local` | 设置安装路径 |
+| | `cmake -LAH ..` | 列出所有可配置选项（带帮助信息） |
+| **构建** | `cmake --build build` | 执行构建 |
+| | `cmake --build build --config Release` | 多配置生成器指定构建类型 |
+| | `cmake --build build --target my_app` | 只构建特定目标 |
+| | `cmake --build build -j8` | 并行 8 个作业 |
+| **安装** | `cmake --install build` | 执行安装规则 |
+| | `cmake --install build --prefix /opt` | 指定安装路径 |
+| **其他** | `cmake --version` | 查看 CMake 版本 |
+| | `ctest` | 运行测试 |
+| | `ccmake ..` / `cmake-gui` | 交互式配置工具 |
+
+---
+
+## 七、总结：三者关系一览
 
 ```mermaid
 graph LR

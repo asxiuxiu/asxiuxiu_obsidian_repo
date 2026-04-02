@@ -230,7 +230,7 @@ def generate_sourcetree(config_path, output_dir, source_root):
 def main():
     args = parse_args()
     
-    # 获取脚本所在目录（build-system-demo/launch/）
+    # 获取脚本所在目录（build-system-demo/）
     script_dir = Path(__file__).parent.parent
     
     config_path = Path(args.config)
