@@ -39,7 +39,7 @@ git add .
 if [ -n "$ARGUMENTS" ]; then
     COMMIT_MSG="$ARGUMENTS"
 else
-    COMMIT_MSG="Vault backup: $(date +'%Y-%m-%d %H:%M:%S')"
+    COMMIT_MSG="Vault backup: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
 fi
 git commit -m "$COMMIT_MSG"
 
