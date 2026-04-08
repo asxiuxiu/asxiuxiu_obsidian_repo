@@ -1,0 +1,16 @@
+{
+    "name": "GameCode",
+    "root_path": "_game",
+    "modules": [
+        {
+            "name": "client",
+            "path": "source/client",
+            "enabled": true
+        },
+        {
+            "name": "server",
+            "path": "source/server",
+            "enabled": false
+        }
+    ]
+}

@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cmake: build day01_two_sum",
+      "type": "shell",
+      "command": "cmake --build build --target day01_two_sum",
+      "options": {
+        "cwd": "${workspaceFolder}/algo-practice",
+        "env": {}
+      },
+      "group": "build",
+      "problemMatcher": ["$gcc"],
+      "detail": "增量编译当前题可执行文件（需已执行过 cmake 配置）"
+    }
+  ]
+}

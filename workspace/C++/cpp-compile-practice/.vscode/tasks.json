@@ -1,0 +1,32 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build (g++)",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "main.cpp",
+                "utils.cpp",
+                "-o", "myapp",
+                "-Wall",
+                "-finput-charset=UTF-8",
+                "-fexec-charset=UTF-8"
+            ],
+            "group": { "kind": "build", "isDefault": true },
+            "presentation": { "reveal": "silent" },
+            "problemMatcher": ["$gcc"],
+            "options": { "cwd": "${workspaceFolder}/cpp-compile-practice" }
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "cmd",
+            "args": ["/c", "chcp 65001 >nul && myapp"],
+            "group": "test",
+            "presentation": { "reveal": "always" },
+            "dependsOn": "build (g++)",
+            "options": { "cwd": "${workspaceFolder}/cpp-compile-practice" }
+        }
+    ]
+}

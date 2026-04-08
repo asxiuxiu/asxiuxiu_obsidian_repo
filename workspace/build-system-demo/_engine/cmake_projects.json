@@ -1,0 +1,16 @@
+{
+    "name": "EngineCore",
+    "root_path": "_engine",
+    "modules": [
+        {
+            "name": "core",
+            "path": "source/core",
+            "enabled": true
+        },
+        {
+            "name": "renderer",
+            "path": "source/renderer",
+            "enabled": true
+        }
+    ]
+}
