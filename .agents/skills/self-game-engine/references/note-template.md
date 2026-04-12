@@ -6,7 +6,7 @@
 
 ```
 Notes/SelfGameEngine/
-├── 00-索引.md
+├── 索引.md
 ├── 01-基础层/字符串系统.md
 ├── 02-核心运行时/组件系统架构.md
 └── ...
@@ -32,7 +32,7 @@ aliases:
 ```markdown
 # <主题>
 
-> [← 返回 SelfGameEngine 索引]([[Notes/SelfGameEngine/00-索引|SelfGameEngine 索引]])
+> [← 返回 SelfGameEngine 索引]([[Notes/SelfGameEngine/索引|SelfGameEngine 索引]])
 > [→ 对应源码分析笔记]([[Game/<路径>/<模块>-源码解析：<主题>|源码分析笔记]])
 
 ---

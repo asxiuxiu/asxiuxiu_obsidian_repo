@@ -205,7 +205,7 @@ Notes/SelfGameEngine/
 
 ### 必须维护的索引
 
-创建 `Notes/SelfGameEngine/00-索引.md` 作为入口，结构参考 `Game/00-引擎与游戏全解析主索引.md`，但只包含通用主题。
+创建 `Notes/SelfGameEngine/索引.md` 作为入口，结构参考 `Game/00-引擎与游戏全解析主索引.md`，但只包含通用主题。
 
 ### 跨笔记链接
 
