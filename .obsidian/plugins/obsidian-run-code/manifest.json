@@ -1,0 +1,9 @@
+{
+	"id": "obsidian-run-code",
+	"name": "Run Code",
+	"version": "1.0.0",
+	"minAppVersion": "0.15.0",
+	"description": "Run code snippets directly in Obsidian using the Piston API. No local environment needed.",
+	"author": "",
+	"isDesktopOnly": false
+}

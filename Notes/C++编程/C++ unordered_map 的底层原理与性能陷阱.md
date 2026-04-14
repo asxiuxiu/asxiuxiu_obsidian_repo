@@ -113,134 +113,78 @@ for (const auto& kv : myMap) { ... }
 
 这意味着迭代过程是 **bucket 跳转 + 链表追逐** 的混合，每一步都可能是 cache miss。
 
-### 6. `std::map` 的底层：红黑树（Red-Black Tree）
+### 6. 存取链路详解
 
-作为对比，C++ 标准库中的 `std::map` 并不使用哈希，而是基于 **红黑树**（一种自平衡二叉搜索树）：
+#### 查找 `find(key)`
 
-#### 红黑树的核心规则
+1. **计算哈希值**：调用 `Hash(key)` 得到一个 `size_t` 类型的哈希值。
+2. **定位 bucket**：`bucket_index = hash_value % bucket_count`。
+3. **遍历链表**：从该 bucket 的头节点开始，沿着 `next` 指针逐个比较：
+   - 先比较**哈希值**（快速排除）。
+   - 哈希值相同再调用 `KeyEqual` 比较真正的 key。
+4. **返回结果**：找到则返回指向该节点的迭代器，否则返回 `end()`。
 
-1. 每个节点要么是红色，要么是黑色。
-2. 根节点是黑色。
-3. 所有叶子（NIL）都是黑色。
-4. 红色节点的两个子节点必须是黑色（不能有连续红节点）。
-5. 从任一节点到其每个叶子的所有简单路径都包含相同数目的黑色节点（黑高相等）。
+> 在 C++11 及以后，如果某个 bucket 的链表过长（通常 >= 8 个节点），一些实现会将其**树化**为红黑树，此时第 3 步变为树查找，最坏复杂度从 O(n) 降到 O(log n)。
 
-这些规则保证了树的最坏高度不超过 `2 * log₂(n)`，从而确保查找、插入、删除都是 **O(log n)**。
+#### 插入 `insert({key, value})`
 
-#### 内存布局
+1. **计算哈希值**并定位 bucket（同查找）。
+2. **检查 key 是否已存在**：遍历该 bucket 的链表/树，若找到相同 key，插入失败（返回已有迭代器 + `false`）。
+3. **分配新节点**：在堆上 `new` 一个 Node，存储 `key`、`value`、哈希值和 `next` 指针。
+4. **挂到链表头部**：将新节点的 `next` 指向当前 bucket 的头节点，然后更新 bucket 指针指向新节点（头插法，O(1)）。
+5. **检查负载因子**：若 `load_factor > max_load_factor`，触发 **rehash**。rehash 会分配更大的 bucket 数组，把所有节点重新散列到新 bucket 中。
 
-```
-std::map<int, T>
-├─ Root Node
-│   ├─ left  → Node A
-│   ├─ right → Node B
-│   ├─ parent → nullptr
-│   └─ color → BLACK
-│
-├─ Node A
-│   ├─ left  → nullptr
-│   ├─ right → Node C
-│   ├─ parent → Root
-│   └─ color → RED
-│
-└─ Node B
-    ├─ left  → nullptr
-    ├─ right → nullptr
-    ├─ parent → Root
-    └─ color → RED
-```
+#### 删除 `erase(key)`
 
-- 每个节点包含 `key`、`value`、**左子指针**、**右子指针**、**父指针**和**颜色标记**。
-- 节点同样是**离散分配**的（通过 allocator 逐个 `new`），物理内存不连续。
-- 额外的三个指针（`left`/`right`/`parent`）带来约 24 字节（64 位）的固定开销，再加上颜色标记的对齐填充。
+1. **计算哈希值**并定位 bucket（同查找）。
+2. **遍历链表**找到目标节点，同时记录其前驱节点。
+3. **调整链表指针**：`prev->next = target->next`，将目标节点从链表中摘除。
+4. **释放节点内存**：`delete` 目标节点，元素计数减一。
+5. **返回结果**：返回删除的节点数量（0 或 1）。
 
-#### 基本存取逻辑
-
-**查找（`find`）**
-
-1. 从根节点出发。
-2. 将目标 `key` 与当前节点比较：
-   - 小于当前节点 → 走左子树。
-   - 大于当前节点 → 走右子树。
-   - 等于 → 找到返回。
-3. 直到抵达叶子（`nullptr`），说明不存在。
-
-由于红黑树的平衡性，这一步最多走 `~2 * log₂(n)` 层。
-
-**插入（`insert`）**
-
-1. 按查找逻辑定位到应插入的叶子位置。
-2. 新建节点并染成**红色**（插入红色对黑高影响最小）。
-3. 如果导致"双红冲突"（父节点也是红色），通过**旋转**（左旋 / 右旋）和**重新着色**恢复平衡。
-4. 最后将根节点染回黑色。
-
-**删除（`erase`）**
-
-1. 找到目标节点。
-2. 按 BST 规则用后继节点（或前驱节点）替换。
-3. 如果被删除的是黑色节点，可能破坏"黑高相等"规则，需要通过**旋转**和**重新着色**修复。
-4. 释放节点内存。
-
-#### 与 `unordered_map` 的关键差异
-
-| 特性 | `std::map`（红黑树） | `std::unordered_map`（哈希表） |
-|------|---------------------|-------------------------------|
-| **底层结构** | 自平衡 BST | 分离链接法哈希表 |
-| **查找复杂度** | O(log n)，稳定 | O(1) 平均，最坏 O(n) |
-| **内存连续性** | 完全不连续，指针更多 | 完全不连续，bucket 数组连续 |
-| **节点开销** | 3 个指针 + 颜色标记 | 1~2 个指针（next）+ 哈希值 |
-| **有序性** | 按键有序，支持范围查询 | 无序 |
-| **迭代器稳定性** | 插入/删除不使其他迭代器失效 | rehash 时全部失效 |
-| **适用场景** | 需要顺序遍历、范围查询 | 纯点查、键无顺序要求 |
+> **注意**：删除操作不会触发 rehash（即不会收缩 bucket 数组）。如果你插入了大量元素后又删除大部分，bucket 数量仍然保持不变，可以通过 `rehash(0)` 强制收缩。
 
 ---
 
-## How：从代码层面理解性能差异
+## How：为什么批量遍历这么慢？
 
-### 实验：连续数组 vs `unordered_map` 的遍历开销
+### Cache Miss 分析
 
-下面的代码对比了三种存储结构的遍历性能（仅作原理演示）：
+现代 CPU 读取内存时，会把一整块相邻数据（cache line，通常 64 字节）拉进 L1/L2 cache。
+
+- **连续数组（如 `std::vector`）**：元素紧密排列。读取 `v[0]` 时，`v[1]`、`v[2]` 很可能已经被一起加载到 cache 中。后续访问几乎都是 **cache hit**。
+- **`std::unordered_map`**：每个 Node 是独立分配的，物理位置随机。读取 Node A 后，下一个 Node B 可能远在另一个内存页，CPU 不得不等待主内存加载，产生 **cache miss**。这就是"指针追逐"的代价。
+
+### 一个直观的性能对比
+
+下面的代码演示了遍历开销的数量级差异：
 
 ```cpp
 #include <vector>
 #include <unordered_map>
-#include <random>
 #include <chrono>
 #include <iostream>
 
-struct Component {
-    float x, y, z;
-};
+struct Component { float x, y, z; };
 
 int main() {
     const int N = 100000;
-    std::mt19937 rng(42);
-    std::uniform_int_distribution<int> dist(0, N * 10);
 
-    // 1. 连续数组（std::vector）
-    std::vector<Component> dense;
-    dense.reserve(N);
-    for (int i = 0; i < N; ++i) dense.push_back({1.0f, 2.0f, 3.0f});
-
-    // 2. unordered_map（键是稀疏的 Entity ID）
+    std::vector<Component> dense(N, {1.0f, 2.0f, 3.0f});
     std::unordered_map<int, Component> map;
     map.reserve(N * 2);
-    for (int i = 0; i < N; ++i) map[dist(rng)] = {1.0f, 2.0f, 3.0f};
+    for (int i = 0; i < N; ++i) map[i] = {1.0f, 2.0f, 3.0f};
 
-    // 测试 vector 遍历
+    // vector 遍历
     auto t1 = std::chrono::high_resolution_clock::now();
     float sum1 = 0;
-    for (const auto& c : dense) {
-        sum1 += c.x + c.y + c.z;
-    }
+    for (const auto& c : dense) sum1 += c.x + c.y + c.z;
     auto t2 = std::chrono::high_resolution_clock::now();
 
-    // 测试 unordered_map 遍历
+    // unordered_map 遍历
     auto t3 = std::chrono::high_resolution_clock::now();
     float sum2 = 0;
-    for (const auto& [k, c] : map) {
-        sum2 += c.x + c.y + c.z;
-    }
+    for (const auto& [k, c] : map) sum2 += c.x + c.y + c.z;
     auto t4 = std::chrono::high_resolution_clock::now();
 
     std::cout << "vector: " << (t2 - t1).count() / 1e6 << " ms\n";
@@ -250,26 +194,7 @@ int main() {
 
 > **典型结果**：在 Release 模式下，`unordered_map` 的遍历耗时通常是 `vector` 的 **5~20 倍**（取决于节点分布和 CPU cache 大小）。
 
-### 为什么差这么多？Cache Miss 分析
-
-现代 CPU 读取内存时，会把一整块相邻数据（cache line，通常 64 字节）拉进 L1/L2 cache。
-
-- **`std::vector`**：元素紧密排列。读取 `dense[0]` 时，`dense[1]`、`dense[2]` 很可能已经被一起加载到 cache 中。后续访问几乎都是 **cache hit**。
-- **`std::unordered_map`**：每个 Node 是独立分配的，物理位置随机。读取 Node A 后，下一个 Node B 可能远在另一个内存页，CPU 不得不等待主内存加载，产生 **cache miss**。这就是"指针追逐"的代价。
-
-### 插入和查找：哈希表并非一无是处
-
-| 操作 | `std::vector` | `std::unordered_map` |
-|------|--------------|---------------------|
-| **按索引访问** | O(1)，极快 | 不支持 |
-| **按键查找** | O(n)，需线性扫描 | O(1) 平均，快 |
-| **遍历所有元素** | 极快，cache 友好 | 慢，指针追逐 |
-| **插入（中间）** | O(n)，需搬移元素 | O(1) 平均 |
-| **内存连续性** | 完全连续 | 完全不连续 |
-
-**结论**：
-- 如果你的核心操作是**按键查找**，`unordered_map` 是优秀的选择。
-- 如果你的核心操作是**批量遍历**或**线性扫描**，连续数组几乎总是更优。
+这不是因为算法复杂度更高，而是因为**内存不连续导致的频繁 cache miss**。`unordered_map` 的单次 `find` 确实很快，但批量线性扫描是它的软肋。
 
 ---
 
@@ -333,9 +258,10 @@ entityIndex (sparse)          dense (components)
 ## 关键结论
 
 1. **`bucket` 是 `std::unordered_map` 的底层存储单元**，每个 bucket 挂一条链表（或树），真正的数据节点是离散分配的。
-2. **O(1) 不等于高性能**：`unordered_map` 的点查很快，但批量遍历因为 cache miss 和指针追逐而很慢。
-3. **Rehash 是隐藏的停顿源**：元素增多时会触发全表重建，实时系统需要提前 `reserve()` 或换用其他结构。
-4. **ECS 选择 Sparse Set 不是炫技**，而是因为哈希表无法满足"O(1) 访问 + 连续遍历"的双重需求。
+2. **存取链路 = 哈希 → 取模定位 bucket → 链表/树遍历**。插入可能触发 rehash，删除只做链表摘除不缩容。
+3. **O(1) 不等于高性能**：`unordered_map` 的点查很快，但批量遍历因为 cache miss 和指针追逐而很慢。
+4. **Rehash 是隐藏的停顿源**：元素增多时会触发全表重建，实时系统需要提前 `reserve()` 或换用其他结构。
+5. **ECS 选择 Sparse Set 不是炫技**，而是因为哈希表无法满足"O(1) 访问 + 连续遍历"的双重需求。
 
 > 下次当你本能地想写 `std::unordered_map<int, T>` 来存储组件时，先问自己一个问题："我更需要按键查找，还是批量遍历？"
 

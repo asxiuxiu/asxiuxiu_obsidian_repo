@@ -11,3 +11,4 @@ Game/
 **/*/.cache/*
 *.ppm
 *.exe
+node_modules

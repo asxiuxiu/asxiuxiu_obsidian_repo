@@ -1,0 +1,64 @@
+/* Container for a code block with run button */
+.obsidian-run-code-block {
+	position: relative;
+}
+
+/* Run button */
+.obsidian-run-code-btn {
+	position: absolute;
+	top: 8px;
+	right: 40px;
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+	border: none;
+	border-radius: 4px;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	font-size: 12px;
+	line-height: 24px;
+	text-align: center;
+	cursor: pointer;
+	opacity: 0;
+	z-index: 10;
+}
+
+.obsidian-run-code-block:hover .obsidian-run-code-btn,
+.obsidian-run-code-btn:hover {
+	opacity: 1;
+}
+
+/* Output panel */
+.obsidian-run-code-output {
+	display: none;
+	background: var(--background-primary-alt);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-top: none;
+	border-radius: 0 0 4px 4px;
+	padding: 8px 12px;
+	font-family: var(--font-monospace);
+	font-size: 12px;
+	white-space: pre-wrap;
+	word-break: break-word;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.obsidian-run-code-output.is-error {
+	color: var(--text-error);
+}
+
+/* Ensure button is visible inside edit mode code blocks */
+.cm-preview-code-block {
+	position: relative;
+}
+
+.cm-preview-code-block .obsidian-run-code-btn {
+	top: 8px;
+	right: 40px;
+}
+
+.cm-preview-code-block:hover .obsidian-run-code-btn {
+	opacity: 1;
+}

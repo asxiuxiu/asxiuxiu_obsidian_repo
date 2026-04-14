@@ -1,0 +1,25 @@
+{
+  "name": "obsidian-run-code",
+  "version": "1.0.0",
+  "description": "Run code snippets directly in Obsidian via Piston API",
+  "main": "main.js",
+  "scripts": {
+    "dev": "node esbuild.config.mjs development",
+    "build": "node esbuild.config.mjs production"
+  },
+  "keywords": [
+    "obsidian",
+    "plugin"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.4.1",
+    "@codemirror/view": "^6.26.3",
+    "builtin-modules": "^5.1.0",
+    "esbuild": "^0.20.2",
+    "obsidian": "^1.5.7",
+    "typescript": "^5.4.5"
+  }
+}
