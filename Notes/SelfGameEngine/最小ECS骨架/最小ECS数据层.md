@@ -10,11 +10,9 @@ aliases:
   - Minimal ECS Data Layer
 ---
 
-> [← 返回 SelfGameEngine 索引]([[索引|SelfGameEngine 索引]])
-
-> **前置依赖**：无（本模块是引擎的绝对起点）
+> **前置依赖**：[[窗口与输入系统]]、[[可视化日志系统]]
 > **本模块增量**：建立 World、Entity、ComponentArray 三个最基础的数据结构，让引擎第一次拥有"实体-组件"状态骨架。
-> **下一步**：[[组件系统架构]] — 在最小数据层上增加 Query 查询、Archetype 存储和工业级演进。
+> **下一步**：[[极简Inspector与ECS可视化]] — 没有 Inspector 的 ECS 是黑盒，下一章在窗口里直接观察 ECS 世界。
 
 ---
 
@@ -291,6 +289,55 @@ Remove(E3) —— id=3 在 dense 中的索引是 1：
 
 ---
 
+## How：真实引擎的 ECS 数据层是如何一步一步复杂起来的？
+
+### 阶段 1：最小实现 → 能用（解决 Query 和注册表问题）
+
+#### 触发原因
+- 当组件类型超过 5 个，硬编码 `World` 变得不可维护
+- `MovementSystem` 手动检查 `velocities.get()` 写法笨拙，需要表达"同时有 Position 和 Velocity 的实体"
+
+#### 代码层面的变化
+1. **引入 `ComponentTypeId` 和全局注册表**
+   - 每个组件类型分配一个递增的整数 ID
+   - `World` 内部用 `std::vector<IComponentArray*>` 存储所有组件数组，不再硬编码
+
+2. **引入 `Query<Position, Velocity>`**
+   - 通过遍历最小的组件数组，再检查其他组件是否存在，实现多组件联合查询
+   - 这是从"手动 get"到"声明式查询"的关键跃迁
+
+### 阶段 2：能用 → 好用（解决 Cache 和迭代效率问题）
+
+#### 触发原因
+- Sparse Set 虽然让同类型组件连续，但一个 Entity 的 `Position` 和 `Velocity` 可能相距甚远
+- System 每次迭代都需要两次独立的 `dense` 数组访问，无法充分利用 CPU cache
+
+#### 代码层面的变化
+1. **Archetype 存储模型**
+   - 把"拥有相同组件组合的 Entity"分到同一个 Archetype 中
+   - 每个 Archetype 内部用 Chunk 存储实体数据，`Position` 和 `Velocity` 在内存上相邻
+
+2. **Query 缓存**
+   - 维护一个 Archetype 匹配缓存，新实体加入时只需检查是否需要加入已知 Query
+   - 避免每帧全量扫描所有 Archetype
+
+### 阶段 3：好用 → 工业级（解决并发和规模问题）
+
+#### 触发原因
+- 实体数量超过 10 万，单线程迭代成为瓶颈
+- 多线程读写同一组件类型需要严格的依赖分析和隔离
+
+#### 代码层面的变化
+1. **Chunk-based SoA 布局**
+   - 每个 Chunk 固定大小（如 16KB），刚好填满一个或几个 cache line
+   - 组件按 SoA（Structure of Arrays）排列，批量运算时 SIMD 友好
+
+2. **基于读写掩码的依赖调度**
+   - 每个 System 声明自己读哪些组件、写哪些组件
+   - 调度器自动分析无依赖的 System，分配到不同线程并行执行
+
+---
+
 ## AI 友好设计检查清单
 
 | 检查项 | 本模块的实现 | 说明 |
@@ -330,8 +377,6 @@ Remove(E3) —— id=3 在 dense 中的索引是 1：
 
 ---
 
-> **下一步**：[[组件系统架构]]
+> **下一步**：[[极简Inspector与ECS可视化]]
 >
-> 现在你已经有了最简陋但可运行的 ECS 数据层。下一步是在此基础上建立真正的数据模型：多组件联合 Query、Archetype 存储、Chunk-based 并行调度。
-
-> [← 返回 SelfGameEngine 索引]([[索引|SelfGameEngine 索引]])
+> 现在你已经有了最简陋但可运行的 ECS 数据层。下一步是在阶段 1 的窗口里，通过 ImGui 面板直接观察 ECS 世界状态：Entity 列表、组件字段、实时增删。没有可视化调试的 ECS 只是黑盒。
