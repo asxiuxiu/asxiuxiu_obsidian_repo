@@ -1,6 +1,6 @@
 ---
 title: MCP与Agent桥接层
-date: 2026-04-14
+date: 2026-04-15
 tags:
   - self-game-engine
   - agent
@@ -16,9 +16,9 @@ aliases:
 
 # MCP 与 Agent 桥接层
 
-> **前置依赖**：[[从零开始的引擎骨架]]、[[反射与序列化]]、[[系统调度与确定性]]
+> **前置依赖**：[[从零开始的引擎骨架]]、[[反射系统]]、[[系统调度与确定性]]
 > **本模块增量**：引擎对外暴露标准 MCP 工具接口，AI Agent 能安全地观察世界状态、修改组件字段、推进帧、保存/回滚快照。
-> **下一步**：[[内存管理全链路]] 或 [[网络同步全链路]] — 根据项目需求选择纵深方向。
+> **下一步**：[[多Agent编排与沙箱]] — 当需要多个专项 Agent 并行工作时，权限、隔离和冲突检测必不可少。
 
 ---
 
@@ -37,25 +37,21 @@ aliases:
 3. **AI 不知道能做什么、不能做什么**
    - 引擎有数百个内部函数，AI 没有边界感。它可能误删核心组件、修改受保护的运行时字段、或在迭代中触发迭代器失效。
 
-4. **多个 AI 同时工作会互相破坏**
-   - 一个 AI 在调物理参数，另一个 AI 在改材质颜色。如果没有隔离机制，它们的修改可能互相覆盖，甚至让世界状态进入不一致的非法组合。
-
 ### 三个真实场景
 
 | 场景 | 没有桥接层的困难 | AgentBridge 的答案 |
 |------|-----------------|-------------------|
 | **场景 1：AI 想批量调整所有敌人的血量上限** | AI 直接写代码操作内存，可能改错偏移量或触发段错误 | 通过 `set_component_field` 结构化工具，基于反射元数据安全修改 |
 | **场景 2：换了一个 AI 客户端，引擎集成要重写** | 协议绑定到特定客户端的私有 API | 统一 MCP 协议，任何支持 MCP 的客户端都能直接调用 |
-| **场景 3：两个 Agent 同时修改同一个实体** | 修改互相覆盖，结果不可预测 | Orchestrator + 组件白名单 + 事务沙箱，实现冲突检测与隔离 |
+| **场景 3：AI 需要知道"这个世界里有什么"** | 只能读取日志或 dump 内存 | 通过 `query_entities` 和 `get_component` 返回结构化 JSON |
 
 ### 这是"必须"还是"优化"
 
-对于 **vibe coding**（让 AI 长时间自主迭代引擎）和 **多 Agent 协作开发**，Agent 桥接层是**必须**：
+对于 **vibe coding**（让 AI 长时间自主迭代引擎），Agent 桥接层是**必须**：
 
 - AI 需要"安全的操作边界" → 只有结构化的工具接口才能做到。
 - AI 需要"不绑定特定客户端" → 只有 MCP 这类开放标准才能满足。
-- AI 需要"知道什么能做、什么不能" → 只有权限引擎和白名单才能约束。
-- 多 Agent 需要"并行而不冲突" → 只有 Orchestrator 才能调度。
+- AI 需要"知道什么能做、什么不能" → 只有 [[多Agent编排与沙箱]] 中的权限引擎和白名单才能约束。
 
 > **核心结论**：AgentBridge 不是"锦上添花"，而是让引擎从"人类专用工具"进化为"AI 可协作伙伴"的关键基础设施。
 
@@ -67,7 +63,7 @@ aliases:
 
 1. **结构化显示与事件流反馈**：把引擎内部状态转化为 AI 和用户都能理解的结构化输出
 2. **MCP 适配层**：引擎对外的唯一接口是标准 MCP 协议
-3. **基础权限控制**：防止 AI 误操作核心状态
+3. **工具自描述**：AI 通过 `list_tools()` 就能知道每个工具的参数约束
 4. **ENGINE_AI.md 静态上下文预加载**：让 AI 在对话开始前就"懂"引擎结构
 
 ```cpp
@@ -197,9 +193,9 @@ public:
 
 ### 这个最小实现还缺什么
 
-- **没有权限引擎**：任何 AI 都能调用任何工具（见 How 阶段 2）
+- **没有权限引擎**：任何 AI 都能调用任何工具（见 [[多Agent编排与沙箱]]）
 - **没有沙箱隔离**：AI 的修改直接生效，无法"先试试，不行再回滚"（见 [[系统调度与确定性]] 中的 Snapshot）
-- **没有多 Agent Orchestrator**：多个 AI 同时工作时会冲突（见 How 阶段 3）
+- **没有多 Agent Orchestrator**：多个 AI 同时工作时会冲突（见 [[多Agent编排与沙箱]]）
 - **没有 ChangeLog 集成**：AI 看不到"自上次以来世界变了什么"（见 [[系统调度与确定性]]）
 
 ---
@@ -272,240 +268,58 @@ void rebuild_engine_ai_md(const TypeRegistry& registry) {
 - 只有在 `TypeRegistry` 或工具集发生重大变化时才重新生成
 - 这部分内容是"静态前缀"，可以最大化复用 Prompt Caching 的收益
 
----
-
-### 阶段 2：好用 —— 让 AI 能高效协作、安全试错
+### 阶段 2：好用 —— 与编辑器共用 Command 基础设施
 
 #### 触发原因
 
-AI 的改动经常引发副作用，需要权限控制、事务隔离和变更追踪。
+人类编辑器和 AI Agent 需要共用同一套"修改世界"的协议，否则就要维护两套逻辑。
 
 #### 代码层面的变化
 
-**A. ChangeLog 对 AI 的特殊价值**
+**A. Command Pattern 就是 MCP 接口**
 
-纯引擎的 `ChangeLog` 已经用于调试。对 AI 来说，它是**避免上下文爆炸**的关键：
-- AI 不需要读整个世界，只需要读这一帧的 `changelog`。
-
-配合**滚动窗口清理**，超过 16 帧的旧记录折叠为统计，防止上下文无限膨胀。
-
-**B. CommandBuffer 作为 AI 的写缓冲**
-
-AI 的改动先进入 `CommandBuffer`，在 Tick 边界统一应用。如果权限检查或冲突检测失败，可以整批回滚。这与编辑器操作、网络同步共用同一套基础设施（详见 [[系统调度与确定性]]）。
-
-**C. 权限控制与安全边界**
-
-引入四级规则来源、拒绝追踪、工具级参数检查：
+人类的 Undo/Redo 栈和 AI 的 `mutate` 工具本质上是一回事。设计好 `ICommand` 接口，一举两得：
 
 ```cpp
-enum class PermissionBehavior { Deny, Ask, Allow };
-
-struct PermissionResult {
-    PermissionBehavior behavior;
-    std::string reason;
-    std::string ruleSource;
-};
-
-struct DenialTracker {
-    int consecutiveDenials = 0;
-    int totalDenials = 0;
-    static constexpr int MAX_CONSECUTIVE = 3;
-    static constexpr int MAX_TOTAL = 20;
-
-    bool shouldFallbackToPrompting() const {
-        return consecutiveDenials >= MAX_CONSECUTIVE || totalDenials >= MAX_TOTAL;
-    }
-    void recordDenial() { consecutiveDenials++; totalDenials++; }
-    void recordAllow() { consecutiveDenials = 0; }
-};
-
-struct PermissionRule {
-    std::string toolName;
-    std::string pattern;
-    PermissionBehavior behavior;
-    std::string source;
-};
-
-class PermissionEngine {
-    std::vector<PermissionRule> rules;
-public:
-    PermissionResult evaluate(const std::string& toolName, const std::string& input) const {
-        for (const auto& r : rules) {
-            if (r.behavior == PermissionBehavior::Deny && matches(r, toolName, input))
-                return {PermissionBehavior::Deny, "matched deny rule", r.source};
-        }
-        for (const auto& r : rules) {
-            if (r.behavior == PermissionBehavior::Ask && matches(r, toolName, input))
-                return {PermissionBehavior::Ask, "matched ask rule", r.source};
-        }
-        for (const auto& r : rules) {
-            if (r.behavior == PermissionBehavior::Allow && matches(r, toolName, input))
-                return {PermissionBehavior::Allow, "matched allow rule", r.source};
-        }
-        return {PermissionBehavior::Ask, "no rule matched", "default"};
-    }
-    bool matches(const PermissionRule& r, const std::string& toolName,
-                 const std::string& input) const;
-};
-
-class ToolPermissionChecker {
-public:
-    virtual PermissionResult check(const std::string& inputJson) const = 0;
-};
-
-class ApprovalRuntime {
-    DenialTracker tracker;
-    PermissionEngine engine;
-    std::unordered_map<std::string, std::unique_ptr<ToolPermissionChecker>> checkers;
-public:
-    PermissionResult resolve(const std::string& toolName, const std::string& input) {
-        auto result = engine.evaluate(toolName, input);
-        if (result.behavior == PermissionBehavior::Deny) {
-            tracker.recordDenial();
-            return result;
-        }
-        auto it = checkers.find(toolName);
-        if (it != checkers.end()) {
-            auto safety = it->second->check(input);
-            if (safety.behavior == PermissionBehavior::Deny) {
-                tracker.recordDenial();
-                return safety;
-            }
-            if (safety.behavior == PermissionBehavior::Ask) {
-                return safety;
-            }
-        }
-        if (tracker.shouldFallbackToPrompting()) {
-            return {PermissionBehavior::Ask, "denial limit exceeded", "tracker"};
-        }
-        if (result.behavior == PermissionBehavior::Allow) {
-            tracker.recordAllow();
-        }
-        return result;
-    }
+struct ICommand {
+    virtual void execute() = 0;
+    virtual void undo() = 0;
 };
 ```
 
-**D. 沙箱与事务隔离**
+AI 的 `set_component` 工具内部就是构造并执行一个 `SetComponentFieldCommand`。
 
-```cpp
-struct SandboxConfig {
-    std::vector<std::string> allowWrite;
-    std::vector<std::string> denyWrite;
-    std::vector<std::string> allowRead;
-};
+**B. 数据桥协议**
 
-class AgentBridge {
-    ApprovalRuntime* approvalRuntime = nullptr;
-    SandboxConfig sandbox;
-public:
-    void setApprovalRuntime(ApprovalRuntime* runtime) { approvalRuntime = runtime; }
-    void setSandboxConfig(const SandboxConfig& cfg) { sandbox = cfg; }
+在 C++ 和 UI 之间建立一层结构化数据桥：
+- 人类用 ImGui 滑块操作它
+- AI 用 JSON 操作它
+- 两者最终都转换为 `CommandBuffer` 中的命令
 
-    PermissionResult request_permission(const std::string& toolName,
-                                        const std::string& input) {
-        if (!approvalRuntime)
-            return {PermissionBehavior::Ask, "no runtime attached", "default"};
-        return approvalRuntime->resolve(toolName, input);
-    }
-
-    ToolResult execute_tool(const std::string& name, const std::string& input) {
-        auto perm = request_permission(name, input);
-        if (perm.behavior == PermissionBehavior::Deny)
-            return {false, R"({"error":"permission denied"})", {}};
-        if (perm.behavior == PermissionBehavior::Ask)
-            return {false, R"({"error":"waiting for approval"})", {}};
-
-        auto it = toolRegistry.tools.find(name);
-        if (it == toolRegistry.tools.end())
-            return {false, R"({"error":"unknown tool"})", {}};
-
-        if (!it->second.isReadOnly) {
-            // 写操作前自动 checkpoint（支撑 Undo）
-            // compressor->checkpoint("auto_before_" + name);
-        }
-        return it->second.call(input);
-    }
-};
-```
-
----
-
-### 阶段 3：工业级 —— 让多 Agent 能安全并行
+### 阶段 3：工业级 —— 完整 MCP Server 部署
 
 #### 触发原因
 
-一个 AI 调渲染、一个 AI 写 gameplay、一个 AI 优化物理。它们需要同时工作，但不能互相破坏。
+当引擎需要被外部 IDE、自动化测试脚本或 Web 前端调用时，AgentBridge 需要成为一个独立的网络服务。
 
 #### 代码层面的变化
 
-**A. Orchestrator 层调度多 Agent**
+**A. MCP over SSE / WebSocket**
 
-```cpp
-enum class AgentTaskType { ReadOnly, WriteHeavy, Verification };
+标准 MCP 协议支持多种传输层：
+- `stdio`：本地进程通信（如 Claude Desktop 插件）
+- `SSE`：Server-Sent Events，适合 Web 前端
+- `WebSocket`：双向实时通信
 
-struct AgentTask {
-    std::string agentId;
-    AgentTaskType type;
-    std::unordered_set<std::string> targetComponents;
-    std::unordered_set<Entity> targetEntities;
-    std::function<ToolResult(AgentBridge&)> execute;
-    bool reuseContext = false;
-};
+引擎的 `McpAdapter` 只需要实现标准的 JSON-RPC 层，传输层可以按需切换。
 
-class AgentOrchestrator {
-    std::vector<AgentTask> pendingTasks;
-public:
-    void submit(AgentTask task) { pendingTasks.push_back(std::move(task)); }
-    void dispatchAll(AgentBridge& bridge, World& world);
-};
+**B. 工具发现与动态注册**
 
-void AgentOrchestrator::dispatchAll(AgentBridge& bridge, World& world) {
-    std::vector<AgentTask> reads, writes, verifies;
-    for (auto& t : pendingTasks) {
-        if (t.type == AgentTaskType::ReadOnly) reads.push_back(t);
-        else if (t.type == AgentTaskType::WriteHeavy) writes.push_back(t);
-        else verifies.push_back(t);
-    }
-
-    // 读任务：自由并行
-    parallel_for(reads, [&](auto& t) { t.execute(bridge); });
-
-    // 写任务：按目标组件/实体集合检测冲突，有重叠则串行
-    for (size_t i = 0; i < writes.size(); ++i) {
-        bool conflict = false;
-        for (size_t j = 0; j < i; ++j) {
-            if (hasOverlap(writes[i].targetComponents, writes[j].targetComponents) &&
-                hasOverlap(writes[i].targetEntities, writes[j].targetEntities)) {
-                conflict = true;
-                break;
-            }
-        }
-        writes[i].execute(bridge); // 实际实现中冲突时等待前任务完成
-    }
-
-    for (auto& t : verifies) {
-        t.execute(bridge);
-    }
-    pendingTasks.clear();
-}
-```
-
-- `PhysicsAgent`：只读写 `RigidBody`、`Collider`
-- `RenderAgent`：只读写 `Material`、`Mesh`
-- `GameplayAgent`：只读写 `Health`、`Inventory`
-- Orchestrator 负责合并改动、检测冲突、决定执行顺序。
-
-> 借鉴 Claude Code Coordinator 的并发哲学：**读任务自由并行，写任务按组件集/实体集串行化**。
-
-**B. 确定性 Replay Pipeline 的 AI 测试价值**
-
-纯引擎的确定性回放已经用于网络同步（见 [[系统调度与确定性]]）。对 AI 来说，它是**自主跑回归测试**的基石：
-- AI 可以改动参数 → 重放同一批输入 → 验证输出是否一致。
+引擎在运行时加载新模块时，模块可以动态向 `ToolRegistry` 注册新工具。AI 客户端通过 `list_tools()` 实时获取最新工具列表，无需重启。
 
 ---
 
-## AI 友好设计红线检查
+## AI 友好设计检查清单
 
 | 检查项 | 本模块的实现 | 说明 |
 |--------|-------------|------|
@@ -513,7 +327,7 @@ void AgentOrchestrator::dispatchAll(AgentBridge& bridge, World& world) {
 | **自描述** | ✅ ToolRegistry + ENGINE_AI.md | AI 无需头文件即可知道工具列表和参数约束 |
 | **确定性** | ✅ 所有修改走 CommandBuffer | 在 Tick 边界统一应用，时序可复现 |
 | **工具边界** | ✅ 结构化 JSON/Schema | 每个工具都有 `inputSchema` 和 JSON 返回值 |
-| **Agent 安全** | ✅ 四层保护 | PermissionEngine + SandboxConfig + CommandBuffer + Snapshot |
+| **Agent 安全** | ⚠️ 基础保护 | 核心安全机制在 [[多Agent编排与沙箱]] 中实现 |
 
 ---
 
@@ -521,9 +335,8 @@ void AgentOrchestrator::dispatchAll(AgentBridge& bridge, World& world) {
 
 | 决策点 | 原型阶段 | 工业级阶段 |
 |--------|---------|-----------|
-| AI 接口 | `AgentBridge` 手写 3~5 个工具 | 完整 MCP 协议 + Schema 验证 |
-| 权限模型 | 简单白名单 | 四级规则来源 + 工具级参数检查 + 审批运行时 |
-| 并发模型 | 单 Agent 顺序调用 | Orchestrator + 读写隔离 + 冲突检测 |
+| AI 接口 | `AgentBridge` 手写 3~5 个工具 | 完整 MCP 协议 + Schema 验证 + 动态注册 |
+| 传输层 | stdio（本地进程） | SSE / WebSocket / gRPC |
 | 错误恢复 | 手动调试 | 快照 + 确定性回放 + 事务沙箱 |
 
 ---
@@ -533,23 +346,17 @@ void AgentOrchestrator::dispatchAll(AgentBridge& bridge, World& world) {
 1. **暴露 `query_entities` + `get_component` 工具**
    - 让 AI 能用一句话拿到它关心的所有实体，并读取/修改具体字段。
 
-2. **ChangeLog 实施滚动窗口清理**
-   - 超过 16 帧的旧记录自动折叠为统计，防止 AI 上下文无限膨胀。
-
-3. **为 AI 设计 `EngineDisplayBlock` 反馈协议**
+2. **为 AI 设计 `EngineDisplayBlock` 反馈协议**
    - 把工具执行结果拆成两部分：`json` 给 AI 消费，`blocks` 给 UI 渲染。
 
-4. **预生成 `ENGINE_AI.md` 作为静态上下文**
+3. **预生成 `ENGINE_AI.md` 作为静态上下文**
    - 把 ECS 架构、组件说明、常用调参模式写成文档，作为 system prompt 的固定前缀注入。
 
-5. **优先实现 MCP 协议而非自定义协议**
+4. **优先实现 MCP 协议而非自定义协议**
    - 引擎的 AI 接口应该首先是一套 MCP Server，`AgentBridge` 是引擎内部对这套 MCP 接口的封装。
 
-6. **引入 Orchestrator 层调度多个专项 Agent**
-   - 每个 Agent 绑定组件白名单，防止"越权操作"。
-
-7. **核心系统插入 Invariant 断言**
-   - 让引擎本身成为 Agent 改动的"自动审核员"。
+5. **Command Pattern 就是 AI 的 MCP 接口**
+   - 人类的 Undo/Redo 栈和 AI 的 `mutate` 工具本质上是一回事。设计好 Command 接口，一举两得。
 
 ---
 
@@ -557,19 +364,19 @@ void AgentOrchestrator::dispatchAll(AgentBridge& bridge, World& world) {
 
 - [[AI友好的引擎架构]] — 本知识库的设计宪法
 - [[从零开始的引擎骨架]] — AgentBridge 依赖的 ECS 基础
-- [[反射与序列化]] — ToolRegistry 自动生成组件工具的前提
+- [[反射系统]] — ToolRegistry 自动生成组件工具的前提
 - [[系统调度与确定性]] — CommandBuffer、Snapshot、确定性回放的实现细节
+- [[多Agent编排与沙箱]] — 权限引擎、Orchestrator、冲突检测
 - [[编辑器框架]] — 人类操作与 AI 操作共享同一套 Command 基础设施
 
 > **下一步预告**
 >
-> 现在你的引擎已经具备完整的 AI 协作能力：
+> 现在你的引擎已经具备单个 AI Agent 的协作能力：
 > - ✅ ECS 数据模型
 > - ✅ 运行时反射
 > - ✅ 确定性调度
 > - ✅ MCP 标准接口
-> - ✅ 多 Agent 编排与沙箱
 >
-> 下一步可以进入工业级专题增强：[[内存管理全链路]]、[[网络同步全链路]] 或 [[多Agent编排与沙箱]]。
+> 下一步：[[多Agent编排与沙箱]] — 当需要多个专项 Agent 并行工作时，权限、隔离和冲突检测必不可少。
 
 > [← 返回 SelfGameEngine 索引]([[索引]])
