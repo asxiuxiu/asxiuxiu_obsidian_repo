@@ -1,8 +1,8 @@
 {
   "theme": "obsidian",
-  "cssTheme": "Minimal",
+  "cssTheme": "Things",
   "enabledCssSnippets": [
     "pic_center"
   ],
-  "accentColor": ""
+  "accentColor": "#dedede"
 }
