@@ -273,16 +273,115 @@ delete p;  // 只调用 Base::~Base()！Derived 的资源泄漏了！
 
 虚函数的性能开销（分支预测失败 + 指针追逐 + 指令 Cache 未命中）在现代引擎中不可忽视。常见的优化/替代方向：
 
-| 方案 | 原理 | 适用场景 |
-|------|------|---------|
-| **Type Splitting** | 按类型分数组，用 `switch` 替代虚函数 | ECS 中同类型对象批量处理 |
-| **CRTP（奇异递归模板模式）** | 用模板静态多态替代动态多态，编译期确定调用目标 | 需要多态语义但追求零开销 |
-| **`std::variant` + `std::visit`** | 类型安全的联合体，访问时编译期生成分发表 | 有限类型集合的替代多态 |
-| **函数指针内联缓存** | 运行时缓存上次调用的目标地址 | JavaScript V8 等动态语言的优化技巧 |
-| **Final 关键字** | `final class` / `final` 虚函数允许编译器去虚拟化 | 确定不会被覆盖的类/函数 |
+| 方案                                | 原理                                   | 适用场景                     |
+| --------------------------------- | ------------------------------------ | ------------------------ |
+| **Type Splitting**                | 按类型分数组，用 `switch` 替代虚函数              | ECS 中同类型对象批量处理           |
+| **CRTP（奇异递归模板模式）**                | 用模板静态多态替代动态多态，编译期确定调用目标              | 需要多态语义但追求零开销             |
+| **`std::variant` + `std::visit`** | 类型安全的联合体，访问时编译期生成分发表                 | 有限类型集合的替代多态              |
+| **函数指针内联缓存**                      | 运行时缓存上次调用的目标地址                       | JavaScript V8 等动态语言的优化技巧 |
+| **Final 关键字**                     | `final class` / `final` 虚函数允许编译器去虚拟化 | 确定不会被覆盖的类/函数             |
 
 > [!tip] 编译器去虚拟化（Devirtualization）
 > 如果编译器能静态证明 `p` 实际指向的类型（如 `Base* p = new Derived(); p->foo();` 且 `foo` 是 `final`），现代编译器（GCC/Clang/MSVC）会直接生成静态绑定的 `call`，跳过 vtable 查找。
+
+### Type Splitting：按类型分片替代虚函数
+
+#### Why：为什么批量处理时虚函数性能差？
+
+虚函数调用是**间接跳转**（`call rax`），目标地址运行时才能确定。当循环里混杂多种类型对象时，分支预测器看到的地址序列近乎随机，预测失败代价高达 10~20+ 周期。同时伴随指针追逐（vptr → vtable → 函数代码），每一步都可能 Cache Miss。
+
+#### What：类型分片是什么？
+
+**把不同类型的对象拆到不同的数组里**，同类型的数据紧挨着放。处理时逐个数组遍历，类型在循环外就已经确定。
+
+类型分片是 ECS（Entity-Component-System）架构的**数据层基础**，但两者不等同：
+
+| 概念 | 类型分片 | ECS |
+|------|---------|-----|
+| **本质** | 一种**数据布局策略** | 一种**架构模式** |
+| **组成** | 按类型拆分数组 | ID（Entity）+ 纯数据（Component）+ 批量逻辑（System）|
+| **关系** | ECS 的 Component 存储天然就是类型分片 | 在类型分片之上绑定了"无行为的数据"契约 |
+
+#### How：代码对比与底层原理
+
+**传统虚函数方式（分支预测不友好）：**
+
+```cpp
+std::vector<Entity*> entities;  // 各种类型混杂
+
+for (auto* e : entities) {
+    e->update();  // 虚函数调用：目标地址随机，分支预测器猜不准
+}
+```
+
+**类型分片方式（Cache + 分支预测友好）：**
+
+```cpp
+std::vector<Enemy> enemies;
+std::vector<Bullet> bullets;
+std::vector<Particle> particles;
+
+for (auto& e : enemies) {
+    updateEnemy(e);   // 直接调用，编译期确定地址，无分支预测风险
+}
+
+for (auto& b : bullets) {
+    updateBullet(b);
+}
+```
+
+如果必须在同一循环里处理多种类型，用 `switch` 或显式类型标记替代虚函数：
+
+```cpp
+enum class EntityType { Enemy, Bullet, Particle };
+
+for (auto& e : entities) {
+    switch (e.type) {  // 直接条件分支，比间接跳转更好预测
+        case EntityType::Enemy:   updateEnemy(e); break;
+        case EntityType::Bullet:  updateBullet(e); break;
+    }
+}
+```
+
+#### `switch` / `if-else` vs 虚函数：分支预测的本质区别
+
+| 特性 | `switch` / `if-else` | 虚函数调用 |
+|------|---------------------|-----------|
+| 指令类型 | **直接条件分支**（`jz label`） | **间接跳转**（`call rax`） |
+| 目标地址 | 指令中硬编码相对偏移 | 藏在寄存器里，运行时计算 |
+| 分支预测器工作 | 猜"跳还是不跳"（二元问题） | 猜"rax 里是哪个地址"（多选问题） |
+| 预测失败惩罚 | ~10-20 周期 | ~10-20+ 周期 |
+
+> **核心结论**：`switch` 和 `if-else` 在分支预测层面**半斤八两**，它们**共同的优势**是"直接分支 vs 虚函数的间接跳转"。真正的性能分水岭是"跳转类型"而非"switch 还是 if"。
+
+#### 编译器如何优化 `switch`：跳转表与 case 密集
+
+编译器对 `switch` 的优化取决于 case 值的**数值跨度**，而非 case 的个数：
+
+| case 值 | 数值跨度 | 跳转表大小 | 编译器策略 | 分支预测影响 |
+|---------|---------|-----------|-----------|------------|
+| `0, 1, 2, 3` | `3 - 0 + 1 = 4` | 4 × 8 = **32 字节** | **跳转表（Jump Table）** | **无分支预测问题**，数组索引直接算地址 |
+| `0, 100, 200` | `200 - 0 + 1 = 201` | 201 × 8 = **1608 字节** | 退化为 `if-else` 链或二分查找 | 和普通条件分支一样，预测器需要猜 |
+
+**跳转表的本质**：一个紧凑的地址数组，用变量值当索引直接查表跳转。整个过程没有条件跳转指令。
+
+```asm
+; 跳转表形态（case 0,1,2,3）
+cmp     eax, 3          ; 越界检查
+ja      .L_default
+lea     rdx, [rip + .L_jump_table]
+movsxd  rax, [rdx + rax*4]  ; 用值当索引取目标偏移
+add     rax, rdx
+jmp     rax             ; 直接跳转，无需分支预测
+
+.L_jump_table:
+    .long .L_case_0 - .L_jump_table
+    .long .L_case_1 - .L_jump_table
+    .long .L_case_2 - .L_jump_table
+    .long .L_case_3 - .L_jump_table
+```
+
+在 ECS 中，实体类型通常用从 0 开始连续编号的枚举（如 `enum class Type : uint8_t { Enemy, Bullet, Particle }`），这种**天然密集**的 case 值使 `switch(type)` 极易被编译为跳转表——这也是它替代虚函数时性能好的原因之一。
 
 ---
 
