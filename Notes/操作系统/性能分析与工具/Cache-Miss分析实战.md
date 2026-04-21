@@ -131,7 +131,7 @@ perf stat -e LLC-load-misses,cycles ./matrix_multiply
 ### 实验 2：False Sharing 定位
 
 ```cpp
-// 使用 [[CPU与内存架构/内存对齐与填充]] 中的 false_sharing.cpp
+// 使用 [[Notes/操作系统/CPU与内存架构/内存对齐与填充]] 中的 false_sharing.cpp
 // perf c2c record ./false_sharing
 // perf c2c report
 ```
@@ -156,5 +156,5 @@ perf stat -e LLC-load-misses,cycles ./matrix_multiply
 ---
 
 > [!info] 延伸阅读
-> - [[CPU与内存架构/CPU缓存体系]] — Cache 优化的理论基础
-> - [[CPU与内存架构/内存对齐与填充]] — False Sharing 的原理与解法
+> - [[Notes/操作系统/CPU与内存架构/CPU缓存体系]] — Cache 优化的理论基础
+> - [[Notes/操作系统/CPU与内存架构/内存对齐与填充]] — False Sharing 的原理与解法

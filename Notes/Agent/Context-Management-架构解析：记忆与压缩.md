@@ -8,7 +8,7 @@ tags:
   - memory
 ---
 
-> [← 返回 Agent 索引]([[Agent/索引|Agent 索引]])
+> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
 
 # Context Management 架构解析：记忆与压缩
 

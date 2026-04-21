@@ -2,18 +2,17 @@ import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetTy
 import { RangeSetBuilder } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import { RunCodeSettings } from "./settings";
-import { canRunLocally, runLocal } from "./localRunner";
-import { WandboxClient } from "./wandboxClient";
+import { runCpp } from "./cppRunner";
 
 class RunButtonWidget extends WidgetType {
-	constructor(private lang: string, private code: string, private settings: RunCodeSettings) {
+	constructor(private code: string, private settings: RunCodeSettings) {
 		super();
 	}
 
 	toDOM(): HTMLElement {
 		const btn = document.createElement("button");
 		btn.textContent = "▶";
-		btn.title = "Run code";
+		btn.title = "Run C++";
 		btn.className = "obsidian-run-code-btn";
 		btn.addEventListener("click", async () => {
 			await this.runCode();
@@ -34,23 +33,9 @@ class RunButtonWidget extends WidgetType {
 		outputEl.textContent = "Running...";
 		outputEl.style.display = "block";
 
-		if (canRunLocally(this.lang)) {
-			const result = runLocal(this.code);
-			outputEl.textContent = result.text;
-			outputEl.classList.toggle("is-error", result.isError);
-			return;
-		}
-
-		const client = new WandboxClient();
-		try {
-			const result = await client.execute(this.code, this.lang);
-			const formatted = client.formatOutput(result);
-			outputEl.textContent = formatted.text;
-			outputEl.classList.toggle("is-error", formatted.isError);
-		} catch (e) {
-			outputEl.textContent = "Error: " + (e as Error).message;
-			outputEl.classList.add("is-error");
-		}
+		const result = await runCpp(this.code, this.settings.workspacePath);
+		outputEl.textContent = result.text;
+		outputEl.classList.toggle("is-error", result.isError);
 	}
 }
 
@@ -83,7 +68,7 @@ export function runButtonExtension(settings: RunCodeSettings) {
 								const line = view.state.doc.lineAt(node.to);
 								const match = line.text.match(/^```\s*(\S*)/);
 								const lang = match ? match[1].trim().toLowerCase() : "";
-								if (lang && settings.enabledLanguages.includes(lang)) {
+								if (lang === "cpp") {
 									let codeEnd = node.to;
 									let depth = 1;
 									tree.iterate({
@@ -104,7 +89,7 @@ export function runButtonExtension(settings: RunCodeSettings) {
 
 									const codeText = view.state.doc.sliceString(node.to, codeEnd).trim();
 									const deco = Decoration.widget({
-										widget: new RunButtonWidget(lang, codeText, settings),
+										widget: new RunButtonWidget(codeText, settings),
 										side: 1,
 									});
 									builder.add(node.from, node.from, deco);

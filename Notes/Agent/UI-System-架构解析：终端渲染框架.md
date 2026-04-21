@@ -7,7 +7,7 @@ tags:
   - ui
 ---
 
-> [← 返回 Agent 索引]([[Agent/索引|Agent 索引]])
+> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
 
 # UI-System-架构解析：终端渲染框架
 

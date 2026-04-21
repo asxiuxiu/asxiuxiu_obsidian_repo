@@ -9,7 +9,7 @@ tags:
   - integration
 ---
 
-> [← 返回 Agent 索引]([[Agent/索引|Agent 索引]])
+> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
 
 # 引擎 AI 集成实战 MVP
 

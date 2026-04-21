@@ -8,7 +8,7 @@ tags:
   - mcp
 ---
 
-> [← 返回 Agent 索引]([[Agent/索引|Agent 索引]])
+> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
 
 # Tool-System-架构解析：AI的手脚与边界
 

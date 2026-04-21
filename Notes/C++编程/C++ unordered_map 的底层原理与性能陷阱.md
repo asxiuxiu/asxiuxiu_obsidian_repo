@@ -15,7 +15,7 @@ aliases:
 
 # C++ unordered_map 的底层原理与性能陷阱
 
-> **关联笔记**：[[SelfGameEngine/组件系统架构|组件系统架构]] —— 本文讨论的哈希表性能问题，正是 ECS 中选择 `Sparse Set` 而非 `unordered_map` 存储组件的核心原因。
+> **关联笔记**：[[Notes/SelfGameEngine/组件系统架构|组件系统架构]] —— 本文讨论的哈希表性能问题，正是 ECS 中选择 `Sparse Set` 而非 `unordered_map` 存储组件的核心原因。
 
 ---
 

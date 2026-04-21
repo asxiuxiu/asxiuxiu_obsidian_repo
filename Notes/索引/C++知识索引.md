@@ -77,44 +77,44 @@ C++ 知识体系
 
 | 主题 | 笔记 | 核心要点 | 难度 |
 |------|------|---------|------|
-| **值类别与移动语义** | [[C++编程/C++ 值类别与移动语义\|值类别与移动语义]] | lvalue/rvalue/xvalue、std::move、完美转发 | ⭐⭐⭐ |
-| **对象生存期与 RAII** | [[C++编程/C++ 对象生存期与 RAII\|对象生存期与 RAII]] | 所有权模型、智能指针、资源管理 | ⭐⭐⭐ |
-| **构建系统** | [[C++编程/构建系统：make 与 CMake\|make 与 CMake]] | CMake 现代实践、目标导向 | ⭐⭐ |
+| **值类别与移动语义** | [[Notes/C++编程/C++ 值类别与移动语义\|值类别与移动语义]] | lvalue/rvalue/xvalue、std::move、完美转发 | ⭐⭐⭐ |
+| **对象生存期与 RAII** | [[Notes/C++编程/C++ 对象生存期与 RAII\|对象生存期与 RAII]] | 所有权模型、智能指针、资源管理 | ⭐⭐⭐ |
+| **构建系统** | [[Notes/C++编程/构建系统：make 与 CMake\|make 与 CMake]] | CMake 现代实践、目标导向 | ⭐⭐ |
 
 ### 🔧 关键字详解
 
 | 关键字 | 笔记 | 一句话概括 |
 |--------|------|-----------|
-| `explicit` | [[C++编程/C++ explicit 关键字\|explicit]] | 禁止隐式类型转换 |
-| `inline` | [[C++编程/C++ inline 关键字\|inline]] | 内联展开，不是强制的 |
-| `noexcept` | [[C++编程/C++ noexcept 关键字\|noexcept]] | 标记不抛异常，优化移动操作 |
-| `decltype` | [[C++编程/C++ decltype 关键字\|decltype]] | 获取表达式类型 |
-| `volatile` | [[C++编程/C++ volatile 关键字\|volatile]] | 禁止优化，用于硬件访问 |
+| `explicit` | [[Notes/C++编程/C++ explicit 关键字\|explicit]] | 禁止隐式类型转换 |
+| `inline` | [[Notes/C++编程/C++ inline 关键字\|inline]] | 内联展开，不是强制的 |
+| `noexcept` | [[Notes/C++编程/C++ noexcept 关键字\|noexcept]] | 标记不抛异常，优化移动操作 |
+| `decltype` | [[Notes/C++编程/C++ decltype 关键字\|decltype]] | 获取表达式类型 |
+| `volatile` | [[Notes/C++编程/C++ volatile 关键字\|volatile]] | 禁止优化，用于硬件访问 |
 
 ### 🛠️ 编译与构建
 
 | 主题 | 笔记 | 说明 |
 |------|------|------|
-| **编译过程** | [[C++编程/C++编译过程原理\|编译过程原理]] | 预处理 → 编译 → 汇编 → 链接 |
-| **编译选项** | [[C++编程/C++编译选项\|编译选项]] | GCC/Clang 常用选项 |
-| **静态/动态库** | [[C++编程/静态库与动态库\|静态库与动态库]] | 链接原理、使用场景 |
-| **Conan 包管理** | [[C++编程/Conan 依赖管理详解\|Conan 依赖管理]] | 现代 C++ 依赖管理 |
+| **编译过程** | [[Notes/C++编程/C++编译过程原理\|编译过程原理]] | 预处理 → 编译 → 汇编 → 链接 |
+| **编译选项** | [[Notes/C++编程/C++编译选项\|编译选项]] | GCC/Clang 常用选项 |
+| **静态/动态库** | [[Notes/C++编程/静态库与动态库\|静态库与动态库]] | 链接原理、使用场景 |
+| **Conan 包管理** | [[Notes/C++编程/Conan 依赖管理详解\|Conan 依赖管理]] | 现代 C++ 依赖管理 |
 
 ### 🐛 调试技术
 
 | 主题 | 笔记 | 核心内容 |
 |------|------|---------|
-| **调试器原理** | [[C++编程/调试器核心概念与原理\|调试器核心概念与原理]] | 断点、单步执行、变量查看原理 |
-| **变量定位** | [[C++编程/调试器如何找到变量位置——进程隔离与DWARF调试信息\|变量定位原理]] | DWARF 格式、调试信息 |
-| **INT3 断点** | [[C++编程/调试器INT3断点插入的位置详解\|INT3 断点]] | 软件断点实现机制 |
-| **GDB 指南** | [[C++编程/GDB调试指南\|GDB 调试指南]] | 常用命令速查 |
-| **PDB 锁定** | [[C++编程/Visual Studio PDB 文件锁定问题\|PDB 锁定问题]] | Windows 调试问题解决 |
+| **调试器原理** | [[Notes/C++编程/调试器核心概念与原理\|调试器核心概念与原理]] | 断点、单步执行、变量查看原理 |
+| **变量定位** | [[Notes/C++编程/调试器如何找到变量位置——进程隔离与DWARF调试信息\|变量定位原理]] | DWARF 格式、调试信息 |
+| **INT3 断点** | [[Notes/C++编程/调试器INT3断点插入的位置详解\|INT3 断点]] | 软件断点实现机制 |
+| **GDB 指南** | [[Notes/C++编程/GDB调试指南\|GDB 调试指南]] | 常用命令速查 |
+| **PDB 锁定** | [[Notes/C++编程/Visual Studio PDB 文件锁定问题\|PDB 锁定问题]] | Windows 调试问题解决 |
 
 ### 🔄 类型系统
 
 | 主题 | 笔记 | 核心内容 |
 |------|------|---------|
-| **类型转换** | [[C++编程/C++类型转换\|类型转换]] | static_cast/dynamic_cast/reinterpret_cast/const_cast |
+| **类型转换** | [[Notes/C++编程/C++类型转换\|类型转换]] | static_cast/dynamic_cast/reinterpret_cast/const_cast |
 
 ---
 
@@ -172,8 +172,8 @@ Conan 依赖管理
 
 ```mermaid
 graph TD
-    RAII[[C++编程/C++ 对象生存期与 RAII\|RAII]] --> SmartPtr[智能指针]
-    RAII --> MoveSem[[C++编程/C++ 值类别与移动语义\|移动语义]]
+    RAII[[Notes/C++编程/C++ 对象生存期与 RAII\|RAII]] --> SmartPtr[智能指针]
+    RAII --> MoveSem[[Notes/C++编程/C++ 值类别与移动语义\|移动语义]]
     
     MoveSem --> ValueCat[值类别]
     MoveSem --> PerfectFwd[完美转发]
@@ -185,12 +185,12 @@ graph TD
     SmartPtr --> SharedPtr[shared_ptr]
     SmartPtr --> WeakPtr[weak_ptr]
     
-    Build[构建系统] --> CMake[[C++编程/构建系统：make 与 CMake\|CMake]]
-    Build --> Conan[[C++编程/Conan 依赖管理详解\|Conan]]
-    Build --> Lib[[C++编程/静态库与动态库\|库]]
+    Build[构建系统] --> CMake[[Notes/C++编程/构建系统：make 与 CMake\|CMake]]
+    Build --> Conan[[Notes/C++编程/Conan 依赖管理详解\|Conan]]
+    Build --> Lib[[Notes/C++编程/静态库与动态库\|库]]
     
-    Debug[调试] --> GDB[[C++编程/GDB调试指南\|GDB]]
-    Debug --> Dwarf[[C++编程/调试器如何找到变量位置——进程隔离与DWARF调试信息\|DWARF]]
+    Debug[调试] --> GDB[[Notes/C++编程/GDB调试指南\|GDB]]
+    Debug --> Dwarf[[Notes/C++编程/调试器如何找到变量位置——进程隔离与DWARF调试信息\|DWARF]]
 ```
 
 ---
@@ -199,9 +199,9 @@ graph TD
 
 | 考点 | 相关笔记 | 典型问题 |
 |------|---------|---------|
-| **智能指针** | [[C++编程/C++ 对象生存期与 RAII\|RAII]] | shared_ptr 循环引用怎么解决？unique_ptr 怎么转移所有权？ |
-| **移动语义** | [[C++编程/C++ 值类别与移动语义\|值类别]] | 什么时候会触发移动构造？std::move 后对象还能用吗？ |
-| **虚函数** | [[C++编程/C++ 虚函数与多态本质\|虚函数与多态本质]] | 虚函数表原理、纯虚函数、虚析构函数 |
+| **智能指针** | [[Notes/C++编程/C++ 对象生存期与 RAII\|RAII]] | shared_ptr 循环引用怎么解决？unique_ptr 怎么转移所有权？ |
+| **移动语义** | [[Notes/C++编程/C++ 值类别与移动语义\|值类别]] | 什么时候会触发移动构造？std::move 后对象还能用吗？ |
+| **虚函数** | [[Notes/C++编程/C++ 虚函数与多态本质\|虚函数与多态本质]] | 虚函数表原理、纯虚函数、虚析构函数 |
 | **内存对齐** | （待补充） | sizeof 计算、内存对齐规则、#pragma pack |
 | **模板** | （待补充） | SFINAE、偏特化、变参模板 |
 

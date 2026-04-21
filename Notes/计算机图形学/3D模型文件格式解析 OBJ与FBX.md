@@ -16,7 +16,7 @@ aliases:
 # 3D 模型文件格式解析：OBJ 与 FBX
 
 > [!info] 前置知识
-> 建议先了解 [[计算机图形学/变换续 - 视图与投影|MVP 变换]]，理解顶点如何在渲染管线中流动。
+> 建议先了解 [[Notes/计算机图形学/变换续 - 视图与投影|MVP 变换]]，理解顶点如何在渲染管线中流动。
 
 ---
 
@@ -376,7 +376,7 @@ int main() {
 
 ## 延伸阅读
 
-- [[计算机图形学/变换续 - 视图与投影|MVP 变换]]
-- [[计算机图形学/5.  光栅化Rasterization(Triangles)|光栅化]]
+- [[Notes/计算机图形学/变换续 - 视图与投影|MVP 变换]]
+- [[Notes/计算机图形学/5.  光栅化Rasterization(Triangles)|光栅化]]
 - Wavefront OBJ 规范（原版文档，Autodesk 官网）
 - Khronos glTF 2.0 规范

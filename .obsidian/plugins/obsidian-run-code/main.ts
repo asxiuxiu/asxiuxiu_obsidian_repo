@@ -1,14 +1,21 @@
-import { App, Plugin, PluginSettingTab, Setting } from "obsidian";
+import { App, Plugin, PluginSettingTab, Setting, Editor, MarkdownView } from "obsidian";
 import { DEFAULT_SETTINGS, RunCodeSettings } from "./settings";
 import { runButtonExtension } from "./runButtonExtension";
-import { canRunLocally, runLocal } from "./localRunner";
-import { WandboxClient, WANDBOX_LANGUAGE_MAP } from "./wandboxClient";
+import { runCpp, getDefaultWorkspacePath } from "./cppRunner";
+
+const CPP_SNIPPET = "```cpp\n#include <iostream>\n\nint main() {\n    \n    return 0;\n}\n```\n";
 
 export default class RunCodePlugin extends Plugin {
 	settings: RunCodeSettings;
 
 	async onload() {
 		await this.loadSettings();
+
+		// Auto-fill default workspace path if empty
+		if (!this.settings.workspacePath) {
+			const basePath = (this.app.vault.adapter as any).basePath as string;
+			this.settings.workspacePath = getDefaultWorkspacePath(basePath);
+		}
 
 		this.registerEditorExtension(runButtonExtension(this.settings));
 
@@ -24,7 +31,7 @@ export default class RunCodePlugin extends Plugin {
 				const langClass = classes.find((c) => c.startsWith("language-"));
 				const lang = langClass ? langClass.replace("language-", "").toLowerCase() : "";
 
-				if (!lang || !this.settings.enabledLanguages.includes(lang)) return;
+				if (lang !== "cpp") return;
 
 				const wrapper = document.createElement("div");
 				wrapper.className = "obsidian-run-code-block";
@@ -33,7 +40,7 @@ export default class RunCodePlugin extends Plugin {
 
 				const btn = document.createElement("button");
 				btn.textContent = "▶";
-				btn.title = "Run code";
+				btn.title = "Run C++";
 				btn.className = "obsidian-run-code-btn";
 				btn.addEventListener("click", async () => {
 					let outputEl = wrapper.querySelector(".obsidian-run-code-output") as HTMLElement | null;
@@ -46,28 +53,24 @@ export default class RunCodePlugin extends Plugin {
 					outputEl.style.display = "block";
 
 					const code = codeEl.textContent || "";
-
-					if (canRunLocally(lang)) {
-						const result = runLocal(code);
-						outputEl.textContent = result.text;
-						outputEl.classList.toggle("is-error", result.isError);
-						return;
-					}
-
-					const client = new WandboxClient();
-					try {
-						const result = await client.execute(code, lang);
-						const formatted = client.formatOutput(result);
-						outputEl.textContent = formatted.text;
-						outputEl.classList.toggle("is-error", formatted.isError);
-					} catch (e) {
-						outputEl.textContent = "Error: " + (e as Error).message;
-						outputEl.classList.add("is-error");
-					}
+					const result = await runCpp(code, this.settings.workspacePath);
+					outputEl.textContent = result.text;
+					outputEl.classList.toggle("is-error", result.isError);
 				});
 
 				wrapper.appendChild(btn);
 			});
+		});
+
+		this.addCommand({
+			id: "insert-cpp-snippet",
+			name: "Insert C++ snippet",
+			editorCallback: (editor: Editor, view: MarkdownView) => {
+				const cursor = editor.getCursor();
+				editor.replaceRange(CPP_SNIPPET, cursor);
+				const newCursor = { line: cursor.line + 4, ch: 4 };
+				editor.setCursor(newCursor);
+			},
 		});
 
 		this.addSettingTab(new RunCodeSettingTab(this.app, this));
@@ -98,13 +101,13 @@ class RunCodeSettingTab extends PluginSettingTab {
 		containerEl.createEl("h2", { text: "Run Code Settings" });
 
 		containerEl.createEl("p", {
-			text: "JavaScript/TypeScript runs locally. All other languages run remotely via Wandbox.",
+			text: "C++ code runs locally with g++. Make sure g++ is installed and accessible.",
 			cls: "setting-item-description",
 		});
 
 		new Setting(containerEl)
 			.setName("Show run button")
-			.setDesc("Display a run button on supported code blocks.")
+			.setDesc("Display a run button on C++ code blocks.")
 			.addToggle((toggle) =>
 				toggle.setValue(this.plugin.settings.showRunButton).onChange(async (value) => {
 					this.plugin.settings.showRunButton = value;
@@ -113,22 +116,19 @@ class RunCodeSettingTab extends PluginSettingTab {
 			);
 
 		new Setting(containerEl)
-			.setName("Enabled languages")
-			.setDesc("Comma-separated list of languages that should show the run button.")
-			.addTextArea((text) => {
-				text.setValue(this.plugin.settings.enabledLanguages.join(", ")).onChange(async (value) => {
-					this.plugin.settings.enabledLanguages = value
-						.split(",")
-						.map((s) => s.trim().toLowerCase())
-						.filter((s) => s.length > 0);
-					await this.plugin.saveSettings();
-				});
+			.setName("Workspace path")
+			.setDesc("Directory for temporary compile files. Default: vault/workspace/run-code/")
+			.addText((text) => {
+				const basePath = (this.app.vault.adapter as any).basePath as string;
+				const defaultPath = getDefaultWorkspacePath(basePath);
+				text.setPlaceholder("Auto")
+					.setValue(
+						this.plugin.settings.workspacePath === defaultPath ? "" : this.plugin.settings.workspacePath
+					)
+					.onChange(async (value) => {
+						this.plugin.settings.workspacePath = value.trim() || defaultPath;
+						await this.plugin.saveSettings();
+					});
 			});
-
-		const supportedLangs = Object.keys(WANDBOX_LANGUAGE_MAP).sort().join(", ");
-		containerEl.createEl("p", {
-			text: `Wandbox supported languages: ${supportedLangs}`,
-			cls: "setting-item-description",
-		});
 	}
 }

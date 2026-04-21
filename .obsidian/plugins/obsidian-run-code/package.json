@@ -17,6 +17,7 @@
     "@codemirror/language": "^6.12.3",
     "@codemirror/state": "^6.4.1",
     "@codemirror/view": "^6.26.3",
+    "@types/node": "^25.6.0",
     "builtin-modules": "^5.1.0",
     "esbuild": "^0.20.2",
     "obsidian": "^1.5.7",

@@ -284,8 +284,8 @@ graph TD
 
 ## 七、相关参考
 
-- [[C++编程/调试器核心概念与原理.md|调试器核心概念与原理]] - 理解 PDB/DWARF 格式
-- [[C++编程/GDB调试指南.md|GDB 调试学习笔记]] - 跨平台调试工具
+- [[Notes/C++编程/调试器核心概念与原理.md|调试器核心概念与原理]] - 理解 PDB/DWARF 格式
+- [[Notes/C++编程/GDB调试指南.md|GDB 调试学习笔记]] - 跨平台调试工具
 - [Microsoft Docs: /FS (Force Synchronous PDB Writes)](https://docs.microsoft.com/en-us/cpp/build/reference/fs-force-synchronous-pdb-writes)
 - [Sysinternals Process Explorer](https://docs.microsoft.com/en-us/sysinternals/downloads/process-explorer)
 

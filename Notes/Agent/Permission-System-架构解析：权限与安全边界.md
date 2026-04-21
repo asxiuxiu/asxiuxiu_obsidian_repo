@@ -9,7 +9,7 @@ tags:
   - security
 ---
 
-> [← 返回 Agent 索引]([[Agent/索引|Agent 索引]])
+> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
 
 # Permission-System-架构解析：权限与安全边界
 
