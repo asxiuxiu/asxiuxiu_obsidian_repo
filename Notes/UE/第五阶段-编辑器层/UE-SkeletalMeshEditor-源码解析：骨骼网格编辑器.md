@@ -5,7 +5,7 @@ tags: [ue-source, engine-architecture, skeletal-mesh]
 aliases: [SkeletalMeshEditor 模块分析]
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 ## Why：为什么要分析 SkeletalMeshEditor？
 

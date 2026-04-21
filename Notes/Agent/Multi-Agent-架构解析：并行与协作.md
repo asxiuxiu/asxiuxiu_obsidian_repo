@@ -7,7 +7,7 @@ tags:
   - multi-agent
 ---
 
-> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
+> [[Notes/Agent/索引|← 返回 Agent 索引]]
 
 # Multi-Agent 架构解析：并行与协作
 

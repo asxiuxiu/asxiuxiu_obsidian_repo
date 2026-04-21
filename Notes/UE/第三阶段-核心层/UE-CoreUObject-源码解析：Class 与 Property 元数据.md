@@ -8,7 +8,7 @@ aliases:
   - UE CoreUObject Class Property 元数据
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-CoreUObject-源码解析：Class 与 Property 元数据
 

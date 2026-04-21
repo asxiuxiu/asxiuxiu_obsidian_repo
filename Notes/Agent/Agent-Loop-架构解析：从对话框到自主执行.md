@@ -8,7 +8,7 @@ tags:
   - architecture
 ---
 
-> [← 返回 Agent 索引]([[Notes/Agent/索引|Agent 索引]])
+> [[Notes/Agent/索引|← 返回 Agent 索引]]
 
 # Agent Loop 架构解析：从对话框到自主执行
 

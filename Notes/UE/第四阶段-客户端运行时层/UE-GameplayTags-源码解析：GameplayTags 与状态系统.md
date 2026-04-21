@@ -10,7 +10,7 @@ aliases:
   - UE GameplayTags 与状态系统
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-GameplayTags-源码解析：GameplayTags 与状态系统
 

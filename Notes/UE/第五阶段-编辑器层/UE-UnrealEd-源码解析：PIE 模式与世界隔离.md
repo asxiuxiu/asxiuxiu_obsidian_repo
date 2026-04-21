@@ -8,7 +8,7 @@ aliases:
   - UE UnrealEd PIE 模式与世界隔离
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-UnrealEd-源码解析：PIE 模式与世界隔离
 

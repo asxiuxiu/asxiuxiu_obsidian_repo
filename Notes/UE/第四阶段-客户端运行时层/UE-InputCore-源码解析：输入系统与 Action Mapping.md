@@ -10,7 +10,7 @@ aliases:
   - UE 输入系统与 Action Mapping
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-InputCore-源码解析：输入系统与 Action Mapping
 

@@ -8,7 +8,7 @@ aliases:
   - UE ContentBrowser 内容浏览器与资产导入
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-ContentBrowser-源码解析：内容浏览器与资产导入
 

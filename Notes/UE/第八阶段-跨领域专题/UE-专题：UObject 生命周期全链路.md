@@ -12,7 +12,7 @@ aliases:
   - UE UObject Lifecycle Pipeline
 ---
 
-> [← 返回 00-UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 00-UE全解析主索引]]
 
 # UE-专题：UObject 生命周期全链路
 

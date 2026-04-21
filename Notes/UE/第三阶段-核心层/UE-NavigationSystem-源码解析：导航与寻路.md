@@ -8,7 +8,7 @@ aliases:
   - UE NavigationSystem 导航与寻路
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-NavigationSystem-源码解析：导航与寻路
 

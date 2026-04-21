@@ -9,7 +9,7 @@ aliases:
   - UE Delegates and Events
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引\|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 ## Why：为什么要学习 UE 委托与事件系统？
 

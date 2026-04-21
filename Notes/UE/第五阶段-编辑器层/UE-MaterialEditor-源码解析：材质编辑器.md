@@ -9,7 +9,7 @@ aliases:
   - MaterialEditor 源码解析
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-MaterialEditor-源码解析：材质编辑器
 

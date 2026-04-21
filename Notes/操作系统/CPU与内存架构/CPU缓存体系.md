@@ -10,7 +10,7 @@ aliases:
   - CPU Cache Hierarchy
 ---
 
-> [← 返回 CPU与内存架构索引]([[索引\|CPU与内存架构索引]])
+> [[索引|← 返回 CPU与内存架构索引]]
 
 # CPU 缓存体系
 

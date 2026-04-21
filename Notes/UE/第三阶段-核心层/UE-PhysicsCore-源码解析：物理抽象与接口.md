@@ -8,7 +8,7 @@ aliases:
   - UE PhysicsCore 物理抽象与接口
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-PhysicsCore-源码解析：物理抽象与接口
 

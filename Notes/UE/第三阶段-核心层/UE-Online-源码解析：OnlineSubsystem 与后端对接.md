@@ -9,7 +9,7 @@ aliases:
   - UE Online 后端对接
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引\|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # Why：为什么要学习 OnlineSubsystem？
 

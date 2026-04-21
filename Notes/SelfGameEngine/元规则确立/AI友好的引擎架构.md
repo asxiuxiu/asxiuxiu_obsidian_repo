@@ -11,7 +11,7 @@ aliases:
   - AI引擎架构
 ---
 
-> [← 返回 SelfGameEngine 构建手册]([[0_RoadMap|SelfGameEngine 构建手册]])
+> [[0_RoadMap|← 返回 SelfGameEngine 构建手册]]
 
 # AI友好的引擎架构
 
@@ -455,4 +455,4 @@ public:
 
 下一篇：[[窗口与输入系统]] — 我们将创建第一个可交互窗口、建立事件循环、计算 DeltaTime，为所有后续可视化调试打下基础。
 
-> [← 返回 SelfGameEngine 构建手册]([[0_RoadMap|SelfGameEngine 构建手册]])
+> [[0_RoadMap|← 返回 SelfGameEngine 构建手册]]

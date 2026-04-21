@@ -11,7 +11,7 @@ aliases:
   - Niagara 编辑器
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-NiagaraEditor-源码解析：Niagara 编辑器
 

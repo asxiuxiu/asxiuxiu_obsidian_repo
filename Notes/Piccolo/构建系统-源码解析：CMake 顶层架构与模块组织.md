@@ -10,7 +10,7 @@ aliases:
   - Piccolo-CMake-顶层架构
 ---
 
-> [← 返回 Piccolo 索引]([[Notes/Piccolo/索引|Piccolo 索引]])
+> [[Notes/Piccolo/索引|← 返回 Piccolo 索引]]
 
 # 构建系统-源码解析：CMake 顶层架构与模块组织
 

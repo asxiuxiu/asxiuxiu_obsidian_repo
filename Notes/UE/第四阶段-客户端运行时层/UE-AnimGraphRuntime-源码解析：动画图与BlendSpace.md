@@ -5,7 +5,7 @@ tags: [ue-source, engine-architecture, animation, blendspace, anim-graph]
 aliases: [AnimGraphRuntime 源码解析]
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-AnimGraphRuntime 源码解析：动画图与 BlendSpace
 

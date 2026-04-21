@@ -8,7 +8,7 @@ aliases:
   - UE CoreUObject Package 加载
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-CoreUObject-源码解析：Package 与加载
 

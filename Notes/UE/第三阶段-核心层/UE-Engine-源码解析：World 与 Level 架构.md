@@ -8,7 +8,7 @@ aliases:
   - UE Engine World Level 架构
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-Engine-源码解析：World 与 Level 架构
 

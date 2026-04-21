@@ -9,7 +9,7 @@ aliases:
   - UE-AssetRegistry
 ---
 
-> [← 返回 00-UE全解析主索引]([[00-UE全解析主索引\|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 00-UE全解析主索引]]
 
 ## Why：为什么要理解 AssetRegistry？
 

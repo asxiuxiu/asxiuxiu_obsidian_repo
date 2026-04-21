@@ -10,7 +10,7 @@ aliases:
   - CPU Performance Counters
 ---
 
-> [← 返回 性能分析与工具索引]([[索引\|性能分析与工具索引]])
+> [[索引|← 返回 性能分析与工具索引]]
 
 # CPU 性能计数器与 perf
 

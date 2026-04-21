@@ -8,7 +8,7 @@ aliases:
   - UE Engine GameFramework 规则体系
 ---
 
-> [← 返回 UE全解析主索引]([[00-UE全解析主索引|UE全解析主索引]])
+> [[00-UE全解析主索引|← 返回 UE全解析主索引]]
 
 # UE-Engine-源码解析：GameFramework 与规则体系
 

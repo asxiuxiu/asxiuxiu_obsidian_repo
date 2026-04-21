@@ -12,7 +12,7 @@ aliases:
   - Piccolo-Shader-编译流程
 ---
 
-> [← 返回 Piccolo 索引]([[Notes/Piccolo/索引|Piccolo 索引]])
+> [[Notes/Piccolo/索引|← 返回 Piccolo 索引]]
 
 # 构建系统-源码解析：Shader 编译流程
 

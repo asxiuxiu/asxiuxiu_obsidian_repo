@@ -11,7 +11,7 @@ aliases:
   - Piccolo-编辑器-ImGui-集成
 ---
 
-> [← 返回 Piccolo 索引]([[Notes/Piccolo/索引|Piccolo 索引]])
+> [[Notes/Piccolo/索引|← 返回 Piccolo 索引]]
 
 # 编辑器-源码解析：UI 系统与 ImGui 集成
 

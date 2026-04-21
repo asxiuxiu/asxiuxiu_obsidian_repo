@@ -10,7 +10,7 @@ aliases:
   - Network Basics Socket TCP IP
 ---
 
-> [← 返回 系统调用与IO索引]([[索引\|系统调用与IO索引]])
+> [[索引|← 返回 系统调用与IO索引]]
 
 # 网络基础：Socket、TCP/IP 与协议栈
 
