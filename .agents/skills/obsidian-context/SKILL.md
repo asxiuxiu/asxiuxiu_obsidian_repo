@@ -15,9 +15,22 @@ description: 读取 Obsidian 当前激活笔记和选中文本，注入到对话
 
 ## 使用方法
 
-使用 Obsidian CLI 命令获取上下文信息。
+使用 Obsidian CLI 命令获取上下文信息。Obsidian 必须处于运行状态。
 
-**注意**：以下命令需要在 PowerShell 中执行（项目环境为 Windows）。
+### macOS / Linux (bash / zsh)
+
+```bash
+# 获取当前激活文件信息
+obsidian file active
+
+# 获取当前激活文件内容
+obsidian read active
+
+# 获取当前选中的文本
+obsidian eval code="app.workspace.activeEditor?.editor?.getSelection() ?? ''"
+```
+
+### Windows (PowerShell)
 
 ```powershell
 # 获取当前激活文件信息
@@ -30,18 +43,16 @@ obsidian read active
 obsidian eval code="app.workspace.activeEditor?.editor?.getSelection() ?? ''"
 ```
 
-### Windows 命令注意事项
+### 各平台注意事项
 
-- **PowerShell** 使用 `;` 作为命令分隔符，而非 `&&`
-- **PowerShell** 使用 `Set-Location` 或 `cd` 切换目录
-- 如需错误处理，使用 PowerShell 的 `try/catch` 或 `-ErrorAction` 参数
+| 平台 | 注意点 |
+|------|--------|
+| **macOS / Linux** | `obsidian` 命令通常位于 `/Applications/Obsidian.app/Contents/MacOS/obsidian`（macOS）或安装目录。确保已加入 `PATH`，否则使用绝对路径。 |
+| **Windows** | 使用 `;` 作为命令分隔符，而非 `&&`。切换目录用 `cd` 或 `Set-Location`。错误处理用 `try/catch`。 |
 
 ```powershell
-# 正确：在 PowerShell 中切换目录并执行命令
-Set-Location D:\obsidian_lib; obsidian file active
-
-# 或使用 cd
-cd D:\obsidian_lib; obsidian read active
+# Windows PowerShell 示例
+cd D:\obsidian_lib; obsidian file active
 ```
 
 ## 构建上下文
