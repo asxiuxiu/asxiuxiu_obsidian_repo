@@ -124,7 +124,7 @@ ready.store(true,       ├────────────────>  if
 ### 实验 1：验证 Release-Acquire 的可见性
 
 ```cpp
-// acquire_release.cpp
+// flags: -pthread
 #include <atomic>
 #include <thread>
 #include <cassert>

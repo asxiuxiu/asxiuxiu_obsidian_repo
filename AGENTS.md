@@ -114,6 +114,45 @@
 - 多行数学公式分开书写，避免 `\\` 换行
 - **表格内 wikilink 转义**：`[[路径\|别名]]`
 
+## Run Code 插件（C++ 代码片段）
+
+本 vault 的 `.obsidian/plugins/obsidian-run-code` 插件用于在 Obsidian 内直接运行 C++ 代码块。代码块语言标签**统一使用 `cpp`**，编译参数通过**顶部注释**控制。
+
+### 编译参数注释格式
+
+在代码块前 20 行内放置 `// flags:` 注释：
+
+```cpp
+// flags: -O0 -g -fsanitize=address
+#include <iostream>
+int main() {
+    // 这段代码会以 -std=c++20 -Wall -O2 -O0 -g -fsanitize=address 编译
+    return 0;
+}
+```
+
+| 注释写法 | 效果 |
+|---------|------|
+| `// flags: -O0 -g` | **追加参数**到默认参数之后（默认：`-std=c++20 -Wall -O2`） |
+| `// flags: override -O3 -DNDEBUG` | **完全替换**默认参数，只用 `-O3 -DNDEBUG` |
+
+### 常用配置示例
+
+| 场景 | 注释 |
+|------|------|
+| 调试模式（无优化 + 调试符号） | `// flags: -O0 -g` |
+| Release 模式 | `// flags: override -O3 -DNDEBUG` |
+| AddressSanitizer | `// flags: -fsanitize=address -fno-omit-frame-pointer` |
+| 严格警告 | `// flags: -Wextra -Werror -pedantic` |
+| 链接外部库 | `// flags: -lSDL2` |
+
+### 规范要点
+
+1. **不加空格**：`flags:` 与参数之间用一个空格分隔，参数之间也用空格分隔。
+2. **放在代码块顶部**：`// flags:` 注释尽量放在 `#include` 之前第一行，便于一眼识别。
+3. **不混用多行**：所有编译参数写在一行 `// flags:` 注释中，不支持多行累积。
+4. **代码块语言保持 `cpp`**：不要使用 `cpp-debug` 等变体，避免代码高亮失效。
+
 ## 图片与资源
 
 - 引用格式：`![[Assets/分类/图片名]]`

@@ -86,6 +86,35 @@ function findGpp() {
 function getDefaultWorkspacePath(vaultBasePath) {
   return path.join(vaultBasePath, "workspace", "run-code");
 }
+var DEFAULT_FLAGS = ["-std=c++20", "-Wall", "-O2"];
+function extractFlags(code2) {
+  var lines = code2.split(/\r?\n/);
+  for (var _i = 0, _a = lines.slice(0, 20); _i < _a.length; _i++) {
+    var line = _a[_i];
+    var trimmed = line.trim();
+    var match = trimmed.match(/^\/\/\s*flags:\s*(.*)$/);
+    if (match) {
+      var rest = match[1].trim();
+      if (rest.startsWith("override ")) {
+        return {
+          flags: rest.slice("override ".length).trim().split(/\s+/).filter(Boolean),
+          isOverride: true
+        };
+      }
+      return {
+        flags: rest.split(/\s+/).filter(Boolean),
+        isOverride: false
+      };
+    }
+  }
+  return { flags: [], isOverride: false };
+}
+function buildArgs(srcFile, exeFile, flags) {
+  if (flags.isOverride) {
+    return [srcFile, "-o", exeFile].concat(flags.flags);
+  }
+  return [srcFile, "-o", exeFile].concat(DEFAULT_FLAGS, flags.flags);
+}
 async function runCpp(code, workspacePath) {
   if (!fs.existsSync(workspacePath)) {
     fs.mkdirSync(workspacePath, { recursive: true });
@@ -95,9 +124,11 @@ async function runCpp(code, workspacePath) {
   const exeFile = path.join(workspacePath, `tmp_${timestamp}.exe`);
   fs.writeFileSync(srcFile, code, "utf-8");
   const gpp = findGpp();
+  const compileFlags = extractFlags(code);
+  const args = buildArgs(srcFile, exeFile, compileFlags);
   try {
     try {
-      await execFileAsync(gpp, [srcFile, "-o", exeFile, "-std=c++20", "-Wall", "-O2"], {
+      await execFileAsync(gpp, args, {
         cwd: workspacePath,
         timeout: 3e4,
         windowsHide: true

@@ -9,13 +9,13 @@ std::atomic<int> good_counter{0};
 int bad_counter = 0;
 
 void increment_good() {
-    for (int i = 0; i < 1'000'000; ++i) {
+    for (int i = 0; i < 1000000; ++i) {
         ++good_counter;
     }
 }
 
 void increment_bad() {
-    for (int i = 0; i < 1'000'000; ++i) {
+    for (int i = 0; i < 1000000; ++i) {
         ++bad_counter;
     }
 }
@@ -23,7 +23,7 @@ void increment_bad() {
 std::atomic<int> cas_counter{0};
 
 void cas_increment() {
-    for (int i = 0; i < 100'000; ++i) {
+    for (int i = 0; i < 100000; ++i) {
         int expected = cas_counter.load();
         while (!cas_counter.compare_exchange_weak(expected, expected + 1)) {
             // 重试直到成功

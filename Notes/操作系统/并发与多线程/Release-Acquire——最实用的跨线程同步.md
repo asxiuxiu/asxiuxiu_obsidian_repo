@@ -70,7 +70,7 @@ void consumer() {
 解决方案：**用版本号作为"整批数据的发布标志"**。
 
 ```cpp
-// release_acquire_gamestate.cpp
+// flags: -pthread
 #include <atomic>
 #include <thread>
 #include <iostream>
@@ -187,7 +187,7 @@ g_stage.compare_exchange_strong(expected, 1, std::memory_order_seq_cst);
 ### 实验：验证 Release-Acquire 的正确性
 
 ```cpp
-// ra_correctness.cpp
+// flags: -pthread
 #include <atomic>
 #include <thread>
 #include <iostream>

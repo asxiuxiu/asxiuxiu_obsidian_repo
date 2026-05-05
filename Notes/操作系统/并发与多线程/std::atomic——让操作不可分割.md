@@ -33,6 +33,7 @@ aliases:
 ### 基本用法
 
 ```cpp
+// flags: -pthread
 #include <atomic>
 #include <thread>
 #include <iostream>
@@ -89,11 +90,36 @@ int val = counter;   // 原子读取
 
 ---
 
+## 为什么需要 CAS？fetch_add 不是万能的吗
+
+到目前为止，`fetch_add` 似乎已经很完美了——计数器问题被它干净利落地解决。那 CAS 存在的意义是什么？
+
+问题的关键在于：**`fetch_add` 只能做"基于旧值进行固定算术运算"**，比如 `+1`、`-5`。但现实世界有大量场景，新值**不是"旧值 + delta"这么简单的算术关系**，而是**"基于旧值的某种判断"**。
+
+### 场景：状态机转换
+
+想象一个连接池，每个连接有三种状态。你只能"在连接是空闲时，把它标记为忙碌"：
+
+```cpp
+enum class State { Idle, Busy, Closing };
+std::atomic<State> conn_state{State::Idle};
+```
+
+`fetch_add` 对此完全无能为力——状态不是数字，你不能对一个枚举做加减。
+
+CAS 的设计就是为了这类**"条件性写入"**：
+
+> **只有当前值满足我的预期时，才允许我写入新值。如果不满足，告诉我实际值是多少，我重新判断。**
+
+这就像你去 ATM 取钱：系统会先核对你的余额是不是你预期的那样，如果期间有人转账导致余额变了，系统会拒绝交易并告诉你最新余额，让你重新确认。CAS 就是这个"先核对再执行"的原子操作。
+
+---
+
 ## `compare_exchange`：CAS 操作
 
 除了加减，`std::atomic` 还提供一个更底层的原子操作：**比较并交换（Compare-And-Swap，CAS）**。它是很多无锁数据结构的基石。
 
-CAS 的逻辑像一把"指纹锁"：
+CAS 的逻辑像 ATM 的"核对-执行"：
 
 ```
 "如果当前值等于我预期的值，就把它换成新值；否则告诉我当前实际值是多少"
@@ -108,17 +134,43 @@ bool success = value.compare_exchange_strong(expected, 200);
 // 如果 value 当前不是 100（比如被别的线程改了），返回 false，并把实际值写入 expected
 ```
 
+> [!info] `expected` 的副作用
+> 如果 CAS 失败，`expected` 会被**自动改写**为变量当前的真实值。这是 CAS 设计的关键——你不需要再次 `load()`，直接根据 `expected` 里的新值重新做决策即可。
+
 `compare_exchange_strong` 和 `compare_exchange_weak` 的区别：
 - **strong**：保证 CAS 操作一定执行（除非真的竞争失败）
 - **weak**：允许"假失败"——即使当前值等于预期值，也可能因为某些硬件原因返回失败。但 weak 在某些架构上更快，适合用在循环里。
 
+### 用 CAS 实现自旋锁（状态机的实战）
+
+下面这个例子展示了 CAS 的真正价值——**条件状态转换**。我们实现一个最简单的自旋锁：
+
 ```cpp
-// 用 weak 实现自旋 CAS（推荐模式）
-int expected = old_value;
-while (!atomic_var.compare_exchange_weak(expected, new_value)) {
-    expected = old_value;  // 失败后要重置 expected
-}
+class Spinlock {
+    std::atomic<bool> locked{false};
+
+public:
+    void lock() {
+        bool expected = false;
+        // "只有当锁是 false（未锁定）时，才把它设为 true"
+        // 如果不是 false，说明别的线程拿着锁，expected 会被更新为 true
+        while (!locked.compare_exchange_weak(expected, true)) {
+            expected = false;  // 重置预期，准备下一次竞争
+            // 实际工程中这里会加 pause/yield 避免 CPU 飙高
+        }
+    }
+
+    void unlock() {
+        locked.store(false);
+    }
+};
 ```
+
+> **注意这个 while 循环的精妙之处**：如果 CAS 失败，`expected` 会被**自动更新**为 `locked` 的当前实际值。循环体里手动把它重置回 `false`，是为了下一轮竞争时再次尝试"把 false 改成 true"。
+
+这与 `fetch_add` 有本质区别：
+- `fetch_add` 是"旧值 + 1，无脑写回去"
+- CAS 是"旧值必须是我预期的那个，我才写"
 
 ---
 
@@ -127,7 +179,7 @@ while (!atomic_var.compare_exchange_weak(expected, new_value)) {
 ### 实验 1：验证原子操作的必要性
 
 ```cpp
-// atomic_vs_nonatomic.cpp
+// flags: -pthread
 #include <thread>
 #include <iostream>
 #include <atomic>
@@ -161,10 +213,13 @@ int main() {
 
 **预期结果**：`bad_counter` 显著小于 2000000；`good_counter` 永远等于 2000000。
 
-### 实验 2：用 CAS 实现原子递增
+### 实验 2：用 CAS 模拟原子递增（语法练习）
+
+> [!warning] 这不是 CAS 的推荐用法
+> 对于单纯计数器，`fetch_add` 永远比 CAS 高效。这个实验只是为了让你熟悉 CAS 的语法和重试模式。
 
 ```cpp
-// cas_increment.cpp
+// flags: -pthread
 #include <atomic>
 #include <thread>
 #include <iostream>
@@ -175,7 +230,7 @@ void cas_increment() {
     for (int i = 0; i < 100'000; ++i) {
         int expected = counter.load();
         while (!counter.compare_exchange_weak(expected, expected + 1)) {
-            // 如果 counter 被别的线程改了，expected 会被更新为最新值
+            // 如果 counter 被别的线程改了，expected 会被自动更新为最新值
             // 循环重试直到成功
         }
     }
@@ -190,7 +245,15 @@ int main() {
 }
 ```
 
-这个实验展示了 CAS 的用法，也揭示了它的缺点：**竞争激烈时，while 循环会反复重试，浪费 CPU**。对于单纯的计数器，`fetch_add` 比 CAS 高效得多。CAS 的真正价值在于实现复杂的数据结构（如链表、队列）的原子更新。
+**预期结果**：`counter` 精确等于 200000。
+
+但这个实验也暴露了 CAS 的缺点：**竞争激烈时，while 循环会反复重试**。上面的自旋锁示例里，锁被持有时其他线程会在 `while` 里空转；这个计数器示例里，两个线程也会互相踩踏。
+
+所以请记住这个原则：
+
+> **能用 `fetch_add` / `fetch_sub` 解决的简单算术更新，绝不用 CAS。CAS 的价值在于实现 `fetch_add` 做不了的事——条件性原子更新。**
+
+后续我们将在 [[无锁队列——综合运用]] 中看到 CAS 的真正战场。
 
 ---
 

@@ -1,0 +1,12 @@
+# 游戏引擎源码根目录配置
+# 已加入 .gitignore，不会被提交到 git，方便在不同平台配置不同路径
+# 按需配置，不分析的引擎可留空或注释掉
+
+# chaos 引擎 + wolfgang/proven_ground 游戏项目源码根目录
+CHAOS_SOURCE_ROOT=
+
+# Unreal Engine 源码根目录
+UE_SOURCE_ROOT=/Users/asmallgod/Documents/UnrealEngine-release
+
+# Bevy 引擎源码根目录（Rust ECS 游戏引擎）
+BEVY_SOURCE_ROOT=/Users/asmallgod/Documents/bevy-main

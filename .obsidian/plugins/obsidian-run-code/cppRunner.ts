@@ -10,6 +10,42 @@ export interface CppRunResult {
 	isError: boolean;
 }
 
+export interface CompileFlags {
+	flags: string[];
+	isOverride: boolean;
+}
+
+const DEFAULT_FLAGS = ["-std=c++20", "-Wall", "-O2"];
+
+function extractFlags(code: string): CompileFlags {
+	const lines = code.split(/\r?\n/);
+	for (const line of lines.slice(0, 20)) {
+		const trimmed = line.trim();
+		const match = trimmed.match(/^\/\/\s*flags:\s*(.*)$/);
+		if (match) {
+			const rest = match[1].trim();
+			if (rest.startsWith("override ")) {
+				return {
+					flags: rest.slice("override ".length).trim().split(/\s+/).filter(Boolean),
+					isOverride: true,
+				};
+			}
+			return {
+				flags: rest.split(/\s+/).filter(Boolean),
+				isOverride: false,
+			};
+		}
+	}
+	return { flags: [], isOverride: false };
+}
+
+function buildArgs(srcFile: string, exeFile: string, flags: CompileFlags): string[] {
+	if (flags.isOverride) {
+		return [srcFile, "-o", exeFile, ...flags.flags];
+	}
+	return [srcFile, "-o", exeFile, ...DEFAULT_FLAGS, ...flags.flags];
+}
+
 let cachedGppPath: string | null = null;
 
 function findGpp(): string {
@@ -58,11 +94,13 @@ export async function runCpp(code: string, workspacePath: string): Promise<CppRu
 	fs.writeFileSync(srcFile, code, "utf-8");
 
 	const gpp = findGpp();
+	const compileFlags = extractFlags(code);
+	const args = buildArgs(srcFile, exeFile, compileFlags);
 
 	try {
 		// Compile
 		try {
-			await execFileAsync(gpp, [srcFile, "-o", exeFile, "-std=c++20", "-Wall", "-O2"], {
+			await execFileAsync(gpp, args, {
 				cwd: workspacePath,
 				timeout: 30000,
 				windowsHide: true,

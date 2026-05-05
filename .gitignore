@@ -12,3 +12,6 @@ Game/
 *.ppm
 *.exe
 node_modules
+
+# 本地引擎源码路径配置（跨平台差异，支持 chaos/UE/Bevy）
+.engine-source-config
