@@ -41,10 +41,10 @@ aliases:
 
 ### 1.1 构建系统
 
-| 状态 | 计划笔记 | Bevy crate/目录 |
-|------|---------|----------------|
-| ⬜ | [[Bevy-构建系统-源码解析：Cargo Workspace 与 Feature 体系]] | 根 `Cargo.toml`，各 crate `Cargo.toml` |
-| ⬜ | [[Bevy-构建系统-源码解析：bevy_internal 聚合与条件编译]] | `crates/bevy_internal/` |
+| 状态  | 计划笔记                                            | Bevy crate/目录                       |
+| --- | ----------------------------------------------- | ----------------------------------- |
+| ✅   | [[Bevy-构建系统-源码解析：Cargo Workspace 与 Feature 体系]] | 根 `Cargo.toml`，各 crate `Cargo.toml` |
+| ✅   | [[Bevy-构建系统-源码解析：bevy_internal 聚合与条件编译]]        | `crates/bevy_internal/`             |
 
 ### 1.2 ECS 核心（bevy_ecs）
 
@@ -76,18 +76,18 @@ aliases:
 
 | 状态 | 计划笔记 | Bevy crate/目录 |
 |------|---------|----------------|
-| ⬜ | [[Bevy-bevy_reflect-源码解析：Reflect trait 与动态类型]] | `crates/bevy_reflect/src/reflect.rs`, `type_info.rs` |
-| ⬜ | [[Bevy-bevy_reflect-源码解析： derive 宏与代码生成]] | `crates/bevy_reflect/derive/` |
-| ⬜ | [[Bevy-bevy_reflect-源码解析：TypeRegistry 与序列化]] | `crates/bevy_reflect/src/type_registry.rs`, `serde/` |
+| ✅ | [[Bevy-bevy_reflect-源码解析：Reflect trait 与动态类型]] | `crates/bevy_reflect/src/reflect.rs`, `type_info.rs` |
+| ✅ | [[Bevy-bevy_reflect-源码解析： derive 宏与代码生成]] | `crates/bevy_reflect/derive/` |
+| ✅ | [[Bevy-bevy_reflect-源码解析：TypeRegistry 与序列化]] | `crates/bevy_reflect/src/type_registry.rs`, `serde/` |
 
 ### 2.2 资产与加载（bevy_asset）
 
-| 状态 | 计划笔记 | Bevy crate/目录 |
-|------|---------|----------------|
-| ⬜ | [[Bevy-bevy_asset-源码解析：AssetServer 与 Handle]] | `crates/bevy_asset/src/server.rs`, `handle.rs` |
-| ⬜ | [[Bevy-bevy_asset-源码解析：AssetLoader 与加载管线]] | `crates/bevy_asset/src/loader.rs`, `loader_builders.rs` |
-| ⬜ | [[Bevy-bevy_asset-源码解析：AssetEvents 与热重载]] | `crates/bevy_asset/src/events.rs`, `processor.rs` |
-| ⬜ | [[Bevy-bevy_asset-源码解析：Asset 依赖与标签]] | `crates/bevy_asset/src/id.rs`, `label.rs` |
+| 状态  | 计划笔记                                          | Bevy crate/目录                                           |
+| --- | --------------------------------------------- | ------------------------------------------------------- |
+| ✅   | [[Bevy-bevy_asset-源码解析：AssetServer 与 Handle]] | `crates/bevy_asset/src/server.rs`, `handle.rs`          |
+| ✅   | [[Bevy-bevy_asset-源码解析：AssetLoader 与加载管线]]    | `crates/bevy_asset/src/loader.rs`, `loader_builders.rs` |
+| ✅   | [[Bevy-bevy_asset-源码解析：AssetEvents 与热重载]]     | `crates/bevy_asset/src/events.rs`, `processor.rs`       |
+| ✅   | [[Bevy-bevy_asset-源码解析：Asset 依赖与标签]]          | `crates/bevy_asset/src/id.rs`, `label.rs`               |
 
 ### 2.3 任务与异步（bevy_tasks）
 
@@ -226,6 +226,9 @@ aliases:
 - **2026-05-03**：创建 Bevy 全解析主索引，完成目录结构与六阶段规划。等待首次源码分析开始。
 - **2026-05-03**：完成第一阶段 1.2 ECS 核心全部 7 篇笔记的三层剥离法分析与产出。
 - **2026-05-03**：完成第一阶段 1.3 App 生命周期（bevy_app）全部 3 篇笔记的三层剥离法分析与产出。
+- **2026-05-06**：完成第一阶段 1.1 构建系统全部 2 篇笔记的三层剥离法分析与产出。第一阶段全部笔记已完成。
+- **2026-05-06**：完成第二阶段 2.2 资产与加载（bevy_asset）全部 4 篇笔记的三层剥离法分析与产出。
+- **2026-05-06**：完成第二阶段 2.1 反射系统（bevy_reflect）全部 3 篇笔记的三层剥离法分析与产出。
 
 ---
 
