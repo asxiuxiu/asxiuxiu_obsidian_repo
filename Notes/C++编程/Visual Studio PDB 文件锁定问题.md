@@ -9,7 +9,7 @@ tags:
   - debug
 ---
 
-> [[索引|← 返回 C++编程索引]]
+> [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
 # Visual Studio PDB 文件锁定问题
 

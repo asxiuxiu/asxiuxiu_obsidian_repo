@@ -14,7 +14,7 @@ cssclasses:
   - wide-table
 ---
 
-> [[索引|← 返回 人工智能索引]]
+> [[Notes/人工智能/索引|← 返回 人工智能索引]]
 
 > [!goal] 转型目标
 > **目标**：从C++游戏开发转向大模型AI工程，瞄准Kimi/Moonshot AI等公司的AI Infra/推理优化岗位

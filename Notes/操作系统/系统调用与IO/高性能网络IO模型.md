@@ -10,7 +10,7 @@ aliases:
   - High Performance Network IO
 ---
 
-> [[索引|← 返回 系统调用与IO索引]]
+> [[Notes/操作系统/系统调用与IO/索引|← 返回 系统调用与IO索引]]
 
 # 高性能网络 IO 模型
 

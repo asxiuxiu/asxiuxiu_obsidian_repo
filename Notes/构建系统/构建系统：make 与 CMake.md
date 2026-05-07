@@ -13,7 +13,7 @@ aliases:
   - 构建系统原理
 ---
 
-> [[索引|← 返回 构建系统索引]]
+> [[Notes/构建系统/索引|← 返回 构建系统索引]]
 
 # 构建系统：make 与 CMake
 
@@ -891,4 +891,4 @@ graph LR
 - [[Notes/C++编程/C++编译过程原理]]
 - [[Notes/C++编程/静态库与动态库]]
 - [[Notes/C++编程/C++编译选项]]
-- [[Notes/游戏引擎/build-system-explained-simple|引擎构建系统通俗解读]] —— 包含代理 CMakeLists.txt 的实际应用案例
+- [[build-system-explained-simple|引擎构建系统通俗解读]] —— 包含代理 CMakeLists.txt 的实际应用案例

@@ -9,7 +9,7 @@ aliases:
   - CLAUDE MEMORY 区别
 ---
 
-> [[索引|← 返回 人工智能索引]]
+> [[Notes/人工智能/索引|← 返回 人工智能索引]]
 
 # CLAUDE.md 与 MEMORY.md 的区别
 

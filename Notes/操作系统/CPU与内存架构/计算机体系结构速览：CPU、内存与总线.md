@@ -10,7 +10,7 @@ aliases:
   - Computer Architecture Overview
 ---
 
-> [[索引|← 返回 CPU与内存架构索引]]
+> [[Notes/操作系统/CPU与内存架构/索引|← 返回 CPU与内存架构索引]]
 
 # 计算机体系结构速览：CPU、内存与总线
 

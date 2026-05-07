@@ -13,7 +13,7 @@ date: 2026-03-22
 source: https://zh.d2l.ai/chapter_installation/index.html
 ---
 
-> [[索引|← 返回 人工智能索引]]
+> [[Notes/人工智能/索引|← 返回 人工智能索引]]
 
 # 深度学习环境搭建（D2L）
 

@@ -11,7 +11,7 @@ aliases:
   - Overwatch ECS Architecture
 ---
 
-> [[索引|← 返回 游戏引擎索引]]
+> [[Notes/游戏引擎杂谈碎片/索引|← 返回 游戏引擎索引]]
 
 > **Source**: GDC 2017 - Overwatch Gameplay Architecture and Netcode
 > **Speaker**: Tim Ford (Lead Gameplay Programmer)

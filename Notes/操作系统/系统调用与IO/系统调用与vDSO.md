@@ -10,7 +10,7 @@ aliases:
   - Syscall and vDSO
 ---
 
-> [[索引|← 返回 系统调用与IO索引]]
+> [[Notes/操作系统/系统调用与IO/索引|← 返回 系统调用与IO索引]]
 
 # 系统调用与 vDSO
 

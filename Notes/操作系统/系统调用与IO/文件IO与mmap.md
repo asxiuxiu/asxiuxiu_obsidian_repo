@@ -10,7 +10,7 @@ aliases:
   - File IO and mmap
 ---
 
-> [[索引|← 返回 系统调用与IO索引]]
+> [[Notes/操作系统/系统调用与IO/索引|← 返回 系统调用与IO索引]]
 
 # 文件 IO 与 mmap
 

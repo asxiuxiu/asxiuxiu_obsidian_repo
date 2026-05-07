@@ -10,7 +10,7 @@ aliases:
   - Release Acquire
 ---
 
-> [[索引|← 返回 并发与多线程索引]]
+> [[Notes/操作系统/并发与多线程/索引|← 返回 并发与多线程索引]]
 
 # Release-Acquire——最实用的跨线程同步
 

@@ -9,7 +9,7 @@ aliases:
   - volatile
 ---
 
-> [[索引|← 返回 C++编程索引]]
+> [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
 # C++ `volatile` 关键字
 
