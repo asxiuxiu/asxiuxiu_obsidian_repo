@@ -1,6 +1,6 @@
 ---
 title: 最小ECS数据层
-date: 2026-05-03
+date: 2026-05-07
 tags:
   - self-game-engine
   - ECS
@@ -83,41 +83,59 @@ std::vector<Health>   healths;
 
 但新的问题立刻出现：**怎么知道 `positions[5]` 和 `velocities[5]` 属于同一个实体？** 如果实体可以动态增删，不同组件类型的数组长度很快就会不一致。
 
-最 naive 的解决方案是：**用哈希表把实体 ID 映射到组件数据。**
+最 naive 的解决方案是：**用数组索引直接作为 Entity ID。**
 
 ```cpp
-using Entity = uint32_t;
+using Entity = uint32_t;  // 直接就是数组索引
 
-std::unordered_map<Entity, Position> posMap;
-std::unordered_map<Entity, Velocity> velMap;
-
-// 设置组件
-posMap[e] = {1.0f, 2.0f, 3.0f};
-
-// 读取组件
-if (posMap.contains(e)) {
-    Position& p = posMap[e];
-}
+positions.push_back({1.0f, 2.0f, 3.0f});  // Entity 0
+velocities.push_back({0.5f, 0, 0});       // Entity 0
 ```
 
-这个方案能跑，但有两个致命缺陷：
+这个方案在"只增不减"时勉强能工作，但一遇到删除就崩。假设你删掉了 `Entity 3`（数组索引 3），为了保持数组紧凑，你把最后一个元素 swap 到索引 3 的位置再 pop_back。问题是：**被移动的那个元素原本在索引 7，现在变成了索引 3——所有引用它的 Entity ID 全部失效了。**
 
-**缺陷一：cache 不友好。** `std::unordered_map` 的节点散落在堆内存中。当 System 批量迭代时，每一步都是指针追逐（pointer chasing）：先读 bucket 数组，再跳到节点，再读数据。对 CPU cache 来说，这是随机访问模式，效率极低。
+如果你在其他地方保存了 `Entity e = 7`，删除 3 之后，7 变成了 3，你的句柄指向了错误的数据。更糟的是，下一帧你创建新实体，新实体复用了索引 7，此时旧句柄 `e = 7` 指向了一个全新的、不相关的实体。
 
-**缺陷二：无法高效线性扫描。** 如果你想"遍历所有 `Position` 组件"，只能遍历哈希表的 bucket。哈希表的遍历效率远低于数组，且无法利用 CPU 的预取机制。
-
-> **运行验证**：在 10 万个实体的场景下，遍历 `std::unordered_map` 的耗时通常是遍历连续数组的 5~10 倍，且随着实体数量增加，差距会进一步扩大。
-
-所以我们需要一种数据结构，它同时满足：
-1. 从 Entity 到组件数据是 O(1) 随机访问
-2. 所有实际存在的组件数据在内存中连续排列，支持高效批量迭代
-3. 增删组件也是 O(1)
+> **核心教训**：Entity ID 不能和数组索引绑定。数组需要为了紧凑而移动元素，但 Entity ID 必须稳定。
 
 ---
 
-## 问题3：Sparse Set 如何同时满足随机访问和连续迭代？
+## 问题3：如果 Entity ID 和数组索引解耦呢？
 
-Sparse Set（稀疏集）的核心思想是用**两张表协作**：
+既然 Entity ID 不能直接当数组索引，那我们需要一张**映射表**：从 Entity ID 查到它在密集数组中的实际位置。
+
+```cpp
+using Entity = uint32_t;
+std::vector<Position> dense;           // 实际组件数据，紧凑存储
+std::vector<int> entityToIndex;        // entityToIndex[entity_id] = dense 中的索引
+```
+
+添加组件时：`dense.push_back(pos)`，然后 `entityToIndex[e] = dense.size() - 1`。
+读取组件时：`index = entityToIndex[e]`，然后 `dense[index]`。
+
+这个方案解决了 ID 稳定性问题。但删除时还有坑：如果我们要删除 `Entity 3`，为了保持 `dense` 数组紧凑，仍然需要 swap-and-pop。
+
+```cpp
+// 删除前：dense = [P0, P1, P2, P3, P4, P5]（6个元素）
+// 假设 entityToIndex[3] = 2，我们要删除 dense[2]
+
+// swap-and-pop：用末尾元素 P5 填充被删位置
+dense[2] = dense[5];           // P5 移到了索引 2
+entityToIndex[5] = 2;          // Entity 5 的新索引是 2
+dense.pop_back();              // 删除末尾
+```
+
+注意这个操作中 **Entity 5 的索引从 5 变成了 2**。但因为所有访问都通过 `entityToIndex` 映射，Entity 5 的 ID 本身没有改变，只是映射表被更新了。外部持有的 `Entity 5` 仍然有效。
+
+这个结构已经接近 Sparse Set 了，但还有一个隐患：`entityToIndex` 是一个 `std::vector<int>`，它的大小必须覆盖所有已分配过的 Entity ID。如果我们创建了 `Entity 10000`，`entityToIndex` 就要 resize 到 10001。对于那些没有 `Position` 组件的实体（比如 `Entity 500`），`entityToIndex[500]` 存的是一个无效标记（如 -1）。
+
+这意味着 `entityToIndex` 本身会变成一个**稀疏数组**——大部分位置是 -1，只有少数位置有有效索引。而 `dense` 数组则是完全紧凑的。这个"稀疏索引 + 密集数据"的组合，就是 **Sparse Set（稀疏集）** 的核心思想。
+
+---
+
+## 问题4：Sparse Set 如何同时满足随机访问和连续迭代？
+
+Sparse Set 用**两张表协作**：
 
 - **稀疏表（sparse）**：以 `entity.id` 为下标，只存一个整数索引（或无效标记）。这张表可以很大，允许存在空洞，但每个元素只有 4 字节。
 - **密集表（dense）**：实际存放组件数据的连续数组。只有"真正拥有该组件的实体"才会被记录在这里，完全无空洞。
@@ -185,7 +203,7 @@ remove(E3)：
 
 ---
 
-## 问题4：删除实体后，旧句柄会变成定时炸弹吗？
+## 问题5：删除实体后，旧句柄会变成定时炸弹吗？
 
 Sparse Set 解决了组件存储问题，但还没有解决**实体生命周期**问题。
 
@@ -209,7 +227,7 @@ AI 持旧句柄： player = {id: 5, generation: 0}
 
 ---
 
-## 问题5：World 怎么统一管起来？
+## 问题6：World 怎么统一管起来？
 
 现在我们有了 `ComponentArray<T>` 和带 generation 的 `Entity`，还需要一个 `World` 把它们粘在一起。
 
@@ -234,7 +252,7 @@ public:
 
 ---
 
-## 问题6：一个 System 怎么同时读 Position 和 Velocity？
+## 问题7：一个 System 怎么同时读 Position 和 Velocity？
 
 现在我们可以存储组件了，但 System 需要同时访问多个组件类型。比如移动系统需要读 `Velocity`、写 `Position`。
 
@@ -264,7 +282,7 @@ void tick(World& world, float dt) {
 
 ---
 
-## 问题7：这个最小实现已经能跑了吗？
+## 问题8：这个最小实现已经能跑了吗？
 
 是的。以下是一个**真正可以编译运行**的完整最小 ECS 数据层，总计约 120 行：
 
@@ -288,6 +306,8 @@ struct Entity {
 
 // ============================================================
 // 2. 组件数据（纯 POD，无虚函数）
+// 解决了什么问题：组件可被直接 memcpy、序列化、diff，AI 能平铺观察
+// 还没解决的问题：没有自动反射，Inspector 需要硬编码字段显示（阶段 4.4 解决）
 // ============================================================
 struct Position { float x{0}, y{0}, z{0}; };
 struct Velocity { float x{0}, y{0}, z{0}; };
@@ -295,6 +315,8 @@ struct Health   { float current{100.0f}; float max{100.0f}; };
 
 // ============================================================
 // 3. ComponentArray：Sparse Set 风格的密集存储
+// 解决了什么问题：O(1) 增删 + 连续迭代 + 实体 ID 稳定
+// 还没解决的问题：多组件联合查询时需要在多个 ComponentArray 之间跳转
 // ============================================================
 template<typename T>
 class ComponentArray {
@@ -344,6 +366,8 @@ public:
 
 // ============================================================
 // 4. World：统一管理 Entity 和 ComponentArray
+// 解决了什么问题：实体生命周期集中管理，销毁时自动清理所有组件
+// 还没解决的问题：组件类型硬编码，新增类型需要改 World 类（阶段 4.1 解决）
 // ============================================================
 class World {
     std::vector<uint32_t> entityGenerations;
@@ -380,6 +404,8 @@ public:
 
 // ============================================================
 // 5. 最简单的 System：批量迭代组件
+// 解决了什么问题：数据驱动更新，System 只关心它需要的组件
+// 还没解决的问题：手动硬编码查询逻辑，无法声明式表达"同时有 A 和 B 的实体"（阶段 4.1 解决）
 // ============================================================
 class MovementSystem {
 public:
@@ -436,7 +462,7 @@ int main() {
 
 ---
 
-## 问题8：工业界怎么解决这些遗留问题？
+## 问题9：工业界怎么解决这些遗留问题？
 
 我们的最小实现采用 Sparse Set 存储，这在原型阶段（< 1000 实体）是完全够用的。但当规模扩大时，两个瓶颈会变得尖锐：
 
@@ -464,8 +490,14 @@ int main() {
 > 
 > UE 的 Actor-Component 模型则走了另一条路：Actor 是 Component 容器，Component 继承自 UObject，存储在指针集合中。这不是 ECS 架构，但 UE 的教训是——当组件组合极度灵活、且编辑器需要频繁动态增删时，指针容器虽然慢，但工程上更容易实现反射、序列化和网络复制。我们的自研引擎选择 ECS，正是为了从 Day 1 就避免这种指针膨胀。
 
+**关于两种策略的 benchmark 验证**：Eurographics 2025 的一篇对比研究（Cox et al.）在 50,000 实体场景下测试了两种架构：
+- **实体创建/组件修改速度**：Sparse Set 显著更快（中位数约 1000ns vs Archetype 约 6600ns），因为 Sparse Set 避免了 Archetype 迁移的数据复制。
+- **迭代性能（高实体数）**：Archetype 显著更优，因为组件在内存中按实体组合聚类，多组件查询时的 cache coherence 更好。
+
+> **诚实性说明**：以上 benchmark 来自受控实验环境（C++20 最小原型），实际游戏引擎中的差距会因具体实现、内存分配器和查询模式而有所不同。但在"增删快 vs 迭代快"这个 trade-off 上，结论是稳定的。
+
 **个人项目推荐路径**：
-1. **原型阶段（当前）**：用 Sparse Set（本笔记的实现）。它够简单、够快、代码量小。
+1. **原型阶段（当前）**：用 Sparse Set（本笔记的实现）。它够简单、够快、代码量小。在 < 5000 实体的场景下，Sparse Set 的迭代性能完全够用，而它的增删速度甚至优于 Archetype。
 2. **迭代阶段**：当发现多组件查询成为瓶颈时，引入 **Archetype 存储模型**。
 3. **工业级阶段**：在 Archetype 内部引入 Chunk-based SoA，并配合 Query 缓存和依赖调度。
 
