@@ -20,7 +20,11 @@ const context = await esbuild.context({
 	external: [
 		'obsidian',
 		'electron',
-		'@codemirror/*',
+		'@codemirror/language',
+		'@codemirror/state',
+		'@codemirror/view',
+		'@lezer/highlight',
+		'@lezer/common',
 		'lezer',
 		...builtins],
 	format: 'cjs',

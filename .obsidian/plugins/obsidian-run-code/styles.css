@@ -3,11 +3,25 @@
 	position: relative;
 }
 
-/* Run button */
-.obsidian-run-code-btn {
+/* Button group (run + clone) */
+.obsidian-run-code-btn-group {
 	position: absolute;
 	top: 8px;
 	right: 40px;
+	display: flex;
+	gap: 4px;
+	z-index: 10;
+	opacity: 0;
+	transition: opacity 0.15s ease;
+}
+
+.obsidian-run-code-block:hover .obsidian-run-code-btn-group,
+.obsidian-run-code-btn-group:hover {
+	opacity: 1;
+}
+
+/* Individual button */
+.obsidian-run-code-btn {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
 	border: none;
@@ -19,13 +33,6 @@
 	line-height: 24px;
 	text-align: center;
 	cursor: pointer;
-	opacity: 0;
-	z-index: 10;
-}
-
-.obsidian-run-code-block:hover .obsidian-run-code-btn,
-.obsidian-run-code-btn:hover {
-	opacity: 1;
 }
 
 /* Output panel */
@@ -54,11 +61,83 @@
 	position: relative;
 }
 
-.cm-preview-code-block .obsidian-run-code-btn {
+.cm-preview-code-block .obsidian-run-code-btn-group {
 	top: 8px;
 	right: 40px;
 }
 
-.cm-preview-code-block:hover .obsidian-run-code-btn {
+.cm-preview-code-block:hover .obsidian-run-code-btn-group {
 	opacity: 1;
+}
+
+/* ---------- Clone / Draft Modal ---------- */
+.run-code-clone-modal {
+	display: flex;
+	flex-direction: column;
+	gap: 12px;
+	max-height: 85vh;
+}
+
+.run-code-clone-modal h3 {
+	margin: 0;
+}
+
+/* CodeMirror 6 editor in Draft modal */
+.run-code-clone-cm6 .cm-editor {
+	min-height: 320px;
+	max-height: 60vh;
+}
+
+/* Hint input row */
+.run-code-clone-hint-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 4px;
+}
+
+.run-code-clone-hint-icon {
+	font-size: 14px;
+	line-height: 1;
+}
+
+.run-code-clone-hint-input {
+	flex: 1;
+	padding: 6px 10px;
+	font-size: 13px;
+	font-family: var(--font-interface);
+	background: var(--background-primary-alt);
+	color: var(--text-normal);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+}
+
+.run-code-clone-hint-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+}
+
+/* Actions and output */
+.run-code-clone-actions {
+	display: flex;
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.run-code-clone-output {
+	margin: 0;
+	padding: 8px;
+	background: var(--background-secondary);
+	border: 1px solid var(--background-modifier-border);
+	border-radius: 4px;
+	font-family: var(--font-monospace);
+	font-size: var(--code-size);
+	max-height: 240px;
+	overflow: auto;
+	white-space: pre-wrap;
+}
+
+.run-code-clone-output.is-error {
+	color: var(--text-error);
+	border-color: var(--background-modifier-error);
 }

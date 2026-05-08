@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(cmd /c mklink /J .claude\\\\skills .agents\\\\skills)",
+      "Bash(obsidian file *)",
+      "Bash(obsidian read *)",
+      "Bash(obsidian eval *)",
+      "WebSearch"
+    ]
+  }
+}

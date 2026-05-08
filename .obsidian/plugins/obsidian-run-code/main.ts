@@ -2,6 +2,7 @@ import { App, Plugin, PluginSettingTab, Setting, Editor, MarkdownView } from "ob
 import { DEFAULT_SETTINGS, RunCodeSettings } from "./settings";
 import { runButtonExtension } from "./runButtonExtension";
 import { runCpp, getDefaultWorkspacePath } from "./cppRunner";
+import { CloneRunModal } from "./cloneRunModal";
 
 const CPP_SNIPPET = "```cpp\n#include <iostream>\n\nint main() {\n    \n    return 0;\n}\n```\n";
 
@@ -17,7 +18,7 @@ export default class RunCodePlugin extends Plugin {
 			this.settings.workspacePath = getDefaultWorkspacePath(basePath);
 		}
 
-		this.registerEditorExtension(runButtonExtension(this.settings));
+		this.registerEditorExtension(runButtonExtension(this.app, this.settings));
 
 		this.registerMarkdownPostProcessor((element, context) => {
 			if (!this.settings.showRunButton) return;
@@ -38,6 +39,9 @@ export default class RunCodePlugin extends Plugin {
 				pre.parentNode?.insertBefore(wrapper, pre);
 				wrapper.appendChild(pre);
 
+				const btnGroup = document.createElement("div");
+				btnGroup.className = "obsidian-run-code-btn-group";
+
 				const btn = document.createElement("button");
 				btn.textContent = "▶";
 				btn.title = "Run C++";
@@ -57,8 +61,19 @@ export default class RunCodePlugin extends Plugin {
 					outputEl.textContent = result.text;
 					outputEl.classList.toggle("is-error", result.isError);
 				});
+				btnGroup.appendChild(btn);
 
-				wrapper.appendChild(btn);
+				const cloneBtn = document.createElement("button");
+				cloneBtn.textContent = "🧪";
+				cloneBtn.title = "Clone to Draft Window";
+				cloneBtn.className = "obsidian-run-code-btn clone-btn";
+				cloneBtn.addEventListener("click", () => {
+					const code = codeEl.textContent || "";
+					new CloneRunModal(this.app, code, this.settings.workspacePath).open();
+				});
+				btnGroup.appendChild(cloneBtn);
+
+				wrapper.appendChild(btnGroup);
 			});
 		});
 
@@ -130,5 +145,18 @@ class RunCodeSettingTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					});
 			});
+
+		new Setting(containerEl)
+			.setName("Moonshot API Key")
+			.setDesc("Optional. If set, Kimi code generation will use HTTP API directly (faster) instead of Kimi CLI.")
+			.addText((text) =>
+				text
+					.setPlaceholder("sk-xxxxxxxx")
+					.setValue(this.plugin.settings.moonshotApiKey)
+					.onChange(async (value) => {
+						this.plugin.settings.moonshotApiKey = value.trim();
+						await this.plugin.saveSettings();
+					})
+			);
 	}
 }

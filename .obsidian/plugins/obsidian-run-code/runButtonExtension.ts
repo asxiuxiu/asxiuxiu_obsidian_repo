@@ -1,23 +1,43 @@
+import { App } from "obsidian";
 import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate, WidgetType } from "@codemirror/view";
 import { RangeSetBuilder } from "@codemirror/state";
 import { syntaxTree } from "@codemirror/language";
 import { RunCodeSettings } from "./settings";
 import { runCpp } from "./cppRunner";
+import { CloneRunModal } from "./cloneRunModal";
 
 class RunButtonWidget extends WidgetType {
-	constructor(private code: string, private settings: RunCodeSettings) {
+	constructor(
+		private code: string,
+		private settings: RunCodeSettings,
+		private app: App
+	) {
 		super();
 	}
 
 	toDOM(): HTMLElement {
-		const btn = document.createElement("button");
-		btn.textContent = "▶";
-		btn.title = "Run C++";
-		btn.className = "obsidian-run-code-btn";
-		btn.addEventListener("click", async () => {
+		const container = document.createElement("div");
+		container.className = "obsidian-run-code-btn-group";
+
+		const runBtn = document.createElement("button");
+		runBtn.textContent = "▶";
+		runBtn.title = "Run C++";
+		runBtn.className = "obsidian-run-code-btn";
+		runBtn.addEventListener("click", async () => {
 			await this.runCode();
 		});
-		return btn;
+		container.appendChild(runBtn);
+
+		const cloneBtn = document.createElement("button");
+		cloneBtn.textContent = "🧪";
+		cloneBtn.title = "Clone to Draft Window";
+		cloneBtn.className = "obsidian-run-code-btn clone-btn";
+		cloneBtn.addEventListener("click", () => {
+			new CloneRunModal(this.app, this.code, this.settings.workspacePath, this.settings.moonshotApiKey).open();
+		});
+		container.appendChild(cloneBtn);
+
+		return container;
 	}
 
 	async runCode() {
@@ -39,7 +59,7 @@ class RunButtonWidget extends WidgetType {
 	}
 }
 
-export function runButtonExtension(settings: RunCodeSettings) {
+export function runButtonExtension(app: App, settings: RunCodeSettings) {
 	return ViewPlugin.fromClass(
 		class {
 			decorations: DecorationSet = Decoration.none;
@@ -89,7 +109,7 @@ export function runButtonExtension(settings: RunCodeSettings) {
 
 									const codeText = view.state.doc.sliceString(node.to, codeEnd).trim();
 									const deco = Decoration.widget({
-										widget: new RunButtonWidget(codeText, settings),
+										widget: new RunButtonWidget(codeText, settings, app),
 										side: 1,
 									});
 									builder.add(node.from, node.from, deco);
