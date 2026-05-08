@@ -207,7 +207,7 @@ aliases:
 
 ### 3.4 容器与分配器
 
-- [x] [[容器与分配器]] — FrameArena、ObjectPool、SoA / 稀疏集、内存统计、与 `std::vector` 的迁移边界
+- [x] [[容器与分配器]] — FrameArena、ObjectPool、SparseSet、SoA、RingBuffer、统一分配器接口、与 `std::vector` 的迁移边界
 
 > **回探替换点**：阶段 2 的 `ComponentArray`（`std::vector` 临时实现）→ 替换为引擎自定义的组件存储（Pool / Sparse Set 初版）。这是本阶段**最关键的回探替换**。
 > **下一步**：引擎需要加载外部资源。
