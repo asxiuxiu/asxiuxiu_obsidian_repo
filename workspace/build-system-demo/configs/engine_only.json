@@ -1,6 +1,0 @@
-{
-    "solution_name": "EngineCore",
-    "source_tree": [
-        "_engine/cmake_projects.json"
-    ]
-}
