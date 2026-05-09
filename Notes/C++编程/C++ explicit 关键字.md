@@ -1,4 +1,4 @@
----
+﻿---
 title: C++ explicit 关键字
 date: 2026-03-20
 tags:
@@ -151,3 +151,4 @@ widgets.push_back(Widget(42));   // ✅ 明确意图
 
 - [[C++类型转换]]
 - [[C++ 对象生存期与 RAII]]
+

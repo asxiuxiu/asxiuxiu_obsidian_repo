@@ -1,4 +1,4 @@
----
+﻿---
 title: C++ decltype 关键字
 date: 2026-03-20
 tags:
@@ -212,3 +212,4 @@ using ReturnType = decltype(std::declval<Foo>().bar());  // int
 - [[C++ 对象生存期与 RAII]]
 - [[C++ explicit 关键字]]
 - [[C++ inline 关键字]]
+

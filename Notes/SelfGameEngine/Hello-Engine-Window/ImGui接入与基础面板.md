@@ -13,7 +13,7 @@ aliases:
   - 基础面板
 ---
 
-> [[0_RoadMap|← 返回 SelfGameEngine 构建手册]]
+> [[Notes/SelfGameEngine/0_RoadMap|← 返回 SelfGameEngine 构建手册]]
 
 > **前置依赖**：[[最简图形后端]]
 > **本模块增量**：引擎获得了在屏幕上绘制调试面板的能力——窗口、按钮、文本、滑块、颜色选择器。这是后续所有可视化工具（[[可视化日志系统]]、ECS Inspector、性能分析器）的渲染基础，也是编辑器框架的雏形。
@@ -634,4 +634,4 @@ int main() {
 
 ---
 
-> [[0_RoadMap|← 返回 SelfGameEngine 构建手册]]
+> [[Notes/SelfGameEngine/0_RoadMap|← 返回 SelfGameEngine 构建手册]]

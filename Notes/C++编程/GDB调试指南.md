@@ -1,4 +1,4 @@
----
+﻿---
 title: GDB 调试学习笔记
 tags:
   - cpp
@@ -588,3 +588,4 @@ end
 | `next` | `n` | 单步执行（不进入函数）|
 | `print` | `p` | 查看变量 |
 | `backtrace` | `bt` | 查看调用栈 |
+

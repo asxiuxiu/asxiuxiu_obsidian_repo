@@ -371,4 +371,4 @@ chaos 引擎的 Prefab 系统依赖 `PrefabRSA`（Sketum 二进制资产）、`E
 >
 > **下一步**：[[实体生命周期与注册表]]，因为 Prefab 实例化的本质是批量创建实体，需要完善的 EntityID 分配、生成回收和延迟销毁机制作为底层支撑。
 
-> [[0_RoadMap|← 返回 自研引擎构建手册]]
+> [[Notes/SelfGameEngine/0_RoadMap|← 返回 自研引擎构建手册]]

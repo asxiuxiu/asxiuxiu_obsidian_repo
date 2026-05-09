@@ -1,4 +1,4 @@
----
+﻿---
 title: 调试器如何找到变量位置——进程隔离与 DWARF 调试信息
 date: 2026-03-18
 tags:
@@ -213,3 +213,4 @@ readelf --debug-dump=info a.out | grep -A 10 "DW_AT_name.*param"
 - [[调试器核心概念与原理]]
 - [[C++ 编译过程详解]]
 - [[虚拟内存与内存管理]]
+

@@ -1,4 +1,4 @@
----
+﻿---
 title: C++ noexcept 关键字
 date: 2026-03-20
 tags:
@@ -182,3 +182,4 @@ void process() noexcept {
 
 - [[C++ 值类别与移动语义]] — noexcept 与移动语义的关系
 - [[C++ 对象生存期与 RAII]] — 析构函数与异常安全
+

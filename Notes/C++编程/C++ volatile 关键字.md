@@ -1,4 +1,4 @@
----
+﻿---
 title: C++ volatile 关键字
 date: 2026-03-20
 tags:
@@ -158,3 +158,4 @@ void loadThread() {
 ## 相关笔记
 
 - [[C++类型转换]]
+

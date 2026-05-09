@@ -1,4 +1,4 @@
----
+﻿---
 title: C++ unordered_map 的底层原理与性能陷阱
 date: 2026-04-14
 tags:
@@ -268,3 +268,4 @@ entityIndex (sparse)          dense (components)
 ---
 
 > [[Notes/C++编程/索引|← 返回 C++ 索引]]
+

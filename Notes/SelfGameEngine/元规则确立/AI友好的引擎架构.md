@@ -11,7 +11,7 @@ aliases:
   - AI引擎架构
 ---
 
-> [[0_RoadMap|← 返回 SelfGameEngine 构建手册]]
+> [[Notes/SelfGameEngine/0_RoadMap|← 返回 SelfGameEngine 构建手册]]
 
 > **前置依赖**：无（这是所有后续笔记的起点）
 > **本模块增量**：确立了 **ECS + 反射 + 确定性** 的元规则，为所有后续模块设计提供统一判据。读完这篇笔记，你将能回答"为什么这个引擎选择 ECS 而非 OOP"，能列出 AI 友好架构的 5 条设计红线，并能为任意模块画出"AI 观察接口"和"AI 操作接口"的草图。
@@ -558,4 +558,4 @@ int main() {
 
 下一篇：[[窗口与输入系统]] — 我们将创建第一个可交互窗口、建立事件循环、计算 DeltaTime，为所有后续可视化调试打下基础。
 
-> [[0_RoadMap|← 返回 SelfGameEngine 构建手册]]
+> [[Notes/SelfGameEngine/0_RoadMap|← 返回 SelfGameEngine 构建手册]]
