@@ -1,5 +1,5 @@
 ﻿---
-title: C++ decltype 关键字
+title: decltype 关键字
 date: 2026-03-20
 tags:
   - C++
@@ -11,7 +11,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
-# C++ decltype 关键字
+# decltype 关键字
 
 > [!info] 概述
 > `decltype` 是 C++11 引入的**编译期类型推导**关键字。它在不求值表达式的前提下，推导出表达式的类型，常用于泛型编程、模板和返回类型推导。

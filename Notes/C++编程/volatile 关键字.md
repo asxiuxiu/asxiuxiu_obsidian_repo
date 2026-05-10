@@ -1,5 +1,5 @@
 ﻿---
-title: C++ volatile 关键字
+title: volatile 关键字
 date: 2026-03-20
 tags:
   - C++
@@ -11,7 +11,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
-# C++ `volatile` 关键字
+# `volatile` 关键字
 
 ## 为什么需要 `volatile`？
 

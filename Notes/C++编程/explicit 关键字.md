@@ -1,5 +1,5 @@
 ﻿---
-title: C++ explicit 关键字
+title: explicit 关键字
 date: 2026-03-20
 tags:
   - C++
@@ -11,7 +11,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
-# C++ explicit 关键字
+# explicit 关键字
 
 > [!info] 概述
 > `explicit` 用于修饰**构造函数**或**转换运算符**，禁止编译器将其用于隐式类型转换，要求调用方必须明确写出转换意图。

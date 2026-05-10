@@ -1,5 +1,5 @@
 ﻿---
-title: C++ constexpr 关键字
+title: constexpr 关键字
 date: 2026-04-03
 tags:
   - cpp
@@ -11,7 +11,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
-# C++ constexpr 关键字
+# constexpr 关键字
 
 ## Why：为什么要学习 constexpr？
 

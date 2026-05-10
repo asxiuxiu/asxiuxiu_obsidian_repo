@@ -1,5 +1,5 @@
 ﻿---
-title: C++ unordered_map 的底层原理与性能陷阱
+title: unordered_map 的底层原理与性能陷阱
 date: 2026-04-14
 tags:
   - C++
@@ -13,7 +13,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++ 索引]]
 
-# C++ unordered_map 的底层原理与性能陷阱
+# unordered_map 的底层原理与性能陷阱
 
 > **关联笔记**：[[Notes/SelfGameEngine/组件系统架构|组件系统架构]] —— 本文讨论的哈希表性能问题，正是 ECS 中选择 `Sparse Set` 而非 `unordered_map` 存储组件的核心原因。
 

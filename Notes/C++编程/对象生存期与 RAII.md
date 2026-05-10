@@ -1,5 +1,5 @@
 ---
-title: C++ 对象生存期与 RAII
+title: 对象生存期与 RAII
 date: 2026-03-20
 tags:
   - C++
@@ -13,7 +13,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
-# C++ 对象生存期与 RAII
+# 对象生存期与 RAII
 
 > [!info] 概述
 > 对象生存期（Object Lifetime）是 C++ 核心概念之一，理解它对于编写安全、高效的代码至关重要。RAII（Resource Acquisition Is Initialization）是 C++ 管理资源的标准范式，它将资源生命周期与对象生命周期绑定，确保资源正确释放。

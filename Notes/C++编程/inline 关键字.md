@@ -1,5 +1,5 @@
 ﻿---
-title: C++ inline 关键字
+title: inline 关键字
 date: 2026-03-20
 tags:
   - C++
@@ -12,7 +12,7 @@ aliases:
 
 > [[Notes/C++编程/索引|← 返回 C++编程索引]]
 
-# C++ `inline` 关键字
+# `inline` 关键字
 
 ## 两个截然不同的含义
 
