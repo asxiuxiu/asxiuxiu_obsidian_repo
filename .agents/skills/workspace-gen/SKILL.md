@@ -250,7 +250,7 @@ int main() {
 ### 构建与调试
 
 **初始化构建（首次）**：
-```powershell
+```bash
 cd workspace/<name>
 cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
 cmake --build build

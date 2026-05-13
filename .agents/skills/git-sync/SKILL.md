@@ -34,30 +34,29 @@ Git 同步管理，覆盖 vault 的"推-拉-修"完整工作流。
 
 ### 执行
 
-```powershell
+```bash
 # 检查是否有更改
-$hasChanges = (git status --short) -ne $null
-if (-not $hasChanges) {
-    Write-Host "没有需要提交的更改"
+if [ -z "$(git status --short)" ]; then
+    echo "没有需要提交的更改"
     exit 0
-}
+fi
 
 # 显示修改的文件
-Write-Host "以下文件将被提交："
+echo "以下文件将被提交："
 git status --short
 
 # 添加所有更改
 git add .
 
 # 提交（强制时间戳格式）
-$commitMsg = "Vault backup: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+commitMsg="Vault backup: $(date '+%Y-%m-%d %H:%M:%S')"
 git commit -m "$commitMsg"
 
 # 推送到远程
-$branch = git branch --show-current
-git push origin $branch
+branch=$(git branch --show-current)
+git push origin "$branch"
 
-Write-Host "成功推送到远程仓库！"
+echo "成功推送到远程仓库！"
 git log --oneline -1
 ```
 
@@ -75,57 +74,56 @@ git log --oneline -1
 
 ### 执行
 
-```powershell
-$currentBranch = git branch --show-current
-$remote = "origin"
+```bash
+currentBranch=$(git branch --show-current)
+remote="origin"
 
-Write-Host "正在尝试同步远程更新（使用 rebase 保持直线历史）..."
+echo "正在尝试同步远程更新（使用 rebase 保持直线历史）..."
 
 # 尝试使用 rebase 拉取，自动暂存本地更改
-git pull --rebase --autostash $remote $currentBranch 2>&1
-if ($LASTEXITCODE -eq 0) {
-    Write-Host ""
-    Write-Host "同步完成！分支保持直线历史"
-    Write-Host ""
-    Write-Host "最近3次提交："
+if git pull --rebase --autostash "$remote" "$currentBranch" 2>&1; then
+    echo ""
+    echo "同步完成！分支保持直线历史"
+    echo ""
+    echo "最近3次提交："
     git log --oneline -3
     exit 0
-}
+fi
 
 # 拉取失败，显示状态
-Write-Host ""
-Write-Host "同步失败，检测到冲突或无法自动合并"
-Write-Host ""
-Write-Host "当前状态："
+echo ""
+echo "同步失败，检测到冲突或无法自动合并"
+echo ""
+echo "当前状态："
 git status --short
-Write-Host ""
-Write-Host "最近的提交历史："
+echo ""
+echo "最近的提交历史："
 git log --oneline --graph -5 --all
-Write-Host ""
-Write-Host "您可以："
-Write-Host "  1. 手动解决冲突后完成 rebase"
-Write-Host "  2. 或者放弃本地更改，强制 reset 到远端版本"
-Write-Host ""
-Write-Host "是否强制重置到远端版本？这将丢弃所有本地未提交的更改！(yes/no)"
+echo ""
+echo "您可以："
+echo "  1. 手动解决冲突后完成 rebase"
+echo "  2. 或者放弃本地更改，强制 reset 到远端版本"
+echo ""
+echo "是否强制重置到远端版本？这将丢弃所有本地未提交的更改！(yes/no)"
 ```
 
 如果用户确认重置：
 
-```powershell
-$currentBranch = git branch --show-current
-$remote = "origin"
+```bash
+currentBranch=$(git branch --show-current)
+remote="origin"
 
 # 中止可能正在进行的 rebase
-git rebase --abort 2>$null
+git rebase --abort 2>/dev/null || true
 
 # 强制重置到远端版本
-Write-Host "正在强制重置到远端版本: $remote/$currentBranch"
+echo "正在强制重置到远端版本: $remote/$currentBranch"
 git reset --hard "$remote/$currentBranch"
 
-Write-Host ""
-Write-Host "已强制同步到远端版本"
-Write-Host ""
-Write-Host "最近3次提交："
+echo ""
+echo "已强制同步到远端版本"
+echo ""
+echo "最近3次提交："
 git log --oneline -3
 ```
 
@@ -144,119 +142,115 @@ git log --oneline -3
 
 ### 检查流程
 
-```powershell
-$currentBranch = git branch --show-current
-$remote = "origin"
+```bash
+currentBranch=$(git branch --show-current)
+remote="origin"
 
-Write-Host "开始检查同步问题..."
-Write-Host ""
+echo "开始检查同步问题..."
+echo ""
 
 # ============ 检查 1: 分支是否为直线历史 ============
-Write-Host "检查 1: 分支历史是否线性..."
+echo "检查 1: 分支历史是否线性..."
 
-$mergeBase = git merge-base $currentBranch "$remote/$currentBranch" 2>$null
-if ($mergeBase) {
-    $mergeCommits = (git rev-list --merges "$mergeBase..$currentBranch" 2>$null | Measure-Object).Count
-    if ($mergeCommits -gt 0) {
-        Write-Host "  发现 $mergeCommits 个 merge commit，分支历史非直线"
+mergeBase=$(git merge-base "$currentBranch" "$remote/$currentBranch" 2>/dev/null || true)
+if [ -n "$mergeBase" ]; then
+    mergeCommits=$(git rev-list --merges "$mergeBase..$currentBranch" 2>/dev/null | wc -l)
+    if [ "$mergeCommits" -gt 0 ]; then
+        echo "  发现 $mergeCommits 个 merge commit，分支历史非直线"
         git log --oneline --graph -5
-    } else {
-        Write-Host "  分支历史为直线"
-    }
-} else {
-    Write-Host "  无法确定与远程分支的关系"
-}
+    else
+        echo "  分支历史为直线"
+    fi
+else
+    echo "  无法确定与远程分支的关系"
+fi
 
-Write-Host ""
+echo ""
 
 # ============ 检查 2: Commit 信息规范 ============
-Write-Host "检查 2: Commit 信息是否符合规范..."
+echo "检查 2: Commit 信息是否符合规范..."
 
-$violations = @()
-$commits = git log --format="%H|%ai|%s" -10 2>$null
-$commitCount = 0
+violations=()
+commitCount=0
 
-foreach ($line in $commits) {
-    $parts = $line -split "\|", 3
-    $hash = $parts[0]
-    $date = $parts[1]
-    $msg = $parts[2]
-    $commitCount++
+while IFS='|' read -r hash date msg; do
+    commitCount=$((commitCount + 1))
+    if ! echo "$msg" | grep -qE '^Vault backup: [0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$'; then
+        violations+=("  ${hash:0:7}  $date  $msg")
+    fi
+done < <(git log --format="%H|%ai|%s" -10 2>/dev/null)
 
-    if ($msg -notmatch "^Vault backup: \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$") {
-        $violations += "  $($hash.Substring(0,7))  $date  $msg"
-    }
-}
+if [ ${#violations[@]} -gt 0 ]; then
+    echo "  发现以下 commit 信息不符合规范："
+    for v in "${violations[@]}"; do
+        echo "$v"
+    done
+    echo ""
+    echo "  规范格式: Vault backup: YYYY-MM-DD HH:MM:SS"
+else
+    echo "  最近 $commitCount 个 commit 信息符合规范"
+fi
 
-if ($violations.Count -gt 0) {
-    Write-Host "  发现以下 commit 信息不符合规范："
-    $violations | ForEach-Object { Write-Host $_ }
-    Write-Host ""
-    Write-Host "  规范格式: Vault backup: YYYY-MM-DD HH:MM:SS"
-} else {
-    Write-Host "  最近 $commitCount 个 commit 信息符合规范"
-}
-
-Write-Host ""
-Write-Host "检查完成"
+echo ""
+echo "检查完成"
 ```
 
 ### 修复 1: 非直线分支历史
 
 适用于未推送的本地更改：
 
-```powershell
-$currentBranch = git branch --show-current
-$remote = "origin"
+```bash
+currentBranch=$(git branch --show-current)
+remote="origin"
 
-Write-Host "正在修复分支历史..."
+echo "正在修复分支历史..."
 
 # 暂存本地未提交更改
-$stashed = $false
-if ((git diff --quiet; $LASTEXITCODE -ne 0) -or (git diff --cached --quiet; $LASTEXITCODE -ne 0)) {
-    Write-Host "暂存本地更改..."
-    git stash push -m "git-sync-fix-$(Get-Date -Format 'yyyyMMddHHmmss')"
-    $stashed = $true
-}
+stashed=false
+if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+    echo "暂存本地更改..."
+    git stash push -m "git-sync-fix-$(date '+%Y%m%d%H%M%S')"
+    stashed=true
+fi
 
 # 执行 rebase
-if (git rebase "$remote/$currentBranch"; $LASTEXITCODE -eq 0) {
-    Write-Host "分支历史已修复为直线"
+if git rebase "$remote/$currentBranch"; then
+    echo "分支历史已修复为直线"
     git log --oneline --graph -5
-} else {
-    Write-Host ""
-    Write-Host "Rebase 失败，存在冲突"
-    Write-Host "解决后执行: git rebase --continue"
-    Write-Host "或放弃: git rebase --abort"
+else
+    echo ""
+    echo "Rebase 失败，存在冲突"
+    echo "解决后执行: git rebase --continue"
+    echo "或放弃: git rebase --abort"
     exit 1
-}
+fi
 
 # 恢复暂存
-if ($stashed) {
-    Write-Host ""
-    Write-Host "恢复本地更改..."
+if [ "$stashed" = true ]; then
+    echo ""
+    echo "恢复本地更改..."
     git stash pop
-}
+fi
 
-Write-Host ""
-Write-Host "修复完成"
+echo ""
+echo "修复完成"
 ```
 
 ### 修复 2: Commit Message 不规范
 
 **警告**：这将重写 commit hash，需要强制推送。仅适用于个人仓库。
 
-使用提供的 PowerShell 脚本一键修复：
+使用提供的 Bash 脚本一键修复：
 
-```powershell
+```bash
 # 仅检测（不执行修复）
-.\.agents\skills\git-sync\fix-commit-msg.ps1 -DryRun
+./.agents/skills/git-sync/fix-commit-msg.sh --dry-run
 
 # 交互式修复（推荐）
-.\.agents\skills\git-sync\fix-commit-msg.ps1
+./.agents/skills/git-sync/fix-commit-msg.sh
 
 # 检查最近 20 个 commit
-.\.agents\skills\git-sync\fix-commit-msg.ps1 -CheckCount 20
+./.agents/skills/git-sync/fix-commit-msg.sh --check-count 20
 ```
 
 脚本功能：
@@ -269,25 +263,25 @@ Write-Host "修复完成"
 ### 手动修复步骤
 
 1. **确认需要修复的 commit**：
-```powershell
+```bash
 git log --format="%H %ai %s" -10
 ```
 
 2. **创建备份分支**（重要！）：
-```powershell
+```bash
 git branch backup-before-fix
 ```
 
 3. **找到最后一个正确的 commit**：
-```powershell
+```bash
 # 找到最后一个格式正确的 commit
-$baseCommit = "<正确commit的hash>"
+baseCommit="<正确commit的hash>"
 ```
 
 4. **重建历史（Cherry-pick 方法）**：
-```powershell
+```bash
 # 从 base commit 创建新分支
-git checkout -b fix-commits $baseCommit
+git checkout -b fix-commits "$baseCommit"
 
 # 逐个 cherry-pick 并修正消息
 # 对每个需要修复的 commit：
@@ -304,18 +298,6 @@ git push --force-with-lease origin main
 # 清理
 git branch -D fix-commits backup-before-fix
 ```
-
----
-
-## PowerShell 兼容性
-
-用户环境为 Windows PowerShell 5.1，需要注意：
-
-| 问题 | 解决方式 |
-|------|---------|
-| 不支持 `&&` / `\|\|` | 使用 `if ($?) { ... }` 或 `cmd /c` |
-| 命令链 | 使用 `;` 分隔而非 `&&` |
-| 引号转义 | 注意 `"` 和 `'` 的使用 |
 
 ---
 

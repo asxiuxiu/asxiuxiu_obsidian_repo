@@ -30,9 +30,9 @@
 ## 跨平台与 Shell
 
 - 编译器 GCC，构建 `cmake --build build`，路径用 `/`，换行 LF
-- 环境：Windows PowerShell 5.1，**禁用 `&&` / `||`**
+- 环境：Git Bash（MSYS2），支持 `&&` / `||` 命令链
 - 文件修改优先用 `ReadFile/WriteFile/StrReplaceFile/Glob`
-- 中文路径/读写文件时显式加 `-Encoding UTF8`；git 中文报错用 `git restore --source=HEAD -- "path"`
+- 中文路径/读写文件时确保 UTF-8 编码；git 中文报错用 `git restore --source=HEAD -- "path"`
 
 ## Obsidian 技能
 

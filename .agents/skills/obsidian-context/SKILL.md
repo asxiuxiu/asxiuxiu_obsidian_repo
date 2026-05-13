@@ -43,7 +43,7 @@ obsidian read active
 obsidian eval code="app.workspace.activeEditor?.editor?.getSelection() ?? ''"
 ```
 
-> **Windows 注意**：使用 PowerShell 语法，命令分隔用 `;` 而非 `&&`。如果 `obsidian` 不在 PATH 中，使用绝对路径调用。
+> **Windows 注意**：Git Bash 支持 `&&` / `||` 命令链。如果 `obsidian` 不在 PATH 中，使用绝对路径调用。
 
 ## 注入格式
 
