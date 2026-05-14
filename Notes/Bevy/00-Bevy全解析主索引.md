@@ -74,11 +74,11 @@ aliases:
 
 ### 2.1 反射系统（bevy_reflect）
 
-| 状态 | 计划笔记 | Bevy crate/目录 |
-|------|---------|----------------|
-| ✅ | [[Bevy-bevy_reflect-源码解析：Reflect trait 与动态类型]] | `crates/bevy_reflect/src/reflect.rs`, `type_info.rs` |
-| ✅ | [[Bevy-bevy_reflect-源码解析： derive 宏与代码生成]] | `crates/bevy_reflect/derive/` |
-| ✅ | [[Bevy-bevy_reflect-源码解析：TypeRegistry 与序列化]] | `crates/bevy_reflect/src/type_registry.rs`, `serde/` |
+| 状态  | 计划笔记                                           | Bevy crate/目录                                        |
+| --- | ---------------------------------------------- | ---------------------------------------------------- |
+| ✅   | [[Bevy-bevy_reflect-源码解析：Reflect trait 与动态类型]] | `crates/bevy_reflect/src/reflect.rs`, `type_info.rs` |
+| ✅   | [[Bevy-bevy_reflect-源码解析：derive 宏与代码生成]]      | `crates/bevy_reflect/derive/`                        |
+| ✅   | [[Bevy-bevy_reflect-源码解析：TypeRegistry 与序列化]]   | `crates/bevy_reflect/src/type_registry.rs`, `serde/` |
 
 ### 2.2 资产与加载（bevy_asset）
 
@@ -93,8 +93,8 @@ aliases:
 
 | 状态 | 计划笔记 | Bevy crate/目录 |
 |------|---------|----------------|
-| ⬜ | [[Bevy-bevy_tasks-源码解析：TaskPool 与并行计算]] | `crates/bevy_tasks/src/task_pool.rs` |
-| ⬜ | [[Bevy-bevy_tasks-源码解析：ComputeTaskPool 与 IO 线程]] | `crates/bevy_tasks/src/usages.rs` |
+| ✅ | [[Bevy-bevy_tasks-源码解析：TaskPool 与并行计算]] | `crates/bevy_tasks/src/task_pool.rs` |
+| ✅ | [[Bevy-bevy_tasks-源码解析：ComputeTaskPool 与 IO 线程]] | `crates/bevy_tasks/src/usages.rs` |
 
 ### 2.4 基础工具 crate
 
@@ -115,13 +115,13 @@ aliases:
 
 | 状态 | 计划笔记 | Bevy crate/目录 |
 |------|---------|----------------|
-| ⬜ | [[Bevy-bevy_render-源码解析：RenderApp 与提取阶段]] | `crates/bevy_render/src/lib.rs`, `RenderApp` |
-| ⬜ | [[Bevy-bevy_render-源码解析：RenderGraph 与节点调度]] | `crates/bevy_render/src/render_graph/` |
-| ⬜ | [[Bevy-bevy_render-源码解析：RenderPhase 与绘制排序]] | `crates/bevy_render/src/render_phase/` |
-| ⬜ | [[Bevy-bevy_render-源码解析：View 与 Camera]] | `crates/bevy_render/src/camera/`, `view/` |
-| ⬜ | [[Bevy-bevy_render-源码解析：Mesh 与 Vertex 布局]] | `crates/bevy_render/src/mesh/`, `render_resource/` |
-| ⬜ | [[Bevy-bevy_render-源码解析：Texture 与 BindGroup]] | `crates/bevy_render/src/texture/`, `render_resource/` |
-| ⬜ | [[Bevy-bevy_render-源码解析：wgpu 后端抽象]] | `crates/bevy_render/src/renderer/` |
+| ✅ | [[Bevy-bevy_render-源码解析：RenderApp 与提取阶段]] | `crates/bevy_render/src/lib.rs`, `RenderApp` |
+| ✅ | [[Bevy-bevy_render-源码解析：Render Schedule 与渲染管线驱动]] | `crates/bevy_render/src/renderer/`, `src/lib.rs` |
+| ✅ | [[Bevy-bevy_render-源码解析：RenderPhase 与绘制排序]] | `crates/bevy_render/src/render_phase/` |
+| ✅ | [[Bevy-bevy_render-源码解析：View 与 Camera]] | `crates/bevy_render/src/camera/`, `view/` |
+| ✅ | [[Bevy-bevy_render-源码解析：Mesh 与 Vertex 布局]] | `crates/bevy_render/src/mesh/`, `render_resource/` |
+| ✅ | [[Bevy-bevy_render-源码解析：Texture 与 BindGroup]] | `crates/bevy_render/src/texture/`, `render_resource/` |
+| ✅ | [[Bevy-bevy_render-源码解析：wgpu 后端抽象]] | `crates/bevy_render/src/renderer/` |
 
 ### 3.2 PBR 与材质（bevy_pbr）
 
@@ -229,6 +229,8 @@ aliases:
 - **2026-05-06**：完成第一阶段 1.1 构建系统全部 2 篇笔记的三层剥离法分析与产出。第一阶段全部笔记已完成。
 - **2026-05-06**：完成第二阶段 2.2 资产与加载（bevy_asset）全部 4 篇笔记的三层剥离法分析与产出。
 - **2026-05-06**：完成第二阶段 2.1 反射系统（bevy_reflect）全部 3 篇笔记的三层剥离法分析与产出。
+- **2026-05-14**：完成第二阶段 2.3 任务与异步（bevy_tasks）全部 2 篇笔记的三层剥离法分析与产出。
+- **2026-05-14**：完成第三阶段 3.1 渲染核心（bevy_render）全部 7 篇笔记的三层剥离法全量分析与产出。
 
 ---
 
