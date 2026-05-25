@@ -123,7 +123,13 @@ aliases:
 | ✅ | [[Bevy-bevy_render-源码解析：Texture 与 BindGroup]] | `crates/bevy_render/src/texture/`, `render_resource/` |
 | ✅ | [[Bevy-bevy_render-源码解析：wgpu 后端抽象]] | `crates/bevy_render/src/renderer/` |
 
-### 3.2 PBR 与材质（bevy_pbr）
+### 3.2 核心管线与后处理（bevy_core_pipeline / bevy_post_process / bevy_anti_alias）
+
+| 状态 | 计划笔记 | Bevy crate/目录 |
+|------|---------|----------------|
+| ✅ | [[Bevy-bevy_core_pipeline-源码解析：后处理与特效]] | `crates/bevy_core_pipeline/src/tonemapping/`, `crates/bevy_post_process/src/bloom/`, `crates/bevy_anti_alias/src/fxaa/` |
+
+### 3.3 PBR 与材质（bevy_pbr）
 
 | 状态 | 计划笔记 | Bevy crate/目录 |
 |------|---------|----------------|
@@ -131,13 +137,19 @@ aliases:
 | ⬜ | [[Bevy-bevy_pbr-源码解析：阴影映射与级联]] | `crates/bevy_pbr/src/render/` |
 | ⬜ | [[Bevy-bevy_pbr-源码解析：IBL 与环境光照]] | `crates/bevy_pbr/src/render/` |
 
-### 3.3 2D 与特殊渲染
+### 3.4 2D 与特殊渲染
 
 | 状态 | 计划笔记 | Bevy crate/目录 |
 |------|---------|----------------|
 | ⬜ | [[Bevy-bevy_sprite-源码解析：Sprite 与 2D 渲染]] | `crates/bevy_sprite/src/` |
 | ⬜ | [[Bevy-bevy_gizmos-源码解析：Gizmo 与调试绘制]] | `crates/bevy_gizmos/src/` |
 | ⬜ | [[Bevy-bevy_text-源码解析：文字渲染与字形]] | `crates/bevy_text/src/` |
+
+### 3.5 专题
+
+| 状态 | 计划笔记 | Bevy crate/目录 |
+|------|---------|----------------|
+| ✅ | [[Bevy-专题：粒子系统现状与 bevy_hanabi 架构]] | 社区 crate `bevy_hanabi` |
 
 ---
 
