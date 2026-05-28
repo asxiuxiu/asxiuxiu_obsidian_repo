@@ -300,10 +300,10 @@ struct RenderTransform { Mat4 world_matrix; };
 class ExtractRenderablesSystem : public ISystem {
 public:
     void Update(World* main, World* render) {
-        auto source = main->Query<(MeshHandle, MaterialHandle, GlobalTransform)>();
-        for (auto [mesh, mat, transform] : source) {
+        auto source = main->Query<(Entity, MeshHandle, MaterialHandle, GlobalTransform)>();
+        for (auto [entity, mesh, mat, transform] : source) {
             // 使用跨世界实体映射找到/创建对应的 Render World 实体
-            Entity render_e = sync_map->GetOrCreateRenderEntity(main_entity);
+            Entity render_e = sync_map->GetOrCreateRenderEntity(entity);
             render->SetComponent(render_e, RenderMesh{ /* 解析 Handle */ });
             render->SetComponent(render_e, RenderMaterial{ /* 解析 Handle */ });
             render->SetComponent(render_e, RenderTransform{transform.matrix});
@@ -317,10 +317,185 @@ public:
 - **Handle 解析延迟到 Prepare 阶段**。Extract 阶段只复制 Handle 本身（8 字节），不解析 Handle 指向的实际 GPU 资源。`RenderMesh` 中的 `GpuBuffer vb` 是在 Render World 的 `PrepareAssets` 阶段才填充的。这避免了 Extract 阶段阻塞在等待 GPU 资源上。
 - **跨世界实体映射是双向的**。`RenderEntity(MainEntity)` 和 `MainEntity(RenderEntity)` 两个组件维护映射，确保 Render World 的渲染结果可以回溯到主 World 的实体（如选中 Inspector 中的渲染对象）。
 
-**遗留问题**：Extract 阶段把所有可渲染实体都搬进了 Render World，但相机视野外的那 8000 棵树真的需要搬吗？如果不先做可见性筛选，Extract 的拷贝开销和后续渲染阶段的遍历开销都是浪费。如何在 Extract 之后、生成 Draw Call 之前，高效地剔除不可见物体？
+**跨世界实体映射的三种状态变化**：
+
+| 操作 | 主 World 动作 | Extract 阶段的同步行为 | Render World 结果 |
+|------|-------------|---------------------|------------------|
+| 创建 | `Spawn(E)` + `SyncToRenderWorld` | 检测到无对应 `RenderEntity` | `Spawn(E')`，插入 `MainEntity(E)` |
+| 更新 | `SetComponent(E, Transform)` | 读取并克隆到渲染组件 | `SetComponent(E', RenderTransform)` |
+| 销毁 | `Destroy(E)` | 检测到 `RenderEntity(E)` 指向的实体已失效 | 下一帧 `Destroy(E')`，回收映射 |
+
+> 注意一个微妙的时序：主 World 在帧 N 销毁 E，Render World 在帧 N 的渲染中仍然可以使用 `E'`——这正是延迟管线的预期行为。`E'` 的销毁被延迟到帧 N+1 的 Extract，与渲染管线的快照语义一致。
+
+**遗留问题**：Extract 阶段把可渲染实体搬进了 Render World，但接下来还有三个关键的架构问题：哪些物体真的需要画？可见物体如何组织成 GPU 命令？多 Pass 管线的资源依赖如何自动管理？
+
+
+## 问题 3：Extract 之后，渲染世界如何决定"画什么"？
+
+### 场景与根因
+
+假设 Extract 阶段把 10000 个实体搬进了 Render World，但相机视野内可能只有 500 个。如果在 Extract 之后不做任何筛选，后续的 Queue 阶段要为 10000 个实体生成 Phase Item，Culling 之后的管线阶段也要遍历这 10000 个实体——CPU 开销仍然巨大。
+
+**根因在于：Extract 解决的是"数据可见性"（主 World → Render World），但还没有解决"视图可见性"（Render World → Camera View）。** 这两个筛选发生在不同的坐标空间和不同的阶段。
+
+### 分支研究
+
+#### 分支 A：在 Extract 之前剔除（主 World 侧）
+
+在主 World 的 `ExtractRenderablesSystem` 中，先对每个实体做粗略的视锥测试，只把可能可见的实体搬进 Render World。
+
+- **优点**：减少 Extract 的拷贝量和 Render World 的实体数量。
+- **隐藏代价**：主 World 的 Extract System 必须读取 `Camera` 组件的视锥参数，增加了主 World 与渲染管线的耦合；且主 World 的 `GlobalTransform` 可能已经过时（如果逻辑更新和渲染并行）。
+- **失效条件**：需要多视图渲染时（如阴影贴图的 Light View），主 World 的 Extract 系统需要知道所有视图的参数，架构复杂度激增。
+
+#### 分支 B：在 Extract 之后剔除（Render World 侧）
+
+Extract 阶段不做任何筛选，把所有可渲染实体搬进 Render World。随后在 Render World 的 `Culling` 阶段，用 `ExtractedView` 的视锥参数对 `RenderTransform` 做相交测试，产出 `ViewVisibleList`。
+
+- **优点**：视图参数（相机矩阵、视锥、LOD 距离）全部集中在 Render World，主 World 保持纯净；天然支持多视图（每个视图独立产出一份 `ViewVisibleList`）。
+- **隐藏代价**：Extract 的拷贝量比分支 A 大，但 Render World 的实体管理开销通常远小于 GPU 命令录制开销。
+
+#### 分支 C：GPU-Driven 剔除（Compute Shader）
+
+把可见性判断推迟到 GPU 侧，用 Compute Shader 对实体 AABB 做批量视锥测试，产出可见性位图或间接绘制参数。
+
+- **优点**：CPU 零遍历，数十万实体可在 GPU 上毫秒级完成剔除。
+- **隐藏代价**：需要维护 GPU Scene 数据结构（实体 AABB、LOD 信息的 GPU 缓冲），架构复杂度高，且对小场景是过度设计。
+- **失效条件**：实体数量 < 5000 时，GPU 调度和数据上传开销可能超过 CPU 逐实体测试的收益。
+
+### 决策分析
+
+**默认推荐：分支 B（Render World 侧 CPU 剔除），预留分支 C 的 GPU-Driven 路径。**
+
+理由：
+1. **UE 的裁剪体系完全在 Render Thread 执行**。`FSceneRenderer::BeginInitViews` 在 Render Thread 上构建视锥、执行裁剪、产出 `PrimitiveVisibilityMap`。主线程（Game Thread）不感知裁剪逻辑——这与分支 B 的架构完全一致。
+2. **Bevy 的 `Extract` 也不做裁剪**，`FrustumCullSystem` 是 Render World 的独立 System。可见性判断作为渲染管线的内部阶段，不污染主 World 的逻辑纯度。
+3. **分支 A 破坏了主 World 的纯净性**。如果 Extract 系统需要读取相机参数，就意味着主 World 的 System 与渲染视图产生了耦合——当编辑器需要同时渲染 Scene View 和 Game View 时，主 World 的 Extract 系统需要处理多视图逻辑，这是错误的方向。
+4. **分支 C 是阶段 5 后期的扩展路径**。在最小可行渲染管线（阶段 5 初期）中，CPU 逐实体测试足够；当场景规模达到数万实体时，再引入 GPU-Driven 剔除。
+
+**遗留问题**：经过 Culling，我们得到了 500 个可见实体。但 GPU 每次 Draw Call 都有状态切换开销——500 个实体如果每个都单独调用 `DrawIndexed`，CPU 录制命令的开销仍然很高。如何在生成 Draw Call 之前，把这 500 个实体按 GPU 最高效的方式重新组织？
+
+
+## 问题 4：可见实体如何组织成 GPU 能执行的命令？
+
+### 场景与根因
+
+500 个可见实体，每个都有 `RenderMesh` + `RenderMaterial` + `RenderTransform`。最 naive 的做法是直接在 `RenderSystem` 中遍历这 500 个实体，每个实体调用一次 `DrawIndexed`。
+
+但在现代 GPU 上，**Draw Call 本身的 CPU 开销和状态切换开销是性能瓶颈**。如果 500 个实体使用了 30 种不同的 PSO（Pipeline State Object），而它们又完全随机地分布在遍历顺序中，GPU 会频繁地切换管线状态——这种切换在 CPU 侧需要重新绑定 Vertex Buffer、Index Buffer、Descriptor Set、Push Constants 等，在 GPU 侧则可能导致流水线气泡（pipeline bubble）。
+
+**根因在于：ECS 的存储模型按实体组织数据，但 GPU 的执行效率依赖于按"状态相似性"组织命令。**
+
+### 分支研究
+
+#### 分支 A：直接在 ECS 遍历中生成 Draw Call
+
+`QueueSystem` 直接遍历 `Query<(&RenderMesh, &RenderMaterial, &RenderTransform)>`，为每个实体调用 `ctx->DrawIndexed(...)`。
+
+- **优点**：极简实现，没有中间数据结构。
+- **隐藏代价**：无法排序，无法合批，透明物体无法按深度排序，导致渲染错误和性能崩溃。
+- **失效条件**：任何超过 100 个 Draw Call 的场景。
+
+#### 分支 B：收集到连续数组（Proxy / Phase Item）再排序
+
+`QueueSystem` 不直接生成 Draw Call，而是先把每个可见实体输出为一个轻量的 `PhaseItem` 结构（含 PSO Key、材质 Key、深度、实体引用），收集到连续的 `Array<PhaseItem>` 中。然后对这个数组按排序键（Sort Key）做稳定排序，最后按排序后的顺序批量生成 Draw Call。
+
+```cpp
+struct PhaseItem {
+    uint64_t sort_key;    // 高位：PSO+Material Bin，低位：深度
+    Entity   render_entity;
+};
+
+// QueueSystem：收集
+void QueueOpaqueSystem(Query<...> query, Array<PhaseItem>* items) {
+    items->clear();
+    query.ForEach([&](Entity e, const RenderMesh& m, const RenderMaterial& mat, const RenderTransform& t) {
+        uint64_t key = ((uint64_t)mat.pipeline_key << 32) | ComputeDepthKey(t.depth);
+        items->push_back({key, e});
+    });
+    std::sort(items->begin(), items->end(), [](a, b){ return a.sort_key < b.sort_key; });
+}
+
+// RenderSystem：按排序结果批量生成命令
+void RenderPhaseSystem(const Array<PhaseItem>& items, CommandContext* ctx) {
+    for (const auto& item : items) {
+        // 相同 PSO 的实体自然相邻，可批量绑定
+        ctx->DrawIndexed(...);
+    }
+}
+```
+
+- **优点**：连续数组适合 SIMD 和缓存；排序后相同 PSO 的实体相邻，减少状态切换；透明物体可按深度从远到近排序。
+- **隐藏代价**：需要额外的内存分配和排序计算（500 个元素的排序约 0.01ms，可忽略）。
+
+#### 分支 C：Binned Phase + Sorted Phase 混合
+
+对不透明物体使用 **Binned Phase**：按 `PSO+Material` 分箱（Bin），同一个 Bin 内的实体自动共享 PSO 绑定，只需更新 Per-Draw 的变换矩阵。对透明物体使用 **Sorted Phase**：必须按视图空间深度排序，无法分箱。
+
+- **优点**：不透明物体获得近似最优的合批效率；透明物体保证渲染正确性。
+- **隐藏代价**：需要维护两套 Phase 数据结构；Binned Phase 的 Bin 粒度需要调优（太粗则缓存不友好，太细则分箱开销大）。
+
+### 决策分析
+
+**默认推荐：分支 C（Binned Phase + Sorted Phase 混合）。**
+
+理由：
+1. **UE 的 `FParallelMeshDrawCommandPass` 本质上就是 Binned Phase**。Mesh Draw Command 按 `FMeshDrawCommandSortKey` 排序，相同 Shader+PSO 的命令被分组批量执行。Bevy 的 `BinnedRenderPhase` / `SortedRenderPhase` 也是完全相同的分层设计。
+2. **不透明和透明物体的排序需求根本不同**。不透明物体只需要"相同状态相邻"以最大化 Early-Z 和合批；透明物体必须"从远到近"以保证 Alpha Blending 正确。强行用同一套机制处理两者，必然牺牲一方。
+3. **分支 B 是分支 C 的基础**。即使在阶段 5 初期只实现分支 B（单一排序数组），数据结构也已经为后续升级成分支 C 预留了空间——只需把排序键的位域拆分，把数组拆成多个 Phase 桶。
+
+**遗留问题**：Queue 阶段产出了排序后的 Phase Item，但一帧的渲染往往包含多个 Pass（ShadowMap → GBuffer → Lighting → PostProcess）。每个 Pass 可能读写不同的纹理，需要在 Pass 之间插入资源屏障（Barrier）。手动管理这些屏障在多平台引擎中是灾难性的——如何在 ECS 架构中自动推导和管理 Pass 间的资源依赖？
+
+
+## 问题 5：多 Pass 管线的资源依赖如何管理？
+
+### 场景与根因
+
+一帧的渲染管线包含多个 Pass：Shadow Map Pass 写入深度纹理，GBuffer Pass 读取深度并写入 GBuffer A/B/C，Lighting Pass 读取 GBuffer 和深度并写入 Scene Color，PostProcess Pass 读取 Scene Color 并写入 SwapChain BackBuffer。
+
+在 D3D12/Vulkan 这类显式 API 中，**每个纹理在每次读写前都必须处于正确的资源状态**（如 `DEPTH_WRITE` → `PIXEL_SHADER_RESOURCE` → `RENDER_TARGET`）。如果状态转换缺失或顺序错误，GPU 会直接崩溃或产生未定义行为。
+
+**根因在于：手动管理 Barrier 是"人脑无法可靠完成的组合爆炸问题"。** 10 个 Pass、20 张纹理的全局状态转换图，其可能的合法转换序列数量是天文数字。工程师在代码中手动插入 `TransitionBarrier` 不仅容易遗漏，还会让渲染管线的代码与平台 API 深度耦合——D3D12 的 `ResourceBarrier`、Vulkan 的 `ImageMemoryBarrier`、Metal 的 `MTLRenderPassDescriptor` 各自有不同的语义和限制。
+
+### 分支研究
+
+#### 分支 A：手动 Barrier（即时模式）
+
+每个 Pass 的 System 在开始和结束时手动调用 `ctx->TransitionTexture(depth, DEPTH_WRITE, PIXEL_SHADER_RESOURCE)`。
+
+- **优点**：控制精确，没有抽象层开销。
+- **隐藏代价**：代码与特定 API 绑定；新增一个 Pass 时需要手动检查所有相关的 Barrier；跨平台维护成本极高；AI 无法自动推导 Pass 间的资源依赖。
+- **失效条件**：任何超过 3 个 Pass 的管线。
+
+#### 分支 B：声明式 RenderGraph
+
+在帧开始时，用一个 `RenderGraph` 数据结构声明所有 Pass 及其输入输出资源（如 `Pass A 写入 Depth`，`Pass B 读取 Depth`）。随后由编译器自动推导拓扑顺序、裁剪无效 Pass、插入 Barrier、分配瞬态资源。
+
+- **优点**：Pass 之间完全解耦，只需声明自己的资源需求；自动 Barrier 推导消除了手动错误；瞬态资源别名可显著节省显存。
+- **隐藏代价**：需要实现一个图编译器（拓扑排序、资源生命周期分析、别名分配），初期架构复杂度高。
+
+#### 分支 C：Bevy 的 Schedule 驱动渲染图
+
+Bevy 在 0.12+ 版本中将独立的 `RenderGraph` 数据结构重构为基于 ECS `Schedule` 的系统链。Render Pass 作为常规 System 运行，通过 `before`/`after` 依赖显式排序。资源依赖不通过图节点声明，而是通过 System 的 `Query` 和 `Resource` 签名隐式表达。
+
+- **优点**：没有独立的 Graph 数据结构，渲染管线完全融入 ECS 的调度体系。
+- **隐藏代价**：System 之间的资源依赖不是显式声明的，Barrier 推导需要额外的静态分析或运行时跟踪；跨 Pass 的资源别名（Transient Resource Aliasing）难以在纯 Schedule 模型中实现。
+
+### 决策分析
+
+**默认推荐：分支 B（声明式 RenderGraph），但将 Graph 的编译结果映射到 ECS Schedule 的执行阶段。**
+
+理由：
+1. **UE 的 `FRDGBuilder` 是工业级声明式 RenderGraph 的典范**。RDG 的 `AddPass` 显式声明读写资源，`Execute()` 阶段统一编译：拓扑排序、死 Pass 剔除、自动 Barrier 插入、瞬态资源别名。这是经过 UE5 大规模项目验证的"最正确方案"。
+2. **Bevy 的 Schedule 驱动模型在资源别名和跨平台 Barrier 推导上存在局限**。Bevy 选择抛弃独立 Graph 数据结构，将依赖编码在 Schedule 中，这简化了架构，但失去了"声明-编译-优化"的能力。对于工业级引擎，显式声明资源依赖的 RenderGraph 更具可观测性和优化空间。
+3. **分支 B 与 ECS 并不冲突**。RenderGraph 本身是一个 ECS `Resource`，`BuildRenderGraphSystem` 和 `CompileRenderGraphSystem` 是 Render World 的常规 System。Graph 编译完成后，`ExecuteSystem` 遍历排序后的 Pass 节点，在每个节点的 Lambda 中调用 `CommandContext` 录制命令——这正是"ECS 调度 + 声明式图"的混合架构。
+
+**遗留问题**：RHI 抽象层的接口定义完成后，D3D12 和 Vulkan 都是显式现代 API，但 RHI 层在 ECS 中应该如何表达？全局单例、ECS Resource、还是双 World 模型？
 
 
 ## 问题 6：ECS 架构下，RHI 层该如何设计？
+
+经过问题 3~5 的梳理，我们已经知道 Render World 内部的渲染管线会经历 Culling → Queue → RenderGraph → Execute 等阶段。但这些阶段的最终产物——GPU 命令——总要有一个"入口"送进驱动。在 ECS 架构中，这个入口应该如何设计？
 
 ### 场景与根因
 
@@ -496,7 +671,7 @@ class GenerateCommandsSystem : public ISystem {
 - **工具边界**：AI 不应直接操作 `CommandContext`，但可以修改主 World 的 `Material` 组件（Extract 后影响 Render World）或 Render World 的 `RenderSettings` Resource。这些高层数据的 Schema 是结构化的 JSON。
 - **Agent 安全**：渲染系统的组件操作受 ECS 事务保护。AI Agent 修改 `Material.color` 只影响渲染结果，不会崩溃引擎。
 
-**遗留问题**：RHI 抽象层的接口定义完成后，D3D12 和 Vulkan 都是显式现代 API，但哪一个更适合作为"第一个后端"？两者架构高度同构，但复杂度、调试体验和跨平台覆盖有显著差异。下一节将直接对比并给出明确推荐。
+**遗留问题**：RHI 层的全局性问题已经解决——我们用双 World 模型把 RHI Resource 隔离在 Render World 中。但把这些模块拼成一张完整的地图：从主 World 的 Transform 修改到屏幕上的像素，数据究竟经历了哪些阶段、哪些同步点、哪些状态转换？下一节将给出从主 World 到 Render World 再到屏幕像素的完整生命周期全景。
 
 ## 问题 7：在 ECS 架构下，一帧的完整生命周期是什么样的？
 
@@ -633,7 +808,7 @@ class GenerateCommandsSystem : public ISystem {
 > - `mem::replace` 主 World ≈ 我们的 Extract 快照语义。
 > - `RenderApp` + `Render` Schedule ≈ 我们的 Render World + Stage 1~5。
 > - `BinnedRenderPhase` / `SortedRenderPhase` ≈ 我们的 Phase 分箱/排序。
-> - `RenderGraph`（Schedule Label）+ `RenderSystems` 链 ≈ 我们的 RenderGraph Compile + Execute。
+> - `Core3d` / `Core2d` Schedule（Bevy 0.12+ 将独立的 `RenderGraph` 重构为基于 Schedule 的系统链）≈ 我们的 RenderGraph Compile + Execute。Render Pass 作为常规 System 运行，通过 `before`/`after` 依赖排序。Bevy 选择将图依赖直接编码在 ECS Schedule 中，而我们保留了独立的 `RenderGraph` Resource 以支持显式资源声明和瞬态别名。
 > - `SystemBuffer::queue` + `PendingCommandBuffers` + `render_system` Present ≈ 我们的 Submit + Present。
 
 ### 为什么这个架构是"AI 友好"的？
