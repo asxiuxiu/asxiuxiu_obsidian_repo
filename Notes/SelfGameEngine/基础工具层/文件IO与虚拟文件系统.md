@@ -358,7 +358,7 @@ FileData ReadFile(const char* path) {
 > - **UE 的 FPakFile** 同样在尾部存放目录表，但支持 Mount 优先级和 Pak 之间的覆盖层级。UE 的 Pak 还内置了压缩（Oodle/Zlib）和加密（AES-256）选项，并允许在 Cook 阶段按平台选择不同的压缩策略。
 > - **Bevy 不直接使用 Pak**，而是通过 `AssetSource` 抽象支持文件系统、网络、内存等多种来源。Bevy 的资产在发布时通常以目录形式存在，依赖 `AssetProcessor` 做预处理（压缩、格式转换），输出到 `imported_assets/` 目录。
 >
-> **个人项目推荐**：默认采用"尾部目录表 + LZ4 压缩 + 小文件内联"的 Pak 格式。AES 加密在需要防拆包时可选，但会增加 CPU 开销；对于个人项目或开源游戏，加密往往不是首要需求。
+> **默认推荐**：默认采用"尾部目录表 + LZ4 压缩 + 小文件内联"的 Pak 格式。AES 加密在需要防拆包时可选，但会增加 CPU 开销；对于开源游戏或单机原型，加密可以延后到发布阶段再引入。
 
 ---
 
@@ -502,7 +502,7 @@ public:
 > - **chaos 引擎**在 `AssetManager` 的后处理线程中维护了一棵 `LoadingTree`。加载线程完成 IO 和反序列化后，将结果投递到后处理线程；后处理线程通过有向图的"叶子消褪"算法判断何时可以安全地解析资源引用。这种双线程分离的设计让磁盘 IO 不被引用解析阻塞。
 > - **Bevy** 的依赖追踪更加自动化。`#[derive(Asset)]` 会通过过程宏自动生成 `VisitAssetDependencies` trait 的实现，遍历资产结构体中所有 `Handle<T>` 字段，自动收集依赖关系。`AssetInfo` 中同时维护 `loading_dependencies`（我在等谁）和 `dependents_waiting_on_load`（谁在等我），形成双向链表，状态传播时无需轮询。
 >
-> **个人项目推荐**：初期采用显式依赖声明（如材质文件头部列出引用的纹理路径），资源加载器解析文件后填充依赖图。当反射系统（阶段 4.4）就位后，可以升级为自动依赖扫描——遍历反序列化后的组件/资产对象，发现 `Handle<Texture>` 字段就自动注册依赖。
+> **默认推荐**：初期采用显式依赖声明（如材质文件头部列出引用的纹理路径），资源加载器解析文件后填充依赖图。当反射系统（阶段 4.4）就位后，可以升级为自动依赖扫描——遍历反序列化后的组件/资产对象，发现 `Handle<Texture>` 字段就自动注册依赖。
 
 ---
 
@@ -667,11 +667,24 @@ void ResourceRefreshSystem(World& world, Query<Handle<Texture>&> textures) {
 | **依赖追踪** | LoadingTree 拓扑排序 | `FStreamableManager` 依赖链 | `VisitAssetDependencies` 自动宏推导 + 双向依赖图 |
 | **引用管理** | Handle 体系 + PossessedHandle RAII | `TSharedPtr` / `FWeakObjectPtr` | `Handle::Strong` channel-based drop + `AssetIndexAllocator` |
 
-**个人项目推荐路径**：
-1. **阶段 3（当前）**：实现 `Path` + `IMountPoint` + `VFS` + 极简 Pak 格式（尾部 TOC，无压缩）。同步读取，支持开发期本地目录优先挂载。
-2. **阶段 5（资源管理）**：在 VFS 之上引入异步加载管线（线程池 + Future），支持 Handle 引用和资源依赖图。
-3. **阶段 7（编辑器）**：接入 OS 文件监控实现事件驱动热重载，导出 VFS Schema 供 AI 观察。
-4. **阶段 8（扩展）**：升级 Pak 支持 LZ4 压缩、Catalog 包、Chunk 级加密；引入加载优先级和纹理 mip 流送。
+> **默认推荐路径总结**：
+>
+> 文件 IO 与 VFS 的工业级默认路径是：**`Path` 统一路径抽象 + `IMountPoint` 多后端挂载 + `VFS` 优先级查询 + 极简 Pak（尾部 TOC + 小文件内联）+ 显式依赖图 + 同步读取（异步管线在阶段 5 资源管理中深化）**。该路径在 ECS 兼容前提下吸收了以下工业级设计：
+> - **UE `FPakFile` 的挂载优先级与覆盖层级**：Pak 之间通过 Mount 顺序实现 MOD/DLC/原版的层级覆盖，无需修改加载代码。尾部 TOC 设计让运行时只需维护少量文件句柄。
+> - **UE `FStreamableManager` 的依赖链**：资源之间通过 Handle 形成依赖关系，支持异步加载和引用计数。我们在阶段 3 先建立显式依赖图的基础设施。
+> - **chaos 引擎的热更包排序**：后加载的包通过末尾 `hot_patch_index` 覆盖先加载的包，Chunk 级 LZ4 压缩 + AES-128-CBC 加密。最小实现中先聚焦尾部 TOC 和小文件内联。
+> - **Bevy 的事件驱动热重载**：文件变化转化为 ECS `AssetEvent` Message，渲染系统自动更新。VFS 层的热重载不直接操作 GPU，而是生成 ECS 事件由专门 System 消费。
+>
+> **ECS 映射**：VFS 挂载列表和运行时状态作为 ECS Resource（`VFSResource`）存在。热重载 System 每帧检查文件变化，生成 `FileChangedEvent`；资源刷新 System 消费事件并更新 GPU 资源。AI 可以通过查询 World 中的 Resource 和 Event 来理解整个文件系统状态。
+>
+> **条件切换路径**：如果引擎确定不支持 MOD/DLC（如纯内购手游），可简化 VFS 为单一 Pak 挂载 + 本地目录开发回退；如果目标平台禁止文件系统直接访问（如某些主机），所有资源必须嵌入可执行文件或从加密分区读取，此时 `FileSystemMountPoint` 退化为内存挂载。
+>
+> **扩展路径（更极端工业场景）**：
+> - **异步加载管线**：线程池 + Future + 双线程分离（IO + 后处理），主线程零阻塞。详见阶段 5 [[资源管理]]。
+> - **OS 文件监控**：开发期用 `ReadDirectoryChangesW` / `inotify` / `FSEvents` 替代 mtime 轮询，实现毫秒级事件驱动热重载。
+> - **纹理 Mip 流送**：根据相机距离和显存预算，动态加载/卸载纹理的不同 mip 层级，而非一次性加载完整纹理。
+> - **Catalog 包与增量更新**：用独立的 Catalog 包记录所有子包的命名规则和索引，热更包只传输差异 Chunk，支持断点续传。
+> - **AI 可观测性增强**：VFS 自动导出 Schema、维护 Change Log、记录操作审计，让 AI Agent 在不读 C++ 头文件的情况下理解资源状态。
 
 ---
 
