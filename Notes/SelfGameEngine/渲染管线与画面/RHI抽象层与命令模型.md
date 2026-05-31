@@ -127,12 +127,12 @@ private:
 
 **核心思路**：不自己写 RHI，而是基于已有的跨平台图形库。这些库本身就是"别人写好的 RHI"。
 
-| 库 | 后端覆盖 | 特点 |
-|---|---|---|
-| **wgpu** (Rust/C) | Vulkan, Metal, D3D12, GL, WebGPU | 基于 WebGPU 标准，安全验证严格，API 现代 |
-| **bgfx** (C++) | Vulkan, Metal, D3D12, D3D11, GL | 游戏引擎领域广泛使用，成熟稳定 |
-| **NVRHI** (C++) | Vulkan, D3D12, D3D11 | NVIDIA 出品，自动管理 Barrier 和 Descriptor，可绕过 |
-| **Dawn** (C++) | 同 wgpu | Google 的 WebGPU 实现，C++ 接口 |
+| 库                 | 后端覆盖                             | 特点                                      |
+| ----------------- | -------------------------------- | --------------------------------------- |
+| **wgpu** (Rust/C) | Vulkan, Metal, D3D12, GL, WebGPU | 基于 WebGPU 标准，安全验证严格，API 现代              |
+| **bgfx** (C++)    | Vulkan, Metal, D3D12, D3D11, GL  | 游戏引擎领域广泛使用，成熟稳定                         |
+| **NVRHI** (C++)   | Vulkan, D3D12, D3D11             | NVIDIA 出品，自动管理 Barrier 和 Descriptor，可绕过 |
+| **Dawn** (C++)    | 同 wgpu                           | Google 的 WebGPU 实现，C++ 接口               |
 
 **适用场景**：个人开发者或小团队，想快速获得多后端能力，不重复造轮子。
 
@@ -341,7 +341,7 @@ public:
 - 定义引擎级命令枚举（如 `CmdDrawIndexed`、`CmdSetViewport`、`CmdBindPipeline`），结构与 UE 的 `FRHICommand*` 类似但大幅简化。
 - 每帧分配一块命令内存（`LinearAllocator`，4~16MB 预分配，一帧一清）。
 - 单线程录制：当前 System 调用 `DrawIndexed()` 时，直接 `new (allocator) CmdDrawIndexed(...)` 到内存中。
-- 单线程翻译：帧末由 `RHISubmitSystem` 遍历命令内存，`switch-case` 翻译成 D3D12 API 调用。
+	- 单线程翻译：帧末由 `RHISubmitSystem` 遍历命令内存，`switch-case` 翻译成 D3D12 API 调用。
 - **接口上完全不暴露"即时"语义**：`IRHICommandList::DrawIndexed()` 的文档明确写"将绘制命令追加到当前命令缓冲，不会立即执行"。
 
 **关键设计细节**：

@@ -10,3 +10,6 @@ UE_SOURCE_ROOT=/Users/asmallgod/Documents/UnrealEngine-release
 
 # Bevy 引擎源码根目录（Rust ECS 游戏引擎）
 BEVY_SOURCE_ROOT=/Users/asmallgod/Documents/bevy-main
+
+# 自研引擎 Entelechy 项目根目录（vibe coding 审计目标）
+ENTELECHY_SOURCE_ROOT=
