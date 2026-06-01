@@ -11,10 +11,10 @@ aliases:
   - StringId and InternPool
 ---
 
-> **前置依赖**：[[可变字符串与 SSO]]
+> **前置依赖**：[[可变字符串与 SSO]]、[[字符串系统]]
 > **本模块增量**：深入理解字符串标识系统的设计空间——从哈希算法选择到 UE FNamePool 的工业级分块分配与无锁读取架构。
 >
-> 本笔记是 [[字符串系统]] 话题拆分的子笔记之一，聚焦"字符串标识与全局池"这个主题。
+> 本笔记是 [[字符串系统]] 话题拆分的子笔记之一，聚焦"字符串标识与全局池"这个主题。关于字符串在 ECS 中的角色分工，详见 [[字符串系统#三种字符串角色的精确定义]]。
 
 # 字符串标识与 InternPool
 
@@ -38,6 +38,8 @@ for (auto& c : components) {
 - 配置键查询
 
 这些场景的共性是：**字符串内容在运行期基本不变，但比较操作每帧发生成千上万次**。
+
+---
 
 ## 问题 1：编译期哈希——最小可行方案
 
@@ -63,6 +65,8 @@ for (auto& c : components) {
 
 这个方案已经很好了：比较从 O(n) 降到 O(1)，编译期常量可以在 switch-case 中使用。但运行时构造怎么办？
 
+---
+
 ## 问题 2：运行时字符串的哈希冲突与 Intern 池
 
 ```cpp
@@ -76,14 +80,6 @@ FNV-1a 是 64 位哈希，碰撞概率理论上是 $1/2^{64}$，可以认为是"
 ### Naive 方案：StringId + 简化 Intern 池
 
 ```cpp
-class StringId {
-    u64 m_hash;
-    u32 m_index; // intern 池中的索引（可选，用于二次校验）
-public:
-    constexpr StringId(const char* str) : m_hash(hashFNV1a(str)), m_index(0) {}
-    constexpr u64 hash() const { return m_hash; }
-};
-
 class StringInternPool {
     HashMap<u64, const char*> m_pool; // hash -> 原始字符串
 public:
@@ -112,7 +108,9 @@ public:
 
 下面来看工业级实现是怎么解决这些问题的。
 
-### 工业实现深度：字符串哈希算法选择
+---
+
+## 工业实现深度：字符串哈希算法选择
 
 主笔记直接使用了 FNV-1a。但 FNV-1a 不是唯一选择，也不是在所有场景下都最优。
 
@@ -141,11 +139,13 @@ xxHash:  虽然内部用 SIMD，但前端开销（初始化、finalize）比 FNV
 - **运行期大字符串哈希（> 256 字节）**：xxHash 或 CityHash——SIMD 优化明显
 - **文件内容校验**：xxHash64——质量高、速度极快
 
-### 工业实现深度：UE FNamePool 的架构
+---
+
+## 工业实现深度：UE FNamePool 的架构
 
 UE 的 `FNamePool` 是字符串 intern 系统的工业标杆。它的核心设计可以提炼为四个层次：
 
-#### 层次 1：分块分配（Short / Medium / Large）
+### 层次 1：分块分配（Short / Medium / Large）
 
 不是所有字符串都走同一个分配器。UE 按长度分块：
 
@@ -176,7 +176,7 @@ struct FNameEntry {
 };
 ```
 
-#### 层次 2：无锁读取
+### 层次 2：无锁读取
 
 FNamePool 的读取路径（`resolve`、`比较`）是**无锁**的。
 
@@ -215,7 +215,7 @@ const char* FNamePool::resolve(FNameEntryId id) const {
 - intern 操作是"只增不删"的。一个字符串被 intern 后，它的 entry 地址和字符数据永远不会改变
 - 这保证了读取路径上不需要任何同步
 
-#### 层次 3：TLS 线程本地缓冲 + 批量提交
+### 层次 3：TLS 线程本地缓冲 + 批量提交
 
 多线程同时 intern 新字符串时，即使哈希表用 CAS，高竞争下性能也会下降。UE 的解决方案是**线程本地缓冲**：
 
@@ -249,7 +249,7 @@ StringId StringInternPool::intern(StringView str) {
 - 减少全局 CAS 的竞争频率（16 次 intern → 1 次全局操作）
 - 可以一次性分配一大块内存
 
-#### 层次 4：大小写不敏感
+### 层次 4：大小写不敏感
 
 UE 的 `FName` 默认是**大小写不敏感**的。`"Texture"` 和 `"texture"` 映射到同一个 ID。
 
@@ -265,20 +265,24 @@ uint32_t caseInsensitiveHash(StringView str) {
 
 **陷阱**：`tolower` 有 locale 依赖。UE 的做法是只支持 ASCII 大小写转换，非 ASCII 字符按原样处理。
 
-### 引擎在字符串标识上的具体方案
+---
+
+## 引擎在字符串标识上的具体方案
 
 | 引擎 | 字符串标识方案 | Intern 策略 | 关键特征 |
 |------|--------------|------------|---------|
-| **UE** | `FName` + `FNamePool` | **分块分配**（Short/Medium/Large）、**无锁读取**（开放寻址+CAS）、**TLS 批量提交**、**大小写不敏感** | 工业级标杆。FName 是 UE 中使用最频繁的类型之一，所有资源路径、组件名、配置键都用 FName |
-| **chaos** | 不详（未在源码分析中突出自定义 StringId 系统） | 可能直接用 `std::unordered_map<string, uint64_t>` 或哈希表 | chaos 的字符串系统重点在格式化（`StringFormat`），标识系统可能较简单 |
-| **Bevy** | **不用字符串标识组件** | 无 Intern 池（因为不需要） | Bevy 用 Rust 的 `TypeId`（编译期生成的唯一类型标识）来标识组件类型。资源路径用 `AssetPath<'static>` + `AssetServer` 的 intern 机制，路径只在加载时解析一次，之后用 `Handle<A>` 传递。热路径上全是整数比较 |
+| **UE** | `FName` + `FNamePool` | **分块分配**（Short/Medium/Large）、**无锁读取**（开放寻址+CAS）、**TLS 批量提交**、**大小写不敏感** | 工业级标杆。FName 是 UE 中使用最频繁的类型之一 |
+| **chaos** | `StringID` + `StringKey` | **编译期 FNV-1a 哈希**，无运行时 Intern 池 | `StringID` 是纯 32 位哈希值包装类，`STRING_ID("camera")` 在编译期计算常量。`StringKey` 由 1~4 个 `StringID` 组合成层级键（如 `"camera.set_track"`），用于属性表、动画状态机 |
+| **Bevy** | **不用字符串标识组件** | 无 Intern 池（因为不需要） | Bevy 用 Rust 的 `TypeId`（编译期生成的唯一类型标识）来标识组件类型。资源路径用 `AssetPath<'static>` + `AssetServer`，热路径上全是 `Handle<A>` 整数比较 |
 
 **关键观察**：
 - UE 的 FNamePool 是 OOP 引擎中最完善的字符串 intern 系统，分块+无锁+TLS 三层优化
+- chaos 的 `StringID` 是编译期哈希，适合标识符场景，但**没有运行时 Intern 池的去重保证**——碰撞依赖哈希算法的统计安全性
 - Bevy 的策略是"在 ECS 架构下，很多字符串问题可以通过不用字符串来解决"——组件类型用 `TypeId`，资源引用用 `Handle<A>`
-- chaos 在这个领域没有突出的自定义实现，说明其引擎规模或场景需求还没到需要工业级 FNamePool 的程度
 
-### 自研引擎的 InternPool 推荐实现
+---
+
+## 自研引擎的 InternPool 推荐实现
 
 基于 UE 的设计，在 ECS 架构下的最小工业级实现：
 
@@ -324,7 +328,7 @@ public:
 
 ---
 
-## ECS 映射：字符串标识在 ECS 中该怎么用？
+## ECS 映射：字符串标识在 ECS 中怎么用？
 
 ```cpp
 // ✅ 正确：StringId 是纯值类型，8 字节，可密集存储
@@ -345,16 +349,7 @@ struct NameRegistry : public ECSResource {
 - 序列化时，`StringId` 可以直接写成 u64 或反查后的字符串
 - AI 观察实体时，看到的是一个扁平的整数数组
 
-### 从 OOP 到 ECS 的重构映射
-
-| OOP 设计 | ECS 重构 |
-|---------|---------|
-| Actor 的 Name 成员（FString） | `NameComponent { StringId nameId }` + `NameRegistry` Resource |
-| 类型名字符串（如 UClass::GetFName） | `ComponentId`（u64）+ `TypeRegistry`（编译期注册） |
-| 资源路径（FString 路径） | `AssetPathId`（StringId）+ `AssetRegistry` Resource |
-| 日志 CategoryName（FName） | `LogCategoryId`（StringId），编译期常量 |
-
-> **核心原则**：ECS 组件中只存 `StringId`（u64），不存字符串对象。所有字符串内容上浮到 Resource 或外部系统中。
+关于从 OOP 到 ECS 的完整重构映射，详见 [[字符串系统#ECS 映射]]。
 
 ---
 

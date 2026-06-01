@@ -205,10 +205,10 @@ aliases:
 
 ### 3.3 字符串系统
 
-- [x] [[字符串系统]] — 总览：Why 自定义字符串、默认推荐路径、ECS 映射、引擎对照、回探替换清单
-- [x] [[可变字符串与 SSO]] — SSO 原理与三种工业级实现的精确内存布局（libc++/libstdc++/MSVC）、StringView 设计、COW 历史与废弃、引擎对照
-- [x] [[字符串标识与 InternPool]] — StringId 设计、字符串哈希算法选择（FNV-1a/xxHash/CityHash）、UE FNamePool 工业级架构（分块/无锁/TLS）、引擎对照
-- [x] [[字符串格式化]] — ADL 自由函数栈格式化器、fmtlib 编译期解析与类型擦除、C++20 std::format、引擎对照
+- [x] [[字符串系统]] — **总览与唯一权威定义**：三种字符串角色（StringId/StringView/String）的精确契约、默认推荐路径、ECS 映射、OOP→ECS 重构映射、回探替换清单
+- [x] [[可变字符串与 SSO]] — 可变字符串容器的**两种工业级优化路径**（union SSO vs 分配器参数化）、三引擎对照（UE FString 纯堆/chaos 薄封装/Bevy 架构规避）、StringView 与 COW、自研推荐
+- [x] [[字符串标识与 InternPool]] — StringId 设计、字符串哈希算法选择（FNV-1a/xxHash/CityHash）、UE FNamePool 工业级架构（分块/无锁/TLS）、chaos StringID 编译期哈希、Bevy TypeId/Handle 规避策略
+- [x] [[字符串格式化]] — ADL 自由函数栈格式化器、fmtlib 三层架构（编译期解析/类型擦除/栈缓冲）、C++20 std::format、三引擎格式化对照
 - [x] [[日志消息与字符串系统的边界]] — 日志消息虽经格式化器生产，但存储架构（环形缓冲区/延迟格式化/结构化输出）与标识符完全不同
 
 > **回探替换点**：阶段 1 日志系统中的 `std::string` 日志内容 → 日志级别/分类名替换为 `StringId`，日志消息存储替换为**栈格式化器 + 环形缓冲区**（不走 `String`）；阶段 2 的组件名硬编码字符串 → 替换为 StringId。
