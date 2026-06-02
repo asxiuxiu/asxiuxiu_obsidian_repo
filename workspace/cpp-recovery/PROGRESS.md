@@ -1,6 +1,6 @@
 # C++ 基础恢复 70 天 — 进度追踪
 
-> 📋 完整题目描述见：`D:/asxiuxiu_obsidian_repo/Notes/学习计划/C++基础恢复70天计划.md`
+> 📋 完整题目描述见：`D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/C++基础恢复70天计划.md`
 
 ---
 
