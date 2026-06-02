@@ -46,6 +46,12 @@
 | `obsidian-bases` | 创建/编辑 `.base` 数据库视图 |
 | `json-canvas` | 创建/编辑 `.canvas` 白板 |
 | `note-refine` | 优化笔记叙述、检查笔记质量、用费曼学习法重构笔记 |
+| `cpp-practice-orchestrator` | 用户在 `workspace/cpp-recovery/` 进行 C++ 刻意练习时，协调各子 Skill 工作流 |
+| `cpp-practice-review` | 用户手写代码后请求评审，四维度代码评审（接口/正确性/优化/标准库对比） |
+| `cpp-practice-hint` | 用户卡住时请求提示，三级渐进提示（L1方向→L2线索→L3填空），严防给答案 |
+| `cpp-practice-tracker` | 记录练习数据，维护6维能力矩阵，输出能力趋势和弱项预警 |
+| `cpp-practice-planner` | 根据能力评估动态调整后续计划，支持合并/拆分/插入巩固题 |
+| `cpp-practice-check` | 每天结束后知识校验，3-5个追问检验当天知识点掌握度 |
 
 ## 笔记规范
 
@@ -165,6 +171,21 @@ int main() {
 - 默认格式：`Vault backup: YYYY-MM-DD HH:MM:SS`
 - 禁止总结修改内容；如用户主动传参，仍用传入内容
 - skill `sync-push` 已内置此规范
+
+## C++ 刻意练习工作流
+
+当用户在 `workspace/cpp-recovery/` 目录下进行 C++ 手写练习时，按以下优先级执行：
+
+1. **先读取 `cpp-practice-orchestrator`**，确认当前练习阶段和进度
+2. **手写代码时卡住** → 触发 `cpp-practice-hint`（三级渐进提示，严防给答案）
+3. **写完后请求评审** → 触发 `cpp-practice-review`（四维度评审，严格对齐当天目标不超纲）
+4. **结束一天练习时** → 依次触发：
+   - `cpp-practice-check`（知识校验，3-5个追问）
+   - `cpp-practice-tracker`（记录数据，更新6维能力矩阵）
+   - `cpp-practice-planner`（根据评估动态调整后续计划）
+5. **所有交互后**更新 `workspace/cpp-recovery/.practice-tracker/state.json`
+
+**练习状态文件**：`workspace/cpp-recovery/.practice-tracker/state.json` 是唯一的真实数据源，所有 Skill 必须读写此文件以保持状态一致。
 
 ## 其他
 

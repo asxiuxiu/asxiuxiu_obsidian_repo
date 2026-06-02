@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "meta": {
+    "startDate": "2026-06-02",
+    "lastActiveDate": "2026-06-02",
+    "currentDay": 1
+  },
+  "abilityMatrix": {
+    "syntax": 0,
+    "pointer": 0,
+    "template": 0,
+    "memoryMgmt": 0,
+    "design": 0,
+    "concurrency": 0
+  },
+  "dailyRecords": [
+    {
+      "day": 1,
+      "date": "2026-06-02",
+      "taskId": "day01_string_basic",
+      "taskName": "String 类构造与析构",
+      "weekTheme": "类与对象的生命周期",
+      "status": "in-progress",
+      "submissions": [],
+      "hintsUsed": 0,
+      "checkResults": null,
+      "abilityDelta": {}
+    }
+  ],
+  "planAdjustments": []
+}

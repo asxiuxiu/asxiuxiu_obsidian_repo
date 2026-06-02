@@ -11,9 +11,11 @@ aliases:
 ---
 
 > **前置依赖**：[[引擎基础类型与平台抽象]]、[[字符串系统]]
-> **本模块增量**：深入理解可变字符串容器的两种工业级优化路径——union SSO 与分配器参数化的本质差异、适用场景与在 ECS 架构下的可行性。
+> **本模块增量**：深入理解可变字符串容器的三种工业级路径——union SSO、分配器参数化、薄封装 std::string（chaos 路线）的本质差异、适用场景与在 ECS 架构下的可行性。
 >
 > 本笔记是 [[字符串系统]] 话题拆分的子笔记之一，聚焦"可变字符串容器"这个主题。关于字符串在 ECS 中的角色分工，详见 [[字符串系统#三种字符串角色的精确定义]]。
+>
+> **实现状态**（2026-06-02）：Entelechy 已从自研 union-SSO 切换为 **chaos 薄封装路线**（`std::basic_string` + `StdAllocatorAdapter`）。详见文末「实现细节」。
 
 # 可变字符串与 SSO
 
@@ -77,7 +79,7 @@ class FString {
 };
 ```
 
-`TSizedDefaultAllocator<32>` 本质是 `TSizedHeapAllocator<32>`——**纯堆分配，没有内联存储**。一个空的 `FString` 内部是 `ArrayNum=0, ArrayMax=0, ArrayData=nullptr`。
+`TSizedDefaultAllocator<32>` 中的 `<32>` 是**对齐字节数（alignment）**，不是内联存储大小。它本质是 `TSizedHeapAllocator<32>`——**纯堆分配，没有内联存储**。一个空的 `FString` 内部是 `ArrayNum=0, ArrayMax=0, ArrayData=nullptr`。也就是说，`FString("hi")` 这个 3 字符的字符串，照样会触发一次堆分配来存储 `"hi\0"`。
 
 但 UE 的 `TArray` 支持**分配器模板参数化**：
 
@@ -86,17 +88,34 @@ class FString {
 TArray<int32, TInlineAllocator<4>> SmallArray;
 ```
 
-`TInlineAllocator<N>` 的内存布局是：对象内部有一个 `N * sizeof(T)` 的内联数组 + 一个 `Data` 指针。当元素数 ≤ N 时，数据存在内联数组中；超出时整体搬迁到堆上。
+`TInlineAllocator<N>` 的内存布局比 union SSO 更"笨重"——它在对象内部同时保留了**两套存储**：
+
+```cpp
+// TInlineAllocator<4, int32> 的简化示意（x64）
+class TInlineAllocator_4_int32 {
+    union {
+        int32 InlineData[4];   // 内联数组：16 字节
+        int32*  HeapData;      // 堆指针：8 字节
+    };
+    int32 NumInline;             // 当前用了几个内联槽位：4 字节
+    int32 NumAllocated;          // 总分配数（内联或堆）：4 字节
+    // 对象总大小 ≈ 16 + 8 + 4 + 4 = 32 字节（含 padding）
+};
+```
+
+关键点：**union 里同时存在 `InlineData[4]` 和 `HeapData` 指针，但同一时间只用其中一个**。当 `NumInline > 0` 时，数据在内联数组；当 `NumInline == 0` 且 `HeapData != nullptr` 时，数据在堆上。
+
+这意味着 mode switch（从内联切到堆）时，必须执行一次 `memcpy` 把内联数组的内容搬到堆上新分配的内存。反过来（堆缩回内联）也要 `memcpy`。这个搬迁成本在短字符串高频构造/析构场景下不可忽视——而 union SSO 的切换只是同一个 24 字节 union 的 reinterpret，零拷贝。
 
 **这和 union SSO 的本质区别**：
 
-| 维度 | union SSO | TInlineAllocator |
-|------|-----------|-----------------|
-| 内联空间来源 | union 中固定大小的字符缓冲 | 对象内部独立数组 + 指针 |
-| 模式切换代价 | 无（同一内存区域 reinterpret）| 需要 `memcpy` 搬迁数据 |
-| 对象大小 | 固定（24/32 字节）| 固定（内联数组 + 指针 + 元数据）|
-| 分配器可控性 | 低（union 布局与分配器耦合）| **高**（堆路径走自定义分配器）|
-| 容器复用性 | 仅字符串专用 | **通用**（所有 TArray 共享同一套分配器体系）|
+| 维度     | union SSO             | TInlineAllocator             |
+| ------ | --------------------- | ---------------------------- |
+| 内联空间来源 | union 中固定大小的字符缓冲      | 对象内部独立数组 + 指针                |
+| 模式切换代价 | 无（同一内存区域 reinterpret） | 需要 `memcpy` 搬迁数据             |
+| 对象大小   | 固定（24/32 字节）          | 固定（内联数组 + 指针 + 元数据）          |
+| 分配器可控性 | 低（union 布局与分配器耦合）     | **高**（堆路径走自定义分配器）            |
+| 容器复用性  | 仅字符串专用                | **通用**（所有 TArray 共享同一套分配器体系） |
 
 UE 选择分配器参数化的原因是：**它把"要不要内联存储"的决策权交给调用方，而不是硬编码在字符串类型里**。对需要频繁拼接的局部字符串，用默认堆分配器；对确定很小的数组，显式用 `TInlineAllocator<N>`。
 
@@ -117,7 +136,29 @@ class String {
 };
 ```
 
-`AllocatorWithFixedPool` 把 `std::basic_string` 的字符数组分配导向 chaos 自己的内存池。注意：**`StringPool` 是内存分配池，不是字符串内容去重池**——它只负责"从哪块内存里切出字符数组"，不负责"这个字符串内容是否已经存在"。
+`AllocatorWithFixedPool` 把 `std::basic_string` 的字符数组分配导向 chaos 自己的内存池。它的工作方式类似一个**线程局部的 bump allocator**：
+
+```cpp
+// 极度简化的原理示意
+template<typename T, typename Pool>
+class AllocatorWithFixedPool {
+    Pool& pool;  // 引用一个 64KB 的固定内存池
+public:
+    T* allocate(size_t n) {
+        size_t bytes = n * sizeof(T);
+        if (pool.has_space(bytes)) {
+            return pool.bump_alloc(bytes);  // 从池顶切一块，无锁、无系统调用
+        }
+        return ::operator new(bytes);       // 池满了，fallback 到全局 new
+    }
+    void deallocate(T* p, size_t) {
+        if (pool.contains(p)) return;        // 池内内存不单独回收（池整体重置时一并释放）
+        ::operator delete(p);                // 全局 new 的内存，走全局 delete
+    }
+};
+```
+
+注意：**`StringPool` 是内存分配池，不是字符串内容去重池**——它只负责"从哪块内存里切出字符数组"，不负责"这个字符串内容是否已经存在"。两个内容完全相同的 `"Player_1"` 字符串，各自独立存储，不会合并。
 
 chaos 的策略本质是：**接受 std::string 的全部语义（包括其可能有的平台级 SSO），只在分配器层做优化**。这是一条"低成本、低风险"的路线，但意味着字符串对象的行为完全依赖底层 STL 实现。
 
@@ -199,13 +240,39 @@ C++11 之前，GCC 的 libstdc++ 使用 Copy-On-Write（引用计数共享数据
 | 追求极致性能且团队有能力维护 | **自研 union SSO**（libc++ 风格 24 字节 + 首字节模式标记），或接入 folly::fbstring |
 | 需要同时支持多种分配策略 | **分配器参数化**（UE 路线），容器本身简单，优化下放到分配器层 |
 
-**默认推荐**：阶段 1~2 采用 chaos 路线——薄封装 `std::string` + 自定义分配器。原因：
-- 实现成本最低，不重复造轮子
-- 现代标准库的 `std::string` 在主流平台（GCC/Clang/MSVC2019+）已有成熟的 SSO
-- 自定义分配器接入引擎内存池后，堆分配路径可控
-- 未来如需替换底层实现，薄封装层的接口不变，调用方无感知
+> [!tip] 推荐路线：chaos 薄封装
+> 阶段 1~2 **明确采用 chaos 路线**——薄封装 `std::string` + 自定义分配器。代码已于 2026-06-02 完成迁移。
+
+原因：
+- **实现成本最低**：不重复造轮子，接口直接复用 `std::string` 的全部语义（`substr`、`find`、`append` 等），团队零学习成本
+- **短字符串性能不降级**：现代标准库（GCC/Clang/MSVC2019+）的 `std::string` 已有成熟的 union SSO，22 字符以内零堆分配。UE 的默认 `FString` 反而在这里会触发堆分配
+- **长字符串分配可控**：通过 `StdAllocatorAdapter` 把 `std::basic_string` 的堆分配导向引擎的 `DefaultAllocator`（Mimalloc 或平台对齐分配），获得追踪、统计的全部优势
+- **消除 UB**：自研 union SSO 存在 strict aliasing 和 active-member-switch 的未定义行为风险，`std::string` 的实现经过充分验证
+- **迁移无感知**：薄封装层的接口稳定，底层始终通过 `std::basic_string` 公共接口操作，调用方代码无需关心平台差异
+
+ UE 的分配器参数化路线更适合**已经有一个成熟分配器体系、且团队愿意在热路径上显式选择 `TInlineAllocator<N>`** 的项目。对于从零开始的自研引擎，chaos 路线的 ROI 明显更高。
 
 关于 `String` 在 ECS 中的使用边界（为什么组件中不能存 `String`），详见 [[字符串系统#ECS 映射]]。
+
+### 实现细节（Entelechy 当前代码）
+
+```cpp
+// _engine/source/core/public/allocator/std_allocator_adapter.h
+template<typename T, typename EngineAllocatorT>
+class StdAllocatorAdapter { /* 标准 allocator 接口适配器 */ };
+
+// _engine/source/core/public/string/string.h
+template<typename AllocatorT = DefaultAllocator>
+class BasicString {
+    using AllocType = StdAllocatorAdapter<char, AllocatorT>;
+    std::basic_string<char, std::char_traits<char>, AllocType> m_str;
+    // ... 全部 API 转发给 m_str ...
+};
+
+using String = BasicString<DefaultAllocator>;
+```
+
+**`isInline()` 语义变更**：因 `std::string` 不暴露实际存储位置，且不同 STL 的 SSO 阈值不同，`isInline()` 从"是否实际 inline 存储"改为"长度是否 ≤ SSO_CAPACITY（15）"。全局搜索确认生产代码无 `isInline()` 调用，仅测试使用。
 
 ---
 
