@@ -82,6 +82,11 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
    - "要不要我把今天的任务换成更基础的巩固练习？"
    - 不要直接给完整答案
 4. **记录使用次数**：每次使用提示后，state.json 中 `hintsUsed` +1
+5. **记录交互日志**：每次使用提示后，追加到当天会话日志：
+   ```bash
+   echo '{"ts":"...","day":1,"taskId":"day01_string_basic","type":"hint","level":1,"topic":"内存分配"}' >> .practice-tracker/sessions/day01_2026-06-03.jsonl
+   ```
+   `topic` 是提示涉及的核心知识点，便于 Tracker 统计"哪些概念需要提示"。
 
 ### 提示质量要求
 

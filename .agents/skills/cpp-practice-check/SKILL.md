@@ -133,6 +133,18 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 
 ## 状态更新
 
+### 1. 逐题写入交互日志
+
+每道题问答结束后，追加到当天会话日志：
+
+```bash
+echo '{"ts":"2026-06-03T14:35:00","day":1,"taskId":"day01_string_basic","type":"check","qIndex":1,"qType":"概念理解","userAnswer":"...","rating":"基本掌握"}' >> .practice-tracker/sessions/day01_2026-06-03.jsonl
+```
+
+`rating`：🟢掌握 / 🟡基本掌握 / 🟠需巩固 / 🔴未掌握
+
+### 2. 更新 state.json
+
 校验结束后，更新 `state.json`：
 
 ```json

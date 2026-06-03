@@ -6,6 +6,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra -Wshadow -O2 -g)
+elseif(MSVC)
+    add_compile_options(/W4 /utf-8)
 endif()
 
 include_directories(include)

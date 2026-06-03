@@ -2,29 +2,57 @@
   "version": "1.0",
   "meta": {
     "startDate": "2026-06-02",
-    "lastActiveDate": "2026-06-02",
+    "lastActiveDate": "2026-06-03",
     "currentDay": 1
   },
   "abilityMatrix": {
-    "syntax": 0,
-    "pointer": 0,
+    "syntax": 0.2,
+    "pointer": 1.2,
     "template": 0,
-    "memoryMgmt": 0,
+    "memoryMgmt": 1.2,
     "design": 0,
     "concurrency": 0
   },
   "dailyRecords": [
     {
       "day": 1,
-      "date": "2026-06-02",
+      "date": "2026-06-03",
       "taskId": "day01_string_basic",
       "taskName": "String 类构造与析构",
       "weekTheme": "类与对象的生命周期",
-      "status": "in-progress",
-      "submissions": [],
+      "status": "completed",
+      "submissions": [
+        {
+          "round": 1,
+          "ts": "2026-06-03T14:52:00",
+          "status": "failed",
+          "issues": ["sizeof(str)误用", "&data_误用", "len_未初始化", "缺少空指针检查"]
+        },
+        {
+          "round": 2,
+          "ts": "2026-06-03T17:04:28",
+          "status": "failed",
+          "issues": ["缺少拷贝构造函数", "深拷贝未实现"]
+        },
+        {
+          "round": 3,
+          "ts": "2026-06-03T17:04:28",
+          "status": "passed",
+          "issues": []
+        }
+      ],
       "hintsUsed": 0,
-      "checkResults": null,
-      "abilityDelta": {}
+      "checkResults": {
+        "score": 3,
+        "total": 4,
+        "weakPoints": ["C字符串\\0终止符与内存分配关系", "成员初始化列表的必要性"],
+        "mastered": ["深拷贝vs浅拷贝的因果链条", "delete[]配对new[]"]
+      },
+      "abilityDelta": {
+        "syntax": 0.2,
+        "pointer": 1.2,
+        "memoryMgmt": 1.2
+      }
     }
   ],
   "planAdjustments": []

@@ -25,6 +25,7 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentDay` 和 `weekTheme`
 2. 读取用户提交的代码文件
 3. 根据 `currentDay` 确定**评审边界**（见下方「超纲控制」）
+4. **检查当天已有交互日志**：读取 `.practice-tracker/sessions/day{NN}_YYYY-MM-DD.jsonl`（如存在），了解用户之前迭代过几轮、用过几次 hint、上一轮的 issues 是什么。这决定了本轮是 "round 1" 还是 "round N"。
 
 ## 评审四维度
 
@@ -112,6 +113,38 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
   - [ ] <一个与当天目标相关的自检问题>
   - [ ] <另一个自检问题>
 ```
+
+## 交互日志记录
+
+评审结束后**必须**写入会话日志，以便跨会话追踪迭代历史：
+
+```bash
+# 示例：AI 通过 Shell 工具执行
+echo '{"ts":"2026-06-03T14:30:22","day":1,"taskId":"day01_string_basic","type":"review","round":1,"status":"failed","issues":["sizeof(str)误用","&data_误用"]}' >> .practice-tracker/sessions/day01_2026-06-03.jsonl
+```
+
+`round` 规则：读取当天已有日志，统计 `type==review` 的数量 +1。
+
+`status`：`failed`（还有 bug）/ `passed`（评审通过，可进入 check）
+
+`issues`：本轮发现的所有问题标签（简短英文或中文）
+
+如果用户随后修改了代码并再次请求评审，新日志的 `round` 会递增。这让 Tracker 能准确评估"迭代次数"和"纠错能力"。
+
+## 测试用例补齐规则
+
+评审结束后，**检查用户代码中的测试用例完整性**：
+
+1. **触发条件**：如果用户明确说"测试用例我不想自己写"、"帮我写测试"、或测试函数中存在 `// TODO` / 空实现，则**自动帮用户补齐**。
+2. **补齐范围**：只补齐当前 Day 学习目标范围内可验证的场景，不超纲。
+3. **测试框架**：必须使用项目统一的 `common.h` 宏（`CHECK_EQ`, `CHECK_TRUE`, `RUN_TEST`）。
+4. **覆盖要求**：
+   - 正常路径（典型输入）
+   - 边界条件（空指针、空字符串、零值、单元素等，视当天主题而定）
+   - 资源生命周期（构造-析构配对、无泄漏、无双重释放）
+5. **执行方式**：直接修改用户的 `main.cpp`（或其他测试文件），把 TODO 替换成具体实现。如果类缺少必要的 public 访问接口导致无法测试，在补齐测试前先补接口（并在评审报告中说明）。
+6. **不重复劳动**：如果用户已经写了部分测试，保留已有测试，只补缺失的场景。
+7. **格式命名**：测试函数名统一用 `test_<场景>_<预期行为>`，例如 `test_empty_string_size_is_zero`。
 
 ## 评审原则
 

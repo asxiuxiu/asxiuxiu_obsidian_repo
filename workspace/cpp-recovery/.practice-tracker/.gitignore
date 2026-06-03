@@ -1,0 +1,6 @@
+# Private session logs (plaintext, local only)
+sessions/
+.key
+
+# Encrypted archives are kept under version control if desired
+# archive/
