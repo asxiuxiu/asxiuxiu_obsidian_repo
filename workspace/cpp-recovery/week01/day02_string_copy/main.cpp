@@ -35,6 +35,11 @@ public:
             return *this;
         }
 
+        if (other.len_ == this->len_) {
+
+        }
+
+
         return *this;
     }
 
