@@ -36,9 +36,14 @@ public:
         }
 
         if (other.len_ == this->len_) {
-
+            std::memcpy(data_, other.data_, len_ + 1);
+            return *this;
         }
 
+        delete [] data_;
+        len_ = other.len_;
+        data_ = new char[len_ + 1];
+        std::memcpy(data_, other.data_, len_ + 1);
 
         return *this;
     }
