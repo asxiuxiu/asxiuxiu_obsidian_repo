@@ -814,16 +814,16 @@ aliases:
 > [!warning] 源码阅读建议
 > 按优先级从高到低阅读，先深入理解 1-2 个项目，再拓展到其他。不要贪多。
 
-| 项目 | 语言 | 学习重点 | 优先级 |
-|-----|------|---------|:------:|
-| **llama.cpp** | C++ | 纯 C++ 如何实现 LLM 推理、量化实现、GGUF 格式、CPU/GPU 混合调度 | ⭐⭐⭐⭐⭐ |
-| **vLLM** | Python+C++ | PagedAttention、Continuous Batching 服务架构 | ⭐⭐⭐⭐⭐ |
-| **TensorRT-LLM** | C++ | NVIDIA 极致优化、Kernel 融合、多卡并行 | ⭐⭐⭐⭐ |
-| **ONNX Runtime** | C++ | 跨平台部署、图优化、Execution Providers | ⭐⭐⭐⭐ |
-| **Hugging Face Transformers** | Python | 模型架构实现、Tokenizer、Generation 策略 | ⭐⭐⭐ |
-| **minGPT** | Python | Andrej Karpathy 从零手写 GPT，最佳教学代码 | ⭐⭐⭐⭐⭐ |
-| **LangChain** | Python | Agent 框架、RAG 编排、工具调用 | ⭐⭐⭐ |
-| **stable-diffusion.cpp** | C++ | llama.cpp 作者的扩散模型 C++ 实现 | ⭐⭐⭐ |
+| 项目                            | 语言         | 学习重点                                        |  优先级  |
+| ----------------------------- | ---------- | ------------------------------------------- | :---: |
+| **llama.cpp**                 | C++        | 纯 C++ 如何实现 LLM 推理、量化实现、GGUF 格式、CPU/GPU 混合调度 | ⭐⭐⭐⭐⭐ |
+| **vLLM**                      | Python+C++ | PagedAttention、Continuous Batching 服务架构     | ⭐⭐⭐⭐⭐ |
+| **TensorRT-LLM**              | C++        | NVIDIA 极致优化、Kernel 融合、多卡并行                  | ⭐⭐⭐⭐  |
+| **ONNX Runtime**              | C++        | 跨平台部署、图优化、Execution Providers               | ⭐⭐⭐⭐  |
+| **Hugging Face Transformers** | Python     | 模型架构实现、Tokenizer、Generation 策略              |  ⭐⭐⭐  |
+| **minGPT**                    | Python     | Andrej Karpathy 从零手写 GPT，最佳教学代码             | ⭐⭐⭐⭐⭐ |
+| **LangChain**                 | Python     | Agent 框架、RAG 编排、工具调用                        |  ⭐⭐⭐  |
+| **stable-diffusion.cpp**      | C++        | llama.cpp 作者的扩散模型 C++ 实现                    |  ⭐⭐⭐  |
 
 ---
 

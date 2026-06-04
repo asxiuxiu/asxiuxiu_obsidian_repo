@@ -1,1 +1,2 @@
 add_subdirectory(day01_string_basic)
+add_subdirectory(day02_string_copy)

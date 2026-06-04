@@ -1,0 +1,24 @@
+[
+  {
+    "label": "⚙️ Configure",
+    "command": "cmake",
+    "args": ["-S", ".", "-B", "build", "-G", "Ninja", "-DCMAKE_CXX_COMPILER=g++"],
+    "env": {
+      "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
+    },
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "🔨 Build",
+    "command": "cmake",
+    "args": ["--build", "build"],
+    "env": {
+      "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
+    },
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  }
+]

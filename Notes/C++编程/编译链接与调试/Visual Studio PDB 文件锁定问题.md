@@ -1,4 +1,4 @@
-﻿---
+---
 title: Visual Studio PDB 文件锁定问题
 date: 2026-03-18
 tags:
@@ -284,8 +284,8 @@ graph TD
 
 ## 七、相关参考
 
-- [[Notes/C++编程/调试器核心概念与原理.md|调试器核心概念与原理]] - 理解 PDB/DWARF 格式
-- [[Notes/C++编程/GDB调试指南.md|GDB 调试学习笔记]] - 跨平台调试工具
+- [[Notes/C++编程/编译链接与调试/调试器核心概念与原理|调试器核心概念与原理]] - 理解 PDB/DWARF 格式
+- [[Notes/C++编程/编译链接与调试/GDB调试指南|GDB 调试学习笔记]] - 跨平台调试工具
 - [Microsoft Docs: /FS (Force Synchronous PDB Writes)](https://docs.microsoft.com/en-us/cpp/build/reference/fs-force-synchronous-pdb-writes)
 - [Sysinternals Process Explorer](https://docs.microsoft.com/en-us/sysinternals/downloads/process-explorer)
 

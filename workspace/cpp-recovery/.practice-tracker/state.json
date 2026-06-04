@@ -3,7 +3,7 @@
   "meta": {
     "startDate": "2026-06-02",
     "lastActiveDate": "2026-06-03",
-    "currentDay": 1
+    "currentDay": 2
   },
   "abilityMatrix": {
     "syntax": 0.2,
@@ -55,5 +55,16 @@
       }
     }
   ],
-  "planAdjustments": []
+  "planAdjustments": [
+    {
+      "type": "gap-pool",
+      "concept": "ADL",
+      "dimension": ["template", "syntax"],
+      "difficulty": 2,
+      "phase": "第一阶段",
+      "gapId": "Gap-01",
+      "taskName": "手写支持 ADL 扩展的 mini format 系统",
+      "date": "2026-06-04"
+    }
+  ]
 }
