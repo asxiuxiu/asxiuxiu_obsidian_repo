@@ -5,13 +5,13 @@
 #include <cstring>
 
 class String {
-    char* data_;
+    char *data_;
     size_t len_;
-public:
-    String(const char* str)
-        : data_(nullptr), len_(0)
-    {
-        if (str == nullptr) return;
+
+  public:
+    String(const char *str) : data_(nullptr), len_(0) {
+        if (str == nullptr)
+            return;
 
         len_ = std::strlen(str);
         data_ = new char[len_ + 1];
@@ -19,28 +19,27 @@ public:
         data_[len_] = '\0';
     }
 
-    String(const String& other)
-        : data_(nullptr), len_(0)
-    {
-        if (other.data_ == nullptr) return;
-        len_ = other.len_;
+    String(const String &other) : data_(nullptr), len_(other.len_) {
+        if (other.data_ == nullptr)
+            return;
         data_ = new char[len_ + 1];
         std::memcpy(data_, other.data_, len_ + 1);
     }
 
-    const String& operator=(const String& other)
-    {
-        if (this == &other)
-        {
+    String &operator=(const String &other) {
+        if (other.data_ == nullptr) {
+            // delete[] data_;
+            data_ = nullptr;
+            len_ = 0;
             return *this;
         }
 
-        if (other.len_ == this->len_) {
-            std::memcpy(data_, other.data_, len_ + 1);
+        if (this == &other) {
             return *this;
         }
 
-        delete [] data_;
+        delete[] data_;
+
         len_ = other.len_;
         data_ = new char[len_ + 1];
         std::memcpy(data_, other.data_, len_ + 1);
@@ -48,13 +47,10 @@ public:
         return *this;
     }
 
-    ~String()
-    {
-        delete[] data_;
-    }
+    ~String() { delete[] data_; }
 
     size_t size() const { return len_; }
-    const char* c_str() const { return data_; }
+    const char *c_str() const { return data_; }
 };
 
 // -------------------- 测试用例 --------------------

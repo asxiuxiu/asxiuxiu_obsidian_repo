@@ -1,22 +1,40 @@
 [
   {
     "label": "⚙️ Configure",
-    "command": "cmake",
-    "args": ["-S", ".", "-B", "build", "-G", "Ninja", "-DCMAKE_CXX_COMPILER=g++"],
-    "env": {
-      "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
-    },
+    "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "args": ["-c", "export PATH='/c/msys64/ucrt64/bin:$PATH' && cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++"],
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
     "reveal": "always"
   },
   {
     "label": "🔨 Build",
-    "command": "cmake",
-    "args": ["--build", "build"],
-    "env": {
-      "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
-    },
+    "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "args": ["-c", "export PATH='/c/msys64/ucrt64/bin:$PATH' && cmake --build build"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "🏃 Run Current",
+    "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "args": ["-c", "export PATH='/c/msys64/ucrt64/bin:$PATH' && python scripts/run_current.py '$ZED_FILE'"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "🔄 Build & Run Current",
+    "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "args": ["-c", "export PATH='/c/msys64/ucrt64/bin:$PATH' && python scripts/run_current.py --build '$ZED_FILE'"],
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "🧪 Build with ASan (MinGW不支持，仅MSVC/Clang)",
+    "command": "C:\\Program Files\\Git\\usr\\bin\\bash.exe",
+    "args": ["-c", "export PATH='/c/msys64/ucrt64/bin:$PATH' && cmake -S . -B build-asan -G Ninja -DCMAKE_CXX_COMPILER=g++ -DENABLE_ASAN=ON && cmake --build build-asan"],
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
     "reveal": "always"

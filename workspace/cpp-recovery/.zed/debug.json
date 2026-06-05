@@ -1,0 +1,9 @@
+[
+  {
+    "label": "Debug Current",
+    "adapter": "CodeLLDB",
+    "request": "launch",
+    "program": "$ZED_FILE",
+    "build": "🔨 Build"
+  }
+]

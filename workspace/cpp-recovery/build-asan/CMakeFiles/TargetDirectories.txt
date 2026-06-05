@@ -1,0 +1,10 @@
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/CMakeFiles/edit_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/CMakeFiles/rebuild_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/CMakeFiles/edit_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/CMakeFiles/rebuild_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day01_string_basic/CMakeFiles/day01_string_basic.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day01_string_basic/CMakeFiles/edit_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day01_string_basic/CMakeFiles/rebuild_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day02_string_copy/CMakeFiles/day02_string_copy.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day02_string_copy/CMakeFiles/edit_cache.dir
+D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day02_string_copy/CMakeFiles/rebuild_cache.dir

@@ -1,0 +1,10 @@
+{
+	"InstallScripts" : 
+	[
+		"D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/cmake_install.cmake",
+		"D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/cmake_install.cmake",
+		"D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day01_string_basic/cmake_install.cmake",
+		"D:/asxiuxiu_obsidian_repo/workspace/cpp-recovery/build-asan/week01/day02_string_copy/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
