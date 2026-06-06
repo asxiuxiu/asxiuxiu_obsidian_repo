@@ -2,14 +2,14 @@
   "version": "1.0",
   "meta": {
     "startDate": "2026-06-02",
-    "lastActiveDate": "2026-06-03",
-    "currentDay": 2
+    "lastActiveDate": "2026-06-06",
+    "currentDay": 3
   },
   "abilityMatrix": {
-    "syntax": 0.2,
-    "pointer": 1.2,
+    "syntax": 0.7,
+    "pointer": 1.7,
     "template": 0,
-    "memoryMgmt": 1.2,
+    "memoryMgmt": 2.2,
     "design": 0,
     "concurrency": 0
   },
@@ -52,6 +52,40 @@
         "syntax": 0.2,
         "pointer": 1.2,
         "memoryMgmt": 1.2
+      }
+    },
+    {
+      "day": 2,
+      "date": "2026-06-06",
+      "taskId": "day02_string_copy",
+      "taskName": "给 String 加上拷贝赋值运算符",
+      "weekTheme": "类与对象的生命周期",
+      "status": "completed",
+      "submissions": [
+        {
+          "round": 1,
+          "ts": "2026-06-06T00:23:18",
+          "status": "failed",
+          "issues": ["赋值后nullptr状态丢失", "len相同分支可能解引用nullptr", "operator=返回const String&不符合惯例"]
+        },
+        {
+          "round": 2,
+          "ts": "2026-06-06T15:10:00",
+          "status": "passed",
+          "issues": []
+        }
+      ],
+      "hintsUsed": 0,
+      "checkResults": {
+        "score": 4,
+        "total": 4,
+        "weakPoints": [],
+        "mastered": ["拷贝赋值返回String&支持链式赋值", "自赋值检查防止数据丢失", "delete[]与new顺序对异常安全的影响", "浅拷贝导致double free"]
+      },
+      "abilityDelta": {
+        "syntax": 0.5,
+        "pointer": 0.5,
+        "memoryMgmt": 1.0
       }
     }
   ],

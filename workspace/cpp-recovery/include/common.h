@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iostream>
+#include <cstdlib>
 #include <cassert>
 
 // 简单测试宏，避免引入 gtest 增加复杂度

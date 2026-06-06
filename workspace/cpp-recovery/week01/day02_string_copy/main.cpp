@@ -27,21 +27,23 @@ class String {
     }
 
     String &operator=(const String &other) {
+        if (this == &other) {
+            return *this;
+        }
+
         if (other.data_ == nullptr) {
-            // delete[] data_;
+            delete[] data_;
             data_ = nullptr;
             len_ = 0;
             return *this;
         }
 
-        if (this == &other) {
-            return *this;
-        }
+        char* tmp = data_;
 
-        delete[] data_;
-
+        data_ = new char[other.len_ + 1];
+        delete[] tmp;
         len_ = other.len_;
-        data_ = new char[len_ + 1];
+
         std::memcpy(data_, other.data_, len_ + 1);
 
         return *this;

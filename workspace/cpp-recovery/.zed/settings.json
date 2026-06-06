@@ -1,7 +1,7 @@
 {
   "dap": {
     "CodeLLDB": {
-      "binary": "python",
+      "binary": "C:/Users/liche/miniconda3/python.exe",
       "args": ["scripts/gdb_dap.py"]
     }
   }

@@ -51,6 +51,17 @@ def main():
     exe_path = os.path.normpath(exe_path)
 
     if do_build:
+        build_dir = os.path.join(worktree_root, "build")
+        if not os.path.isdir(build_dir):
+            print("[Build] Build directory not found, configuring...")
+            cfg_result = subprocess.run(
+                ["cmake", "-S", ".", "-B", "build", "-G", "Ninja", "-DCMAKE_CXX_COMPILER=g++"],
+                cwd=worktree_root
+            )
+            if cfg_result.returncode != 0:
+                print("[Build] Configure failed")
+                sys.exit(cfg_result.returncode)
+
         print("[Build] Building...")
         build_result = subprocess.run(
             ["cmake", "--build", "build"],
