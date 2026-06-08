@@ -3,13 +3,13 @@
   "meta": {
     "startDate": "2026-06-02",
     "lastActiveDate": "2026-06-06",
-    "currentDay": 3
+    "currentDay": 4
   },
   "abilityMatrix": {
-    "syntax": 0.7,
-    "pointer": 1.7,
+    "syntax": 1.5,
+    "pointer": 2.2,
     "template": 0,
-    "memoryMgmt": 2.2,
+    "memoryMgmt": 3.2,
     "design": 0,
     "concurrency": 0
   },
@@ -84,6 +84,45 @@
       },
       "abilityDelta": {
         "syntax": 0.5,
+        "pointer": 0.5,
+        "memoryMgmt": 1.0
+      }
+    },
+    {
+      "day": 3,
+      "date": "2026-06-06",
+      "taskId": "day03_string_move",
+      "taskName": "给 String 加上移动构造和移动赋值",
+      "weekTheme": "类与对象的生命周期",
+      "status": "completed",
+      "submissions": [
+        {
+          "round": 1,
+          "ts": "2026-06-06T08:51:38",
+          "status": "passed",
+          "issues": []
+        },
+        {
+          "round": 2,
+          "ts": "2026-06-06T08:59:46",
+          "status": "passed",
+          "issues": []
+        }
+      ],
+      "hintsUsed": 1,
+      "checkResults": {
+        "score": 4,
+        "total": 4,
+        "weakPoints": [],
+        "mastered": [
+          "移动语义与拷贝语义的本质区别",
+          "移动构造/移动赋值的资源转移",
+          "noexcept 对容器扩容性能的影响",
+          "移动后源对象的可析构状态"
+        ]
+      },
+      "abilityDelta": {
+        "syntax": 0.8,
         "pointer": 0.5,
         "memoryMgmt": 1.0
       }
