@@ -6,7 +6,13 @@
 
 template <typename T, size_t N>
 class Array {
-    // TODO: 在此实现 Array<T, N>
+private:
+    size_t m_len;
+    T *m_data;
+
+public:
+
+    size_t size() {}
 };
 
 // -------------------- 测试用例 --------------------
@@ -29,7 +35,7 @@ void test_read_write_elements() {
 void test_const_access() {
     Array<int, 3> a;
     a[0] = 42;
-    const Array<int, 3>& ref = a;
+    const Array<int, 3> &ref = a;
     CHECK_EQ(ref[0], 42);
 }
 

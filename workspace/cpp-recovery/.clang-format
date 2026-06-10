@@ -1,4 +1,97 @@
-BasedOnStyle: LLVM
+# yaml-language-server: $schema=https://json.schemastore.org/clang-format-21.x.json
+---
+# 参照 Visual Studio 默认 C++ 格式化风格
+BasedOnStyle: Microsoft
+Language: Cpp
+Standard: c++20
+
+# 缩进
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
+ContinuationIndentWidth: 4
+IndentAccessModifiers: false
+AccessModifierOffset: -4
+IndentCaseLabels: false
+IndentWrappedFunctionNames: false
+IndentPPDirectives: None
+NamespaceIndentation: None
+
+# 列宽
+ColumnLimit: 120
+
+# 大括号风格（VS 默认不换行）
+BreakBeforeBraces: Attach
+
+# 指针与引用（VS 默认靠近变量名）
+PointerAlignment: Right
+ReferenceAlignment: Pointer
+DerivePointerAlignment: false
+SpaceAroundPointerQualifiers: Default
+
+# 单行规则
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortLambdasOnASingleLine: Inline
+
+# 换行
+AlwaysBreakAfterReturnType: None
+AlwaysBreakBeforeMultilineStrings: false
+AlwaysBreakTemplateDeclarations: Yes
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: true
+ConstructorInitializerAllOnOneLineOrOnePerLine: true
+ConstructorInitializerIndentWidth: 4
+Cpp11BracedListStyle: true
+
+# 参数打包
+BinPackArguments: true
+BinPackParameters: true
+AllowAllParametersOfDeclarationOnNextLine: true
+PackConstructorInitializers: BinPack
+
+# 对齐
+AlignAfterOpenBracket: Align
+AlignOperands: true
+AlignTrailingComments: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
+
+# 空格
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpacesInAngles: false
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeRangeBasedForLoopColon: true
+SpacesBeforeTrailingComments: 1
+SpacesInContainerLiterals: false
+
+# 空行
+MaxEmptyLinesToKeep: 1
+KeepEmptyLines:
+    AtStartOfFile: false
+    AtStartOfBlock: false
+    AtEndOfFile: true
+SeparateDefinitionBlocks: Leave
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Leave
+
+# Include
+SortIncludes: false
+IncludeBlocks: Preserve
+
+# 注释
+ReflowComments: true
+FixNamespaceComments: true
