@@ -1,133 +1,20 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "meta": {
-    "startDate": "2026-06-02",
-    "lastActiveDate": "2026-06-06",
-    "currentDay": 4
+    "startDate": "2026-06-11",
+    "lastActiveDate": "2026-06-11",
+    "currentDay": 1,
+    "planVersion": "笔记先行版"
   },
   "abilityMatrix": {
-    "syntax": 1.5,
-    "pointer": 2.2,
+    "syntax": 0,
+    "pointer": 0,
     "template": 0,
-    "memoryMgmt": 3.2,
+    "memoryMgmt": 0,
     "design": 0,
     "concurrency": 0
   },
-  "dailyRecords": [
-    {
-      "day": 1,
-      "date": "2026-06-03",
-      "taskId": "day01_string_basic",
-      "taskName": "String 类构造与析构",
-      "weekTheme": "类与对象的生命周期",
-      "status": "completed",
-      "submissions": [
-        {
-          "round": 1,
-          "ts": "2026-06-03T14:52:00",
-          "status": "failed",
-          "issues": ["sizeof(str)误用", "&data_误用", "len_未初始化", "缺少空指针检查"]
-        },
-        {
-          "round": 2,
-          "ts": "2026-06-03T17:04:28",
-          "status": "failed",
-          "issues": ["缺少拷贝构造函数", "深拷贝未实现"]
-        },
-        {
-          "round": 3,
-          "ts": "2026-06-03T17:04:28",
-          "status": "passed",
-          "issues": []
-        }
-      ],
-      "hintsUsed": 0,
-      "checkResults": {
-        "score": 3,
-        "total": 4,
-        "weakPoints": ["C字符串\\0终止符与内存分配关系", "成员初始化列表的必要性"],
-        "mastered": ["深拷贝vs浅拷贝的因果链条", "delete[]配对new[]"]
-      },
-      "abilityDelta": {
-        "syntax": 0.2,
-        "pointer": 1.2,
-        "memoryMgmt": 1.2
-      }
-    },
-    {
-      "day": 2,
-      "date": "2026-06-06",
-      "taskId": "day02_string_copy",
-      "taskName": "给 String 加上拷贝赋值运算符",
-      "weekTheme": "类与对象的生命周期",
-      "status": "completed",
-      "submissions": [
-        {
-          "round": 1,
-          "ts": "2026-06-06T00:23:18",
-          "status": "failed",
-          "issues": ["赋值后nullptr状态丢失", "len相同分支可能解引用nullptr", "operator=返回const String&不符合惯例"]
-        },
-        {
-          "round": 2,
-          "ts": "2026-06-06T15:10:00",
-          "status": "passed",
-          "issues": []
-        }
-      ],
-      "hintsUsed": 0,
-      "checkResults": {
-        "score": 4,
-        "total": 4,
-        "weakPoints": [],
-        "mastered": ["拷贝赋值返回String&支持链式赋值", "自赋值检查防止数据丢失", "delete[]与new顺序对异常安全的影响", "浅拷贝导致double free"]
-      },
-      "abilityDelta": {
-        "syntax": 0.5,
-        "pointer": 0.5,
-        "memoryMgmt": 1.0
-      }
-    },
-    {
-      "day": 3,
-      "date": "2026-06-06",
-      "taskId": "day03_string_move",
-      "taskName": "给 String 加上移动构造和移动赋值",
-      "weekTheme": "类与对象的生命周期",
-      "status": "completed",
-      "submissions": [
-        {
-          "round": 1,
-          "ts": "2026-06-06T08:51:38",
-          "status": "passed",
-          "issues": []
-        },
-        {
-          "round": 2,
-          "ts": "2026-06-06T08:59:46",
-          "status": "passed",
-          "issues": []
-        }
-      ],
-      "hintsUsed": 1,
-      "checkResults": {
-        "score": 4,
-        "total": 4,
-        "weakPoints": [],
-        "mastered": [
-          "移动语义与拷贝语义的本质区别",
-          "移动构造/移动赋值的资源转移",
-          "noexcept 对容器扩容性能的影响",
-          "移动后源对象的可析构状态"
-        ]
-      },
-      "abilityDelta": {
-        "syntax": 0.8,
-        "pointer": 0.5,
-        "memoryMgmt": 1.0
-      }
-    }
-  ],
+  "dailyRecords": [],
   "planAdjustments": [
     {
       "type": "gap-pool",

@@ -1,6 +1,6 @@
 # C++ 基础恢复 70 天练习工作区
 
-> 📝 源自笔记：[[workspace/cpp-recovery/C++基础恢复70天计划]]
+> 📝 源自笔记：[[Notes/学习计划/C++基础恢复70天计划.md|C++ 基础恢复 70 天计划]]
 > 📅 生成时间：2026-06-02
 
 ## 简介
@@ -52,7 +52,7 @@ cmake --build build
 
 ### 手写阶段
 
-1. 查看当天任务：打开 `PROGRESS.md`（或 vault 中的 `workspace/cpp-recovery/C++基础恢复70天计划.md`）
+1. 查看当天任务：打开 `PROGRESS.md`（或 vault 中的 `Notes/学习计划/C++基础恢复70天计划.md`）
 2. 在工作区新建/打开当天的 `main.cpp`
 3. 实现代码，填写 TODO
 
@@ -117,7 +117,7 @@ cmake --build build
 
 打开本工作区内的 `PROGRESS.md`，在对应行打勾。`PROGRESS.md` 与 vault 中的计划笔记内容同步，单独打开工作区时无需切回 vault。
 
-> 如需查看详细的题目描述、示例代码、业务映射，仍参考 vault 中的 `workspace/cpp-recovery/C++基础恢复70天计划.md`。
+> 如需查看详细的题目描述、示例代码、业务映射，仍参考 vault 中的 `Notes/学习计划/C++基础恢复70天计划.md`。
 
 ## 新增一天的目录
 

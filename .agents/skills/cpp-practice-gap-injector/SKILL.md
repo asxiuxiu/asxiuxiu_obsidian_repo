@@ -14,7 +14,7 @@
 ## 前置步骤
 
 1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`
-2. 读取 `workspace/cpp-recovery/C++基础恢复70天计划.md`
+2. 读取 `Notes/学习计划/C++基础恢复70天计划.md`
 3. 读取 `workspace/cpp-recovery/PROGRESS.md`
 
 ## 工作流程
