@@ -46,4 +46,24 @@ endif()
 
 include_directories(include)
 
-add_subdirectory(week01)
+# ---------------------------------------------------------------------------
+# 自动发现阶段练习目录
+# 目录命名规范：phase<阶段号>/ex<练习编号>_<主题>/
+# 例如：phase01/ex01_file_guard/
+# ---------------------------------------------------------------------------
+file(GLOB phase_dirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} phase*)
+foreach(phase_dir ${phase_dirs})
+    if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${phase_dir})
+        file(GLOB exercise_dirs RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/${phase_dir} ${phase_dir}/ex*)
+        foreach(exercise_dir ${exercise_dirs})
+            if(IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${exercise_dir})
+                add_subdirectory(${exercise_dir})
+            endif()
+        endforeach()
+    endif()
+endforeach()
+
+# 保留旧 week01 目录兼容（迁移完成后可删除）
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/week01/CMakeLists.txt)
+    add_subdirectory(week01)
+endif()

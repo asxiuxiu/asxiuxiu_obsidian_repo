@@ -1,6 +1,6 @@
 ---
 name: cpp-practice-check
-description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针对当天知识点设计3-5个追问，检验用户是否真正掌握。触发词包括"考考我"、"掌握了没有"、"来个小测验"、"检验一下"。
+description: C++ 刻意练习知识校验 Skill。在每次练习结束后，针对当前 Phase/Exercise 知识点设计3-5个追问，检验用户是否真正掌握。触发词包括"考考我"、"掌握了没有"、"来个小测验"、"检验一下"。
 ---
 
 # C++ 练习知识校验
@@ -8,7 +8,7 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 ## 定位
 
 本 Skill 是练习效果的**质检员**。它不评价代码，而是：
-1. 针对当天知识点设计追问
+1. 针对当前 Phase/Exercise 知识点设计追问
 2. 让用户口头回答（不需要写代码）
 3. 评估掌握度，记录薄弱点
 
@@ -16,12 +16,12 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 
 - 用户说"考考我" / "来个小测验" / "检验一下"
 - 用户说"今天学的掌握了没有"
-- 每天练习结束后由 Orchestrator 建议进行
+- 每次练习结束后由 Orchestrator 建议进行
 
 ## 前置步骤
 
-1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentDay` 和 `weekTheme`
-2. 读取 `Notes/学习计划/C++基础恢复70天计划.md` 获取当天题目和考察点
+1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentPhase` 和 `currentExercise`（兼容旧数据时也可读 `currentDay`）
+2. 读取 `Notes/学习计划/C++基础恢复70天计划.md` 获取当前练习题目和考察点
 3. 基于考察点设计追问
 
 ## 追问设计原则
@@ -40,16 +40,16 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 
 ### 各类型示例
 
-**概念理解**（Day 1 String 构造+析构）：
-> "你的 String 构造函数里，为什么用 `new char[len_ + 1]` 而不是 `new char[len_]`？"
+**概念理解**（Phase 1 Exercise 1 FileGuard）：
+> "FileGuard 的析构函数里为什么要关闭文件？如果构造函数中 `fopen` 返回了空指针，析构函数里还要关闭吗？"
 
-**设计动机**（Day 3 String 移动语义）：
+**设计动机**（Phase 5 Exercise 1 String 移动语义）：
 > "为什么 C++11 要引入移动语义？如果只有拷贝构造，写 `return std::move(str)` 会怎样？"
 
-**边界/变体**（Day 2 String 拷贝赋值）：
+**边界/变体**（Phase 1 Exercise 2 String 拷贝赋值）：
 > "如果你的拷贝赋值运算符收到 `s = s`（自赋值），不做特殊处理会发生什么？"
 
-**代码纠错**（Day 5 UniquePtr）：
+**代码纠错**（Phase 7 Exercise 1 UniquePtr）：
 > "下面这段 UniquePtr 的析构函数有什么问题？
 > ```cpp
 > ~UniquePtr() { delete ptr_; }
@@ -68,7 +68,7 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 ### 流程
 
 ```
-📝 知识校验（Day X: <taskName>）
+📝 知识校验（Phase N Exercise M: <taskName>）
 ━━━━━━━━━━━━━━━━━━━━━━
 
 第 1/4 题（概念理解）：
@@ -102,7 +102,7 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 校验结束后输出总结：
 
 ```
-📊 校验结果（Day X: <taskName>）
+📊 校验结果（Phase N Exercise M: <taskName>）
 ━━━━━━━━━━━━━━━━━━━━━━
 
 得分：X/4
@@ -126,9 +126,9 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 
 ## 超纲控制
 
-校验问题**严格限定在当天学习目标内**：
-- Day 1 不问拷贝构造相关的问题
-- Day 3 才问移动语义
+校验问题**严格限定在当前 Phase/Exercise 学习目标内**：
+- Phase 1 Exercise 1 不问拷贝构造相关的问题
+- Phase 6 才问移动语义
 - 不涉及尚未学习的标准库内部实现
 
 如果用户回答时提到了超纲内容，可以顺势拓展，但**不纳入评分**。
@@ -137,10 +137,10 @@ description: C++ 刻意练习知识校验 Skill。在每天练习结束后，针
 
 ### 1. 逐题写入交互日志
 
-每道题问答结束后，追加到当天会话日志：
+每道题问答结束后，追加到当前练习会话日志：
 
 ```bash
-echo '{"ts":"2026-06-03T14:35:00","day":1,"taskId":"day01_string_basic","type":"check","qIndex":1,"qType":"概念理解","userAnswer":"...","rating":"基本掌握"}' >> .practice-tracker/sessions/day01_2026-06-03.jsonl
+echo '{"ts":"2026-06-17T14:35:00","phase":"01","exercise":"1.1","taskId":"phase01_ex01_file_guard","type":"check","qIndex":1,"qType":"概念理解","userAnswer":"...","rating":"基本掌握"}' >> .practice-tracker/sessions/phase01_ex01_2026-06-17.jsonl
 ```
 
 `rating`：🟢掌握 / 🟡基本掌握 / 🟠需巩固 / 🔴未掌握
@@ -151,9 +151,10 @@ echo '{"ts":"2026-06-03T14:35:00","day":1,"taskId":"day01_string_basic","type":"
 
 ```json
 {
-  "dailyRecords": [
+  "exerciseRecords": [
     {
-      "day": 1,
+      "phase": "01",
+      "exercise": "1.1",
       "checkResults": {
         "score": 3,
         "total": 4,
@@ -164,6 +165,8 @@ echo '{"ts":"2026-06-03T14:35:00","day":1,"taskId":"day01_string_basic","type":"
   ]
 }
 ```
+
+> 兼容旧数据：如果 `state.json` 中只有 `dailyRecords`，则把记录追加到 `dailyRecords`，并额外写入 `phase`/`exercise` 字段。
 
 ## 注意事项
 

@@ -1,4 +1,0 @@
-add_subdirectory(day01_string_basic)
-add_subdirectory(day02_string_copy)
-add_subdirectory(day03_string_move)
-add_subdirectory(day04_array_template)

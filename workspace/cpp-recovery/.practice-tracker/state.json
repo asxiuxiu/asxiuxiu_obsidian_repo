@@ -2,9 +2,11 @@
   "version": "1.1",
   "meta": {
     "startDate": "2026-06-11",
-    "lastActiveDate": "2026-06-11",
+    "lastActiveDate": "2026-06-17",
     "currentDay": 1,
-    "planVersion": "笔记先行版"
+    "currentPhase": "01",
+    "currentExercise": "1.1",
+    "planVersion": "17阶段笔记先行版"
   },
   "abilityMatrix": {
     "syntax": 0,

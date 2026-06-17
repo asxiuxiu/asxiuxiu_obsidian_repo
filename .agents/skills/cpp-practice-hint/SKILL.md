@@ -20,7 +20,7 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
 ## 前置步骤
 
 给出提示前**必须**执行：
-1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentDay`、`taskName`、`hintsUsed`
+1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentPhase`、`currentExercise`（兼容旧数据时也可读 `currentDay`），以及 `hintsUsed`
 2. 读取用户当前的代码文件，了解已经写了什么、卡在哪里
 3. 判断用户处于哪一级提示（L1/L2/L3），从下一级开始给
 
@@ -31,8 +31,8 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
 **内容**：只告诉"从哪里想"，不给任何代码、函数名或具体步骤。
 
 **示例**：
-- Day 1（String 构造）："构造函数需要把传入的 C 字符串复制到堆上。先想想：需要多少字节？用什么函数复制？"
-- Day 8（SharedPtr）："引用计数应该放在哪里？放在 SharedPtr 对象里，还是放在另一个单独的结构里？想想多个 SharedPtr 指向同一个对象时，计数怎么共享。"
+- Phase 1 Exercise 1（FileGuard）："构造函数拿到文件路径后，需要把路径交给一个 C 标准库函数来打开文件。想想 C 语言里是怎么打开文件的？打开失败时返回什么？"
+- Phase 7 Exercise 2（SharedPtr）："引用计数应该放在哪里？放在 SharedPtr 对象里，还是放在另一个单独的结构里？想想多个 SharedPtr 指向同一个对象时，计数怎么共享。"
 
 **目的**：让用户自己搜索记忆中的相关知识点，重新建立连接。
 
@@ -43,8 +43,8 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
 **触发**：用户说"再具体点"、"还是不清楚"、"给点更具体的提示"。
 
 **示例**：
-- Day 1（String 构造）："步骤分解：1. 计算源字符串长度 → 2. 在堆上分配 len+1 个字节 → 3. 把内容复制过去 → 4. 更新成员变量。想想每一步用什么函数。"
-- Day 8（SharedPtr）："思路：创建一个'控制块'结构，里面放引用计数和原始指针。SharedPtr 对象里只存指向控制块的指针。拷贝 SharedPtr 时，让两个 SharedPtr 指向同一个控制块，计数+1。"
+- Phase 1 Exercise 1（FileGuard）："步骤分解：1. 调用 fopen 打开文件 → 2. 把 FILE* 保存到成员变量 → 3. 在析构函数中调用 fclose → 4. IsOpen 判断成员变量是否非空。想想每个步骤对应的 C 函数名。"
+- Phase 7 Exercise 2（SharedPtr）："思路：创建一个'控制块'结构，里面放引用计数和原始指针。SharedPtr 对象里只存指向控制块的指针。拷贝 SharedPtr 时，让两个 SharedPtr 指向同一个控制块，计数+1。"
 
 **目的**：把大问题拆成小问题，让用户逐个击破。
 
@@ -55,15 +55,18 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
 **触发**：用户说"再提示一下"、"给点代码看看"。
 
 **示例**：
-- Day 1（String 构造）：
+- Phase 1 Exercise 1（FileGuard）：
   ```cpp
-  String(const char* str) {
-      len_ = ???;           // 用什么函数算长度？
-      data_ = new ???[???]; // 什么类型？多少个字节？
-      ???(data_, str);      // 用什么函数复制？
+  FileGuard(const char* path, const char* mode) {
+      file_ = ???(path, mode);  // 用什么函数打开文件？
+  }
+  ~FileGuard() {
+      if (file_ != ???) {       // 什么值表示未打开？
+          ???(file_);            // 用什么函数关闭？
+      }
   }
   ```
-- Day 8（SharedPtr 拷贝构造）：
+- Phase 7 Exercise 2（SharedPtr 拷贝构造）：
   ```cpp
   SharedPtr(const SharedPtr& other) {
       ctrl_ = ???;          // 控制块从哪里来？
@@ -86,26 +89,26 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
 2. **每级最多一次**：L1 → L2 → L3，用完即止，不再给更多提示
 3. **L3 之后不再提示**：如果 L3 后用户还写不出来，建议：
    - "这道题对你来说可能还太难，建议先复习相关笔记"
-   - "要不要我把今天的任务换成更基础的巩固练习？"
+   - "要不要我把当前练习换成更基础的巩固练习？"
    - 不要直接给完整答案
-4. **记录使用次数**：每次使用提示后，state.json 中 `hintsUsed` +1
-5. **记录交互日志**：每次使用提示后，追加到当天会话日志：
+4. **记录使用次数**：每次使用提示后，state.json 中 `hintsUsed` +1（按当前 exercise 累计）
+5. **记录交互日志**：每次使用提示后，追加到当前练习会话日志：
    ```bash
-   echo '{"ts":"...","day":1,"taskId":"day01_string_basic","type":"hint","level":1,"topic":"内存分配"}' >> .practice-tracker/sessions/day01_2026-06-03.jsonl
+   echo '{"ts":"...","phase":"01","exercise":"1.1","taskId":"phase01_ex01_file_guard","type":"hint","level":1,"topic":"文件打开"}' >> .practice-tracker/sessions/phase01_ex01_2026-06-17.jsonl
    ```
    `topic` 是提示涉及的核心知识点，便于 Tracker 统计"哪些概念需要提示"。
 
 ### 提示质量要求
 
 - **上下文相关**：提示必须基于用户已经写的代码和卡住的具体位置
-- **当天目标对齐**：提示只涉及当天正在学习的概念
+- **当前练习目标对齐**：提示只涉及当前 Phase/Exercise 正在学习的概念
 - **鼓励思考**：提示以问题结尾，引导用户自己推下一步
 - **不给完整函数**：即使 L3，也只给填空式片段，不给能直接编译通过的完整实现
 
 ## 输出格式
 
 ```
-💡 提示（Day X: <taskName> | L<级别>）
+💡 提示（Phase N Exercise M: <taskName> | L<级别>）
 ━━━━━━━━━━━━━━━━━━━━━━
 
 <提示内容>
@@ -123,4 +126,4 @@ description: C++ 刻意练习渐进提示 Skill。当用户在 workspace/cpp-rec
 - 给出标准库源码作为"参考"
 - 直接告诉用户"你应该这样写"然后贴出实现
 - 一次给多个级别的提示
-- 提示中引入当天学习目标之外的概念
+- 提示中引入当前练习学习目标之外的概念

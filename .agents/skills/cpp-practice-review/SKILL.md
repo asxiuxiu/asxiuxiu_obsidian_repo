@@ -1,6 +1,6 @@
 ---
 name: cpp-practice-review
-description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-recovery/ 手写代码后请求评审时触发。按「接口设计→实现正确性→优化空间→标准库对比」四维度评审，严格对齐当天学习目标，不超纲。触发词包括"帮我看看"、"评审一下"、"有什么优化空间"、"这段代码怎么样"。
+description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-recovery/ 手写代码后请求评审时触发。按「接口设计→实现正确性→优化空间→标准库对比」四维度评审，严格对齐当前阶段练习目标，不超纲。触发词包括"帮我看看"、"评审一下"、"有什么优化空间"、"这段代码怎么样"。
 ---
 
 # C++ 练习代码评审
@@ -8,7 +8,7 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 ## 定位
 
 本 Skill 负责对用户手写的 C++ 代码进行**有边界的评审**。评审必须：
-- 只评价当天学习目标范围内的内容
+- 只评价当前阶段（Phase）/练习（Exercise）学习目标范围内的内容
 - 不引入尚未学习的概念或技巧
 - 给出具体、可执行的建议
 
@@ -22,10 +22,11 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 ## 前置步骤
 
 评审前**必须**执行：
-1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentDay` 和 `weekTheme`
+1. 读取 `workspace/cpp-recovery/.practice-tracker/state.json`，确认 `currentPhase` 和 `currentExercise`（兼容旧数据时也可读 `currentDay`）
 2. 读取用户提交的代码文件
-3. 根据 `currentDay` 确定**评审边界**（见下方「超纲控制」）
-4. **检查当天已有交互日志**：读取 `.practice-tracker/sessions/day{NN}_YYYY-MM-DD.jsonl`（如存在），了解用户之前迭代过几轮、用过几次 hint、上一轮的 issues 是什么。这决定了本轮是 "round 1" 还是 "round N"。
+3. 根据 `currentPhase` + `currentExercise` 确定**评审边界**（见下方「超纲控制」）
+4. **检查当天已有交互日志**：读取 `.practice-tracker/sessions/phase{NN}_ex{MM}_YYYY-MM-DD.jsonl`（如存在），了解用户之前迭代过几轮、用过几次 hint、上一轮的 issues 是什么。这决定了本轮是 "round 1" 还是 "round N"。
+   - 如果旧格式日志 `day{NN}_YYYY-MM-DD.jsonl` 存在，也一并读取以保证历史连续性。
 
 ## 评审四维度
 
@@ -37,7 +38,7 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 - 命名是否符合惯例？
 - 是否遗漏了必要的接口（如 size()、empty()）？
 
-边界：只评价当天已学/正在学的概念。例如 Day 1（构造+析构）不评价拷贝构造，因为还没学到。
+边界：只评价当前阶段已学/正在学的概念。例如 Phase 1 Exercise 1（构造+析构）不评价拷贝构造，因为还没学到。
 
 ### 维度 2：实现正确性
 
@@ -47,7 +48,7 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 - 是否有未定义行为？
 - 资源泄漏风险？
 
-边界：用当天已学的知识能发现的 bug。不引入 RAII 以外的异常安全讨论（如果还没学到）。
+边界：用当前阶段已学的知识能发现的 bug。不引入 RAII 以外的异常安全讨论（如果还没学到）。
 
 ### 维度 3：优化空间
 
@@ -56,7 +57,7 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 - 减少不必要的拷贝
 - 更合理的成员初始化顺序
 
-边界：**只提当前阶段能理解的优化**。例如 Day 1 不提移动语义，Day 3 才提。
+边界：**只提当前阶段能理解的优化**。例如 Phase 1 不提移动语义，Phase 5 才提。
 
 ### 维度 4：标准库对比
 
@@ -65,32 +66,38 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 - 标准库的设计决策背后是什么考量？
 - 你现在还不能实现的部分是什么？
 
-边界：只对比当天主题相关的标准库设计。明确标注「后续阶段学习」的内容。
+边界：只对比当前练习主题相关的标准库设计。明确标注「后续阶段学习」的内容。
 
 ## 超纲控制表
 
-根据 `currentDay` 确定评审边界：
+根据 `currentPhase` + `currentExercise` 确定评审边界：
 
-| Day 范围 | 已学概念 | 禁止引入的评审点 |
+| Phase/Exercise 范围 | 已学概念 | 禁止引入的评审点 |
 |---------|---------|----------------|
-| Day 1-2 | 构造、析构、深拷贝 | 移动语义、模板、异常安全 |
-| Day 3 | + 移动语义 | 完美转发、模板元编程 |
-| Day 4 | + 模板基础 | SFINAE、类型萃取 |
-| Day 5-6 | + RAII、UniquePtr | 引用计数、控制块 |
-| Day 8-9 | + SharedPtr、MakeShared | 弱引用、自定义删除器 |
-| Day 10-11 | + 类型擦除、Variant | 更复杂的内存布局优化 |
-| Day 15-21 | 链表、栈 | 高级数据结构技巧 |
-| Day 24-25 | Vector、emplace_back | 分配器、复杂异常安全 |
-| Day 29-35 | 二叉树、AVL、Trie | 红黑树、B+树 |
-| Day 36-42 | 哈希表、四叉树 | 完美哈希、高级空间索引 |
-| Day 43-49 | 排序、图论 | 高级算法优化 |
-| Day 57-63 | 并发原语 | 内存序、无锁算法细节 |
-| Day 64-70 | ECS、引擎模块 | 超出练习范围的工业细节 |
+| Phase 1 | 构造、析构、访问控制、RAII 萌芽 | 拷贝/移动语义、模板、异常安全 |
+| Phase 2 | 运算符重载 | SFINAE、模板、异常安全 |
+| Phase 3 | 引用、指针、参数传递 | 模板、完美转发 |
+| Phase 4 | 内存布局、对齐、手动虚表 | C++ 虚函数内部细节（已学过可讨论）、多继承 |
+| Phase 5 | 深拷贝、移动、Rule of Five | 完美转发、自定义删除器 |
+| Phase 6 | 值类别、完美转发、emplace | 复杂元编程、无锁 |
+| Phase 7 | RAII、UniquePtr、SharedPtr | 弱引用、复杂内存池 |
+| Phase 8 | SFINAE、Concepts、type_traits | 模板编译模型细节 |
+| Phase 9 | 类模板、特化、CRTP | 复杂 SFINAE |
+| Phase 10 | constexpr、宏、编译期哈希 | 运行期反射 |
+| Phase 11 | 继承、Pimpl、接口设计 | 多继承菱形问题 |
+| Phase 12 | Lambda、类型擦除、委托 | 复杂小对象优化细节 |
+| Phase 13 | 并发原语 | 内存序细节（除非练习涉及）、无锁算法细节 |
+| Phase 14 | 标准库容器原理 | 工业级异常安全细节 |
+| Phase 15 | 编译链接、调试 | 复杂 ABI |
+| Phase 16 | 异常安全、Result | 协程 |
+| Phase 17 | 现代 C++ 演进 | 超出练习范围的工业细节 |
+
+> 若不确定某概念是否已学，优先查看当前 Phase/Exercise 的「前置笔记」和「核心考察点」，再对照 `Notes/学习计划/C++基础恢复70天计划.md` 中该练习所在行的内容。
 
 ## 输出格式
 
 ```
-📋 评审报告（Day X: <taskName>）
+📋 评审报告（Phase N Exercise M: <taskName>）
 ━━━━━━━━━━━━━━━━━━━━━━
 
 ✅ 做得好的地方
@@ -106,11 +113,11 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 
 📚 与标准库对比
   • std::xxx 的做法：<简述>
-  • 你能学到什么：<连接当天知识点>
+  • 你能学到什么：<连接当前阶段知识点>
   • [后续阶段学习] <还没学到的部分，标注清楚>
 
 🎯 自检清单（对照后打勾）
-  - [ ] <一个与当天目标相关的自检问题>
+  - [ ] <一个与当前练习目标相关的自检问题>
   - [ ] <另一个自检问题>
 ```
 
@@ -119,8 +126,9 @@ description: C++ 刻意练习代码评审 Skill。当用户在 workspace/cpp-rec
 评审结束后**必须**写入会话日志，以便跨会话追踪迭代历史：
 
 ```bash
-# 示例：AI 通过 Shell 工具执行
-echo '{"ts":"2026-06-03T14:30:22","day":1,"taskId":"day01_string_basic","type":"review","round":1,"status":"failed","issues":["sizeof(str)误用","&data_误用"]}' >> .practice-tracker/sessions/day01_2026-06-03.jsonl
+# 命名规则：phase<NN>_ex<MM>_YYYY-MM-DD.jsonl
+# taskId 规则：phase<NN>_ex<MM>_<topic>
+echo '{"ts":"2026-06-17T14:30:22","phase":"01","exercise":"1.1","taskId":"phase01_ex01_file_guard","type":"review","round":1,"status":"failed","issues":["sizeof(str)误用","&data_误用"]}' >> .practice-tracker/sessions/phase01_ex01_2026-06-17.jsonl
 ```
 
 `round` 规则：读取当天已有日志，统计 `type==review` 的数量 +1。
@@ -136,11 +144,11 @@ echo '{"ts":"2026-06-03T14:30:22","day":1,"taskId":"day01_string_basic","type":"
 评审结束后，**检查用户代码中的测试用例完整性**：
 
 1. **触发条件**：如果用户明确说"测试用例我不想自己写"、"帮我写测试"、或测试函数中存在 `// TODO` / 空实现，则**自动帮用户补齐**。
-2. **补齐范围**：只补齐当前 Day 学习目标范围内可验证的场景，不超纲。
+2. **补齐范围**：只补齐当前 Phase/Exercise 学习目标范围内可验证的场景，不超纲。
 3. **测试框架**：必须使用项目统一的 `common.h` 宏（`CHECK_EQ`, `CHECK_TRUE`, `RUN_TEST`）。
 4. **覆盖要求**：
    - 正常路径（典型输入）
-   - 边界条件（空指针、空字符串、零值、单元素等，视当天主题而定）
+   - 边界条件（空指针、空字符串、零值、单元素等，视当前练习主题而定）
    - 资源生命周期（构造-析构配对、无泄漏、无双重释放）
 5. **执行方式**：直接修改用户的 `main.cpp`（或其他测试文件），把 TODO 替换成具体实现。如果类缺少必要的 public 访问接口导致无法测试，在补齐测试前先补接口（并在评审报告中说明）。
 6. **不重复劳动**：如果用户已经写了部分测试，保留已有测试，只补缺失的场景。
@@ -153,5 +161,5 @@ echo '{"ts":"2026-06-03T14:30:22","day":1,"taskId":"day01_string_basic","type":"
 1. **先肯定后建议**：每条建议前，确保已有至少一条真诚的肯定
 2. **具体优于抽象**：不说"代码写得不够好"，而说"第 12 行的拷贝构造没有处理自赋值"
 3. **可执行**：每条建议用户知道怎么改，不要说"想想更好的设计"这种空话
-4. **不超纲**：如果不确定某个概念是否已学，查看 state.json 中的 currentDay 和 weekTheme
+4. **不超纲**：如果不确定某个概念是否已学，查看 state.json 中的 currentPhase/currentExercise，并对照计划笔记中该练习的核心考察点
 5. **代码片段**：给出建议时，优先给修改后的代码片段，不要只给文字描述
