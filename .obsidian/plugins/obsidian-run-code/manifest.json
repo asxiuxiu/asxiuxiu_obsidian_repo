@@ -1,9 +1,0 @@
-{
-	"id": "obsidian-run-code",
-	"name": "Run Code",
-	"version": "1.1.0",
-	"minAppVersion": "0.15.0",
-	"description": "Run C++ code snippets locally with built-in workspace. No external API needed.",
-	"author": "",
-	"isDesktopOnly": true
-}

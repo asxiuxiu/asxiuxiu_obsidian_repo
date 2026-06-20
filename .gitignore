@@ -1,20 +1,12 @@
-# 公司游戏项目分析（保密）
-Game/
-
-.obsidian/workspace.json
-.obsidian/graph.json
-.obsidian/plugins/*/data.json
-.obsidian/cache
 .DS_Store
-*.tmp
-**/*/build/*
-**/*/.cache/*
-*.ppm
-*.exe
 node_modules
-
-# 本地引擎源码路径配置（跨平台差异，支持 chaos/UE/Bevy）
-.engine-source-config
-
-# .claude/skills 是 junction 指向 .agents/skills，避免 git 重复追踪
-.claude/skills/
+public
+prof
+tsconfig.tsbuildinfo
+.obsidian
+.quartz-cache
+private/
+.replit
+replit.nix
+.quartz/
+quartz/cli/tui/dist/
