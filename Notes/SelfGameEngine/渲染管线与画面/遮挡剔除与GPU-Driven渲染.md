@@ -1,4 +1,5 @@
 ---
+order: 35
 title: 遮挡剔除与 GPU-Driven 渲染
 date: 2026-05-28
 tags:

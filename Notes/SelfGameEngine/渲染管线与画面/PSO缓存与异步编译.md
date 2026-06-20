@@ -1,4 +1,5 @@
 ---
+order: 32
 title: PSO 缓存与异步编译
 date: 2026-05-28
 tags:

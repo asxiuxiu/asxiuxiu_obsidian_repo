@@ -1,4 +1,5 @@
 ---
+order: 7
 title: 极简Inspector与ECS可视化
 date: 2026-05-07
 tags:

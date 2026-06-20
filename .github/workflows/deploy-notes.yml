@@ -38,7 +38,7 @@ jobs:
         run: |
           rm -rf quartz/content
           mkdir -p quartz/content
-          cp -r vault/Notes quartz/content/
+          rsync -a --exclude='Agent' --exclude='Bevy' --exclude='UE' vault/Notes/ quartz/content/Notes/
           cp -r vault/Assets quartz/content/
           cat > quartz/content/index.md << 'EOF'
           ---
@@ -68,6 +68,10 @@ jobs:
       - name: Build Quartz site
         working-directory: quartz
         run: npx quartz build
+
+      - name: Patch order into content index
+        working-directory: quartz
+        run: node scripts/patch-content-index-order.mjs content public/static/contentIndex.json
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

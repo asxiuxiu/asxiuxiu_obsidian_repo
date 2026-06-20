@@ -1,4 +1,5 @@
 ---
+order: 28
 title: Plugin 与模块系统
 date: 2026-05-28
 tags:

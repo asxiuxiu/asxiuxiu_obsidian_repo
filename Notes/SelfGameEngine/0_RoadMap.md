@@ -1,4 +1,5 @@
 ---
+order: 0
 title: SelfGameEngine 构建手册
 date: 2026-04-15
 tags:

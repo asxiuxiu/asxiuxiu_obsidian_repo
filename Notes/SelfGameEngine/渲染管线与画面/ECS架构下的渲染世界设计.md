@@ -1,4 +1,5 @@
 ---
+order: 33
 title: ECS 架构下的渲染世界设计
 date: 2026-05-25
 tags:

@@ -1,4 +1,5 @@
 ---
+order: 29
 title: RHI 抽象层与命令模型
 date: 2026-05-25
 tags:

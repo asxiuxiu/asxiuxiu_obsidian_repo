@@ -1,4 +1,5 @@
 ---
+order: 43
 title: 材质参数绑定与 GPU 上传
 date: 2026-05-25
 tags:

@@ -1,4 +1,5 @@
 ---
+order: 37
 title: RenderGraph 与多 Pass 资源管理
 date: 2026-05-25
 tags:

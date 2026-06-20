@@ -1,4 +1,5 @@
 ---
+order: 44
 title: 材质系统的 ECS 表达
 date: 2026-05-25
 tags:

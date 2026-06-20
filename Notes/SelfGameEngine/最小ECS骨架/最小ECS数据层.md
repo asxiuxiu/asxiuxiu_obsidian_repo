@@ -1,4 +1,5 @@
 ---
+order: 6
 title: 最小ECS数据层
 date: 2026-05-07
 tags:

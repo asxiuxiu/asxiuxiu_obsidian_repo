@@ -1,4 +1,5 @@
 ---
+order: 36
 title: 渲染队列与 DrawCall 组织
 date: 2026-05-25
 tags:

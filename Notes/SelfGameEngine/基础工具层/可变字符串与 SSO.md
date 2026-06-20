@@ -1,4 +1,5 @@
 ---
+order: 11
 title: 可变字符串与 SSO
 date: 2026-06-01
 tags:

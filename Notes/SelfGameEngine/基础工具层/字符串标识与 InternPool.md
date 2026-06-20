@@ -1,4 +1,5 @@
 ---
+order: 12
 title: 字符串标识与 InternPool
 date: 2026-06-01
 tags:

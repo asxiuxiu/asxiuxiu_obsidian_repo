@@ -1,4 +1,5 @@
 ---
+order: 1
 title: AI友好的引擎架构
 date: 2026-04-15
 tags:

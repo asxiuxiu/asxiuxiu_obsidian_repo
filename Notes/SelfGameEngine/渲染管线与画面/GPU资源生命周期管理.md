@@ -1,4 +1,5 @@
 ---
+order: 31
 title: GPU 资源生命周期管理
 date: 2026-05-28
 tags:
