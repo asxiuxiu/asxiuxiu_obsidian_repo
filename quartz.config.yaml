@@ -13,6 +13,9 @@ configuration:
     - templates
     - .obsidian
     - .trash
+    - Notes/Agent/**
+    - Notes/Bevy/**
+    - Notes/UE/**
   theme:
     fontOrigin: googleFonts
     cdnCaching: true
