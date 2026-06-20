@@ -124,6 +124,44 @@ class QuickTerminalPlugin extends Plugin {
                     child.on('error', handleError);
                     child.on('spawn', handleSuccess);
                     child.unref();
+                } else if (terminalApp === 'Ghostty') {
+                    const appleScriptEscapedDir = workingDir.replace(/"/g, '\\"');
+
+                    const appleScriptArgs = [
+                        '-e', 'tell application "Ghostty"',
+                        '-e', 'activate',
+                        '-e', 'set config to new surface configuration',
+                        '-e', `set initial working directory of config to "${appleScriptEscapedDir}"`,
+                        '-e', 'if (count of windows) > 0 then',
+                        '-e', 'new tab in front window with configuration config',
+                        '-e', 'else',
+                        '-e', 'new window with configuration config',
+                        '-e', 'end if',
+                        '-e', 'end tell'
+                    ];
+
+                    const child = spawn('/usr/bin/osascript', appleScriptArgs, {
+                        detached: true,
+                        stdio: ['ignore', 'pipe', 'pipe']
+                    });
+
+                    let stderr = '';
+                    child.stderr.on('data', (data) => { stderr += data.toString(); });
+
+                    child.on('close', (code) => {
+                        if (code !== 0) {
+                            const msg = stderr || `osascript exited with code ${code}`;
+                            new Notice(`Ghostty 打开失败: ${msg}`);
+                            console.error('[QuickTerminal] Ghostty osascript stderr:', stderr);
+                        } else {
+                            handleSuccess();
+                        }
+                    });
+                    child.on('error', (err) => {
+                        console.error('[QuickTerminal] Ghostty AppleScript error:', err);
+                        new Notice('Ghostty 需要自动化权限：系统设置 → 隐私与安全性 → 自动化 → 勾选 Obsidian');
+                    });
+                    child.unref();
                 } else if (terminalApp === 'iTerm') {
                     // 方案A: 纯 iTerm2 AppleScript（无弹框）
                     const appleScriptArgsA = [
@@ -306,6 +344,7 @@ class QuickTerminalSettingTab extends PluginSettingTab {
                 .addDropdown(dropdown => dropdown
                     .addOption('Terminal', 'Terminal.app')
                     .addOption('iTerm', 'iTerm2')
+                    .addOption('Ghostty', 'Ghostty')
                     .addOption('custom', '自定义路径')
                     .setValue(this.plugin.settings.macosTerminalApp)
                     .onChange(async (value) => {
@@ -362,6 +401,7 @@ class QuickTerminalSettingTab extends PluginSettingTab {
             noticeList.createEl('li', { text: '启动参数用空格分隔，含空格的值用引号包裹' });
         } else if (isMac) {
             noticeList.createEl('li', { text: 'Terminal.app / iTerm2 为内置支持，无需填写路径' });
+            noticeList.createEl('li', { text: 'Ghostty 会自动复用已有窗口新建标签页；首次使用需授予 Obsidian 控制 Ghostty 的自动化权限' });
             noticeList.createEl('li', { text: 'iTerm2 首次使用可能提示「自动化」权限，请在弹框中点击「允许」' });
             noticeList.createEl('li', { text: '若 iTerm2 弹辅助功能权限框，请前往 系统设置 → 隐私与安全性 → 辅助功能 → 勾选 Obsidian' });
             noticeList.createEl('li', { text: '自定义路径请填写终端可执行文件的完整路径（如 /usr/bin/open）' });
@@ -381,6 +421,7 @@ class QuickTerminalSettingTab extends PluginSettingTab {
         } else if (isMac) {
             pathsList.createEl('li', { text: 'Terminal.app: 已内置支持，无需填写路径' });
             pathsList.createEl('li', { text: 'iTerm2: 已内置支持，无需填写路径' });
+            pathsList.createEl('li', { text: 'Ghostty: 已内置支持，无需填写路径' });
             pathsList.createEl('li', { text: '自定义: 填写可执行文件完整路径' });
         } else {
             pathsList.createEl('li', { text: 'GNOME Terminal: /usr/bin/gnome-terminal' });

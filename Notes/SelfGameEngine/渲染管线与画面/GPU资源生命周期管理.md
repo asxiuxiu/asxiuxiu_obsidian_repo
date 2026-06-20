@@ -21,7 +21,7 @@ aliases:
 
 ### 场景与根因
 
-假设你有一扇石门，玩家打开后，门上的动态法线纹理不再需要了。你在 C++ 侧写了一个智能指针 `std::shared_ptr<GPUTexture> door_normal;`，当玩家离开房间时，智能指针析构，`delete` 了纹理对象，底层调用 `vkDestroyImageView` 和 `vkFreeMemory`。
+假设你有一扇石门，玩家打开后，门上的动态法线纹理不再需要了。你在 C++ 侧写了一个智能指针 `std::shared_ptr<GPUTexture> door_normal;`当玩家离开房间时，智能指针析构，`delete` 了纹理对象，底层调用 `vkDestroyImageView` 和 `vkFreeMemory`。
 
 但 GPU 可能还在处理上一帧的渲染命令——门上的高光 Pass 可能有一两个 Draw Call 还在 GPU 管线深处排队。如果 CPU 立即释放这块显存，轻则画面闪烁（读到脏数据），重则驱动崩溃（访问已释放的资源）。这不是 bug，而是**CPU-GPU 异步执行的固有特性**。
 
