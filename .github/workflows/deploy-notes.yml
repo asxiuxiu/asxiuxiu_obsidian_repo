@@ -1,0 +1,86 @@
+name: Deploy Notes to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Notes/**'
+      - 'Assets/**'
+      - '.github/workflows/deploy-notes.yml'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout vault
+        uses: actions/checkout@v4
+        with:
+          path: vault
+          fetch-depth: 0
+
+      - name: Checkout Quartz project
+        uses: actions/checkout@v4
+        with:
+          ref: v5
+          path: quartz
+
+      - name: Sync Notes and Assets into Quartz content
+        run: |
+          rm -rf quartz/content
+          mkdir -p quartz/content
+          cp -r vault/Notes quartz/content/
+          cp -r vault/Assets quartz/content/
+          cat > quartz/content/index.md << 'EOF'
+          ---
+          title: 首页
+          ---
+
+          欢迎来到阿秀的知识库。
+
+          > [[Notes/索引|进入知识索引]]
+          EOF
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: quartz/package-lock.json
+
+      - name: Install dependencies
+        working-directory: quartz
+        run: npm ci
+
+      - name: Install Quartz plugins
+        working-directory: quartz
+        run: npx quartz plugin install
+
+      - name: Build Quartz site
+        working-directory: quartz
+        run: npx quartz build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: quartz/public
+
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
