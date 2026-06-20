@@ -187,6 +187,72 @@ int main() {
 
 **练习状态文件**：`workspace/cpp-recovery/.practice-tracker/state.json` 是唯一的真实数据源，所有 Skill 必须读写此文件以保持状态一致。
 
+## Quartz 网站迭代工作流
+
+本 vault 通过 GitHub Pages 发布为 Quartz v5 静态网站。仓库包含两个关键分支：
+
+| 分支 | 作用 | 主要文件 |
+|------|------|----------|
+| `main` | Obsidian vault 源码 | `Notes/`、`Assets/`、`.github/workflows/deploy-notes.yml` |
+| `v5` | Quartz 网站工程 | `quartz.config.yaml`、`quartz.ts`、`quartz/styles/custom.scss` |
+
+### 修改范围
+
+- **站点标题 / 字体 / 配色 / 组件配置** → 改 `v5` 分支的 `quartz.config.yaml`
+- **布局逻辑 / Explorer 排序 / 插件选项覆盖** → 改 `v5` 分支的 `quartz.ts`
+- **样式细节 / 移动端适配 / 设计感** → 改 `v5` 分支的 `quartz/styles/custom.scss`
+- **首页文案 / 部署触发条件** → 改 `main` 分支的 `.github/workflows/deploy-notes.yml`
+
+### 分支切换与并发修改
+
+两个分支都需要改时，优先用 `git worktree` 避免来回切换导致未提交修改冲突：
+
+```bash
+git worktree add ../asxiuxiu_obsidian_repo-v5 v5
+# main 继续留在原仓库根目录操作
+```
+
+### 快速迭代技巧
+
+全量构建（200+ 篇笔记）很慢，调试样式/脚本时应先精简 `content/`：
+
+```bash
+# 保留 1-2 个测试页面即可
+rm -rf content
+mkdir -p content/Notes/xxx
+# 复制一篇测试笔记进去
+npx quartz build
+```
+
+验证没问题后再恢复完整 `content/` 做一次全量构建。
+
+### 本地验证
+
+```bash
+# 1. 起本地服务
+python3 -m http.server 8080 --directory public
+
+# 2. 用 puppeteer + Chrome 截图看移动端效果
+npx puppeteer-core --...  # 或写脚本用 Chrome headless 截图
+```
+
+### 常见坑
+
+1. **`quartz.ts` 中传给插件的回调会序列化到浏览器端执行**。例如 `ExternalPlugin.Explorer({ sortFn: ... })` 的 `sortFn` 会被 `JSON.stringify` 后交给客户端 `eval`，因此：
+   - 不能引用外部作用域的函数/变量
+   - 不能使用命名函数或箭头函数赋值给变量，否则 esbuild 的 `keepNames` 会注入 `__name` 辅助函数，导致客户端 `ReferenceError: __name is not defined`
+   - 解决方案：把逻辑完全内联，只使用原始循环/条件语句
+
+2. **移动端 `.sidebar.left` 默认是 `flex-direction: row`**。如果想让目录、标题、搜索在移动端垂直排列，必须显式覆盖为 `column`。
+
+3. **移动端 Explorer 默认被折叠成 34px 宽的汉堡按钮**。要让目录索引默认可见，需要覆盖 `.explorer.collapsed` 的 `flex` 和 `.explorer-content` 的 `transform/visibility/width`。
+
+### 提交顺序
+
+1. 先提交 `v5` 分支的 Quartz 改动
+2. 再提交 `main` 分支的 workflow 改动
+3. push 后 GitHub Actions 会自动用最新 v5 配置部署网站
+
 ## 其他
 
 - 新规则默认添加在 AGENTS.md，添加后自动尝试压缩精简
