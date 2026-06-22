@@ -232,22 +232,22 @@ aliases:
 > **与 SelfGameEngine 的关系**：本阶段对应引擎阶段5.2 "资源管理"中网格资源的GPU上传链路，以及阶段5.4 "渲染一帧的生命周期"中顶点数据流的理解。
 
 **验收标准（能看见的）**：
-- [ ] 用VBO存储一个三角形的顶点数据，解释为什么需要VBO（对比每帧memcpy）
-- [ ] 用VAO配置位置+颜色+UV三个属性，画出带UV的三角形
-- [ ] 用EBO+8个顶点渲染一个立方体（而不是36个）
+- [x] 用VBO存储一个三角形的顶点数据，解释为什么需要VBO（对比每帧memcpy）
+- [x] 用VAO配置位置+颜色+UV三个属性，画出带UV的三角形
+- [x] 用EBO+8个顶点渲染一个立方体（而不是36个）
 - [ ] 加载一个OBJ文件，解析v/vt/vn/f，上传到GPU并渲染
 - [ ] 能画出5个不同位置的立方体（理解Uniform的MVP矩阵传递）
 
 ### 4.1 从顶点数组到VBO
 
-- [ ] [[Notes/计算机图形学/顶点数据与索引/从顶点数组到VBO|从顶点数组到VBO]] — VBO创建、glBufferData、显存常驻、对比软渲染器的std::vector
+- [x] [[Notes/计算机图形学/顶点数据与索引/从顶点数组到VBO|从顶点数组到VBO]] — VBO创建、glBufferData、显存常驻、对比软渲染器的std::vector
 
 > **问题驱动**：软渲染器里顶点存在 `std::vector<Vertex>`，每次draw直接读内存。GPU怎么访问？每帧memcpy到显存？
 > **下一步**：VBO存了数据，但GPU怎么知道"前3个float是位置，后2个是UV"？
 
 ### 4.2 VAO与顶点属性配置
 
-- [ ] [[Notes/计算机图形学/顶点数据与索引/VAO与顶点属性配置|VAO与顶点属性配置]] — glVertexAttribPointer、stride、offset、多属性交织布局
+- [x] [[Notes/计算机图形学/顶点数据与索引/VAO与顶点属性配置|VAO与顶点属性配置]] — glVertexAttribPointer、stride、offset、多属性交织布局
 
 > **问题驱动**：每次绘制都用glVertexAttribPointer配置一遍？画100个物体重复100次？
 > **与 SelfGameEngine 的关系**：VAO就是引擎RHI层里 "VertexLayout" 概念的原型。理解VAO=理解RHI为什么需要抽象顶点布局。
@@ -255,10 +255,10 @@ aliases:
 
 ### 4.3 索引缓冲EBO
 
-- [ ] [[Notes/计算机图形学/顶点数据与索引/索引缓冲EBO|索引缓冲EBO]] — EBO创建、绑定位置、glDrawElements、与VAO/VBO的关系
+- [x] [[Notes/计算机图形学/顶点数据与索引/索引缓冲EBO|索引缓冲EBO]] — EBO创建、绑定位置、glDrawElements、与VAO/VBO的关系
 
 > **问题驱动**：不用EBO，立方体要存36个顶点；用了EBO，只需8个顶点+36个索引。显存省了，但EBO绑在哪？
-> **下一步**：顶点数据能画了，但颜色怎么来？固定颜色太丑，需要Shader。
+> **下一步**：[[Notes/计算机图形学/顶点数据与索引/从OBJ文件到GPU网格|从OBJ文件到GPU网格]] — 把OBJ解析出的顶点/索引上传到GPU，渲染真实模型。
 
 ### 4.4 从OBJ文件到GPU网格
 
@@ -287,7 +287,7 @@ aliases:
 
 ### 5.1 GLSL数据流与着色器编译
 
-- [ ] [[Notes/计算机图形学/Shader与光照/GLSL数据流与着色器编译|GLSL数据流与着色器编译]] — in/out/uniform、顶点→片段的数据传递、光栅化插值机制、Shader编译链接流程
+- [x] [[Notes/计算机图形学/Shader与光照/GLSL数据流与着色器编译|GLSL数据流与着色器编译]] — in/out/uniform、顶点→片段的数据传递、光栅化插值机制、Shader编译链接流程
 
 > **问题驱动**：顶点着色器输出的颜色，片段着色器怎么拿到？中间发生了什么？
 > **与已有知识的衔接**：你在[[Notes/计算机图形学/Shader与光照/GPU上的Blinn-Phong光照|GPU上的Blinn-Phong光照]]里学过"顶点着色器→光栅化→片段着色器"，现在理解数据是怎么流的。
@@ -295,7 +295,7 @@ aliases:
 
 ### 5.2 Uniform与VertexAttribute
 
-- [ ] [[Notes/计算机图形学/Shader与光照/Uniform与VertexAttribute|Uniform与VertexAttribute]] — 两种数据通道的API调用、数量限制、std140布局
+- [x] [[Notes/计算机图形学/Shader与光照/Uniform与VertexAttribute|Uniform与VertexAttribute]] — 两种数据通道的API调用、数量限制、std140布局
 
 > **问题驱动**：MVP矩阵每个顶点都一样，应该用Attribute还是Uniform？光源位置呢？
 > **与 SelfGameEngine 的关系**：Uniform就是引擎"材质系统"中"材质参数"的底层机制。理解Uniform=理解材质参数怎么传给GPU。
@@ -335,7 +335,7 @@ aliases:
 
 ### 6.2 纹理对象与加载
 
-- [ ] [[Notes/计算机图形学/纹理系统/纹理对象与加载|纹理对象与加载]] — stb_image、glGenTextures、glTexImage2D、像素数据对齐
+- [x] [[Notes/计算机图形学/纹理系统/纹理对象与加载|纹理对象与加载]] — stb_image、glGenTextures、glTexImage2D、像素数据对齐
 
 > **问题驱动**：你笔记里说"纹理是一张2D图片"，但怎么从PNG文件变成GPU上的纹理对象？
 > **与 SelfGameEngine 的关系**：这就是引擎"资源管理"中"Texture Import → GPU Upload"链路的实现细节。
@@ -625,12 +625,12 @@ aliases:
 | OpenGL状态机模型 | ✅ 已完成 | 阶段三 | 阶段1.2回探 | |
 | 第一个三角形 | ✅ 已完成 | 阶段三 | 阶段1.2回探 | |
 | 显示同步与帧时间 | ✅ 已完成 | 阶段三 | 阶段1.2回探 | 刷新率 vs 帧率、VSync、GPU时间戳 |
-| 从顶点数组到VBO | ⬜ 待产出 | 阶段四 | 阶段5.2资源管理 | |
-| VAO与顶点属性配置 | ⬜ 待产出 | 阶段四 | 阶段5.2资源管理 | |
-| 索引缓冲EBO | ⬜ 待产出 | 阶段四 | 阶段5.2资源管理 | |
-| GLSL数据流与着色器编译 | ⬜ 待产出 | 阶段五 | 阶段5.1 RHI | |
-| Uniform与VertexAttribute | ⬜ 待产出 | 阶段五 | 阶段5.3材质 | |
-| 纹理对象与加载 | ⬜ 待产出 | 阶段六 | 阶段5.2资源管理 | |
+| 从顶点数组到VBO | ✅ 已完成 | 阶段四 | 阶段5.2资源管理 | |
+| VAO与顶点属性配置 | ✅ 已完成 | 阶段四 | 阶段5.2资源管理 | |
+| 索引缓冲EBO | ✅ 已完成 | 阶段四 | 阶段5.2资源管理 | |
+| GLSL数据流与着色器编译 | ✅ 已完成 | 阶段五 | 阶段5.1 RHI | |
+| Uniform与VertexAttribute | ✅ 已完成 | 阶段五 | 阶段5.3材质 | |
+| 纹理对象与加载 | ✅ 已完成 | 阶段六 | 阶段5.2资源管理 | |
 | Mipmap与纹理过滤 | ⬜ 待产出 | 阶段六 | 阶段5.3材质 | |
 | 纹理寻址与采样 | ⬜ 待产出 | 阶段六 | 阶段5.3材质 | |
 | 多重纹理与材质 | ⬜ 待产出 | 阶段六 | 阶段5.3材质 | |
