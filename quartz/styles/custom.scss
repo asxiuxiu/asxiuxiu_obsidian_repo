@@ -1,3 +1,152 @@
 @use "./variables.scss" as *;
 
-// put your custom CSS here!
+// ============================================================================
+// Mobile Explorer: make the directory toggle always visible and more tappable
+// ============================================================================
+
+@media all and ($mobile) {
+  // The hamburger button is hidden until JS loads by default; force it visible
+  // so users can always open the directory on slow connections.
+  .explorer .mobile-explorer.hide-until-loaded {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    background: var(--lightgray);
+    color: var(--dark);
+  }
+
+  .explorer .mobile-explorer .lucide-menu {
+    stroke: var(--dark);
+    stroke-width: 2.5;
+  }
+}
+
+// ============================================================================
+// Mobile Explorer drawer: avoid the collapsed 34px-wide dead zone
+// ============================================================================
+
+@media all and ($mobile) {
+  .explorer {
+    order: -1;
+    width: auto;
+    flex: 0 0 auto !important;
+  }
+
+  .explorer.collapsed,
+  .explorer:not(.collapsed) {
+    flex: 0 0 auto !important;
+  }
+
+  .explorer .explorer-content {
+    max-width: 85vw;
+    width: 85vw;
+    padding: 4rem 1.5rem 2rem 1.5rem;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  }
+}
+
+// ============================================================================
+// Homepage category cards
+// ============================================================================
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.category-card {
+  position: relative;
+  padding: 1.25rem;
+  border: 1px solid var(--lightgray);
+  border-radius: 0.75rem;
+  background: var(--light);
+  color: var(--dark);
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: var(--secondary);
+}
+
+.category-card h3 {
+  position: relative;
+  margin: 0 0 0.5rem 0;
+  font-size: 1.1rem;
+  color: var(--secondary);
+}
+
+.category-card h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+// Make the whole card clickable by stretching the heading link over the card
+.category-card h3 a::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0.75rem;
+}
+
+.category-card p {
+  position: relative;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--darkgray);
+  line-height: 1.4;
+}
+
+@media all and ($mobile) {
+  .category-grid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .category-card {
+    padding: 1rem;
+  }
+}
+
+// ============================================================================
+// Mobile spacing and typography tweaks
+// ============================================================================
+
+@media all and ($mobile) {
+  .page > #quartz-body .sidebar.left {
+    padding-top: 1rem;
+    gap: 0.75rem;
+  }
+
+  .search-button {
+    min-height: 2.5rem;
+    border-radius: 0.5rem;
+    background: var(--lightgray);
+    padding: 0 0.75rem;
+  }
+
+  .page-header {
+    padding-top: 0.5rem;
+  }
+
+  article > h1 {
+    font-size: 1.6rem;
+    margin-top: 1.5rem;
+  }
+
+  // Keep folder-page listings readable on narrow screens
+  .page-listing ul li a {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
