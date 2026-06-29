@@ -256,3 +256,9 @@ npx puppeteer-core --...  # 或写脚本用 Chrome headless 截图
 ## 其他
 
 - 新规则默认添加在 AGENTS.md，添加后自动尝试压缩精简
+- 使用 `workspace-gen` 生成 C++ 工作区时：
+  - 必须同时生成 `.vscode/` 和 `.zed/` 两套编辑器配置；任务必须显式指定运行时 shell（优先 Git Bash 绝对路径），不能依赖编辑器默认终端，并提供让用户按实际安装路径替换的占位符/说明。
+  - C++ CMake 项目必须在 `CMakeLists.txt` 中开启 `CMAKE_EXPORT_COMPILE_COMMANDS ON`，并在构建后把 `build/compile_commands.json` 复制到项目根目录；`.gitignore` 必须忽略 `build/` 和 `compile_commands.json`。
+  - `.vscode/settings.json` 与 `.zed/settings.json` 必须配置 clangd 使用项目根目录的 `compile_commands.json`。
+  - 必须在工作区根目录生成 `.clang-format`：优先复制用户 home 目录的 `~/.clang-format`；不存在时生成最小默认配置（`BasedOnStyle: Microsoft`）。
+  - 编辑器任务中必须包含 `"Format current file"` 任务，调用 `clang-format -i <file>`。

@@ -1,0 +1,33 @@
+[
+    {
+        "label": "Configure + Build",
+        "command": "bash",
+        "args": [
+            "build.sh"
+        ],
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false,
+        "reveal": "always",
+        "hide": "never",
+        "shell": {
+            "program": "C:\\Program Files\\Git\\bin\\bash.exe"
+        }
+    },
+    {
+        "label": "Format current file",
+        "command": "clang-format",
+        "args": [
+            "-i",
+            "$ZED_FILE"
+        ],
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false,
+        "reveal": "always",
+        "hide": "never",
+        "shell": {
+            "program": "C:\\Program Files\\Git\\bin\\bash.exe"
+        }
+    }
+]

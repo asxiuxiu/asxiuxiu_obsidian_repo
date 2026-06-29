@@ -1,0 +1,14 @@
+{
+    "lsp": {
+        "clangd": {
+            "arguments": [
+                "--compile-commands-dir=${workspaceFolder}",
+                "--background-index",
+                "--clang-tidy",
+                "--header-insertion=iwyu"
+            ]
+        }
+    },
+    "format_on_save": "on",
+    "formatter": "language_server"
+}

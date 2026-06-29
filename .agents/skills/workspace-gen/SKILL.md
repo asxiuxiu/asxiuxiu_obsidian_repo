@@ -85,6 +85,9 @@ project(<name> LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 为 clangd 生成 compile_commands.json
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra -Wshadow -O2 -g)
 endif()
@@ -96,6 +99,8 @@ add_executable(<target> src/main.cpp)
 ```bash
 cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
 cmake --build build
+# 复制 compile_commands.json 到项目根目录，供 clangd 自动加载
+cp -f build/compile_commands.json . 2>/dev/null || true
 ```
 
 ### C++ 代码规范（防污染）
@@ -147,11 +152,19 @@ cmake --build build
 ```
 workspace/<name>/
 ├── CMakeLists.txt
+├── .clang-format           # 复用用户默认格式化配置
+├── .gitignore
 ├── main.cpp
-└── .vscode/
-    ├── launch.json
+├── .vscode/
+│   ├── settings.json       # LSP / clangd / 格式化配置
+│   ├── launch.json
+│   └── tasks.json
+└── .zed/
+    ├── settings.json       # LSP / clangd 配置
     └── tasks.json
 ```
+
+> 用户同时在 VS Code 和 Zed 中开发，因此编辑器任务/配置必须成对生成。LSP 配置统一指向 `compile_commands.json`，格式化统一使用用户默认的 `.clang-format`。
 
 ### CMakeLists.txt
 
@@ -162,11 +175,55 @@ project(<name> LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# 必须开启，供 clangd 做语义补全与跳转
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options(-Wall -Wextra -Wshadow -O2 -g)
 endif()
 
 add_executable(${PROJECT_NAME} main.cpp)
+```
+
+> `CMAKE_EXPORT_COMPILE_COMMANDS` 会在 `build/` 下生成 `compile_commands.json`；后续再通过 `build.sh` 或 CMake 自定义目标把它复制到项目根目录，方便编辑器自动加载。
+
+### build.sh
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# 优先使用 UCRT64 工具链，避免与 mingw64 的 DLL 混用
+if [[ -d "/c/msys64/ucrt64/bin" ]]; then
+    export PATH="/c/msys64/ucrt64/bin:${PATH}"
+fi
+
+cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++ -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build
+
+# 复制 compile_commands.json 到项目根目录，供 clangd 自动加载
+if [[ -f build/compile_commands.json ]]; then
+    cp -f build/compile_commands.json .
+fi
+```
+
+> `build.sh` 负责统一构建环境（PATH、编译器、compile_commands 复制）。编辑器任务只调用 `bash build.sh`，避免在每个编辑器配置里重复环境处理逻辑。
+
+### .gitignore
+
+```gitignore
+# 构建产物
+build/
+out/
+.cache/
+
+# 编译数据库（由 CMake 生成，每次构建后重新复制到根目录）
+compile_commands.json
+
+# 可执行文件 / 调试符号
+*.exe
+*.exe.dSYM/
+*.pdb
 ```
 
 ### main.cpp
@@ -180,6 +237,26 @@ int main() {
 }
 ```
 
+### .vscode/settings.json
+
+```json
+{
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "C_Cpp.formatting": "clangFormat",
+    "clangd.path": "clangd",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}",
+        "--background-index",
+        "--clang-tidy",
+        "--header-insertion=iwyu"
+    ],
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "llvm-vs-code-extensions.vscode-clangd"
+}
+```
+
+> `.vscode/settings.json` 负责关闭 VS Code 默认 C/C++ 引擎、启用 clangd，并指定 `compile_commands.json` 位置。若未安装 `vscode-clangd` 插件，可去掉 `defaultFormatter` 行或改用 `"ms-vscode.cpptools"`。
+
 ### .vscode/tasks.json
 
 ```json
@@ -187,34 +264,43 @@ int main() {
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Configure CMake",
+            "label": "Configure + Build",
             "type": "shell",
-            "command": "cmake",
+            "command": "bash",
             "args": [
-                "-S", ".",
-                "-B", "build",
-                "-G", "Ninja",
-                "-DCMAKE_CXX_COMPILER=g++"
+                "build.sh"
             ],
-            "group": "build"
-        },
-        {
-            "label": "Build with Ninja",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "--build",
-                "build"
-            ],
+            "options": {
+                "shell": {
+                    "executable": "<path-to-bash.exe>"
+                }
+            },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": "Configure CMake"
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Format current file",
+            "type": "shell",
+            "command": "clang-format",
+            "args": [
+                "-i",
+                "${file}"
+            ],
+            "options": {
+                "shell": {
+                    "executable": "<path-to-bash.exe>"
+                }
+            },
+            "problemMatcher": []
         }
     ]
 }
 ```
+
+> Windows 下 VS Code 默认终端可能是 PowerShell，因此每个 shell 任务都要通过 `options.shell.executable` 显式指定 Git Bash 路径。`<path-to-bash.exe>` 需替换为实际路径，常见如 `C:\Program Files\Git\bin\bash.exe`。
 
 ### .vscode/launch.json
 
@@ -241,22 +327,79 @@ int main() {
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Build with Ninja"
+            "preLaunchTask": "Configure + Build"
         }
     ]
 }
 ```
+
+### .zed/settings.json
+
+```json
+{
+    "lsp": {
+        "clangd": {
+            "arguments": [
+                "--compile-commands-dir=${workspaceFolder}",
+                "--background-index",
+                "--clang-tidy",
+                "--header-insertion=iwyu"
+            ]
+        }
+    },
+    "format_on_save": true,
+    "formatter": "language_server"
+}
+```
+
+> Zed 默认使用 clangd 作为 C/C++ 语言服务器；`--compile-commands-dir` 指向项目根目录的 `compile_commands.json`（由 `build.sh` 在构建后复制）。
+
+### .zed/tasks.json
+
+```json
+[
+    {
+        "label": "Configure + Build",
+        "command": "bash",
+        "args": ["build.sh"],
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false,
+        "reveal": "always",
+        "hide": "never",
+        "shell": {
+            "program": "<path-to-bash.exe>"
+        }
+    },
+    {
+        "label": "Format current file",
+        "command": "clang-format",
+        "args": ["-i", "$ZED_FILE"],
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "use_new_terminal": false,
+        "allow_concurrent_runs": false,
+        "reveal": "always",
+        "hide": "never",
+        "shell": {
+            "program": "<path-to-bash.exe>"
+        }
+    }
+]
+```
+
+> Zed 任务文件位于 `.zed/tasks.json`。`shell.program` 必须显式指向 Git Bash 的绝对路径，否则 Zed 默认会用 PowerShell/CMD 执行，导致 `bash` 命令找不到。`<path-to-bash.exe>` 需替换为实际路径，常见如 `C:\Program Files\Git\bin\bash.exe`。
+>
+> 当工作区已有 `build.sh` 时优先调用它，以复用 UCRT64 PATH 等环境处理逻辑；否则直接写 `cmake -S . -B build ... && cmake --build build`。
 
 ### 构建与调试
 
 **初始化构建（首次）**：
 ```bash
 cd workspace/<name>
-cmake -S . -B build -G Ninja -DCMAKE_CXX_COMPILER=g++
-cmake --build build
+bash build.sh
 ```
 
-**后续构建：** 按 `Ctrl+Shift+B` 或运行 `"Build with Ninja"` 任务。
+**后续构建：** 按 `Ctrl+Shift+B` 或运行 `"Configure + Build"` 任务。
 
 **开始调试：** 在 VS Code 中按 `F5`，选择 `"Debug with GDB"`。
 
@@ -265,6 +408,46 @@ cmake --build build
 ---
 
 ## 通用规范
+
+### 编辑器配置
+
+用户在 VS Code 和 Zed 中都会开发。任何需要生成编辑器任务、启动配置或相关 JSON 的 C++ 工作区，必须同时提供：
+
+- `.vscode/settings.json`（LSP / 格式化 / clangd 配置）
+- `.vscode/tasks.json`（必要时加 `.vscode/launch.json`）
+- `.zed/settings.json`（LSP / 格式化 / clangd 配置）
+- `.zed/tasks.json`（必要时加 `.zed/debug.json`）
+
+两套配置保持行为一致，并遵循以下任务规范：
+
+1. **显式指定运行时 shell**：所有 shell 任务必须写明 shell 可执行文件绝对路径，不能依赖编辑器默认终端。Windows 下优先使用 Git Bash（常见路径如 `C:\Program Files\Git\bin\bash.exe`、`C:\Program Files\Git\usr\bin\bash.exe`）。
+2. **封装复杂环境逻辑**：构建/运行所需的 PATH 调整、编译器选择等，优先写在项目根目录的 `build.sh`/`run.sh` 中；编辑器任务只负责调用脚本，保持简洁。
+3. **提供可替换占位符**：模板中 shell 路径使用占位符或注释说明，避免让用户误以为只能固定在某一个绝对路径。
+
+### compile_commands.json 链路
+
+C++ CMake 工作区必须让 clangd 能拿到准确的编译命令：
+
+1. `CMakeLists.txt` 中设置 `set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`。
+2. 首次构建后，必须有一份 `compile_commands.json` 位于项目根目录，或明确配置 `--compile-commands-dir`。
+3. 推荐在 `build.sh` 末尾追加复制命令（比 CMake 自定义目标更可控）：
+   ```bash
+   if [[ -f build/compile_commands.json ]]; then
+       cp -f build/compile_commands.json .
+   fi
+   ```
+4. `.vscode/settings.json` 与 `.zed/settings.json` 统一把 `--compile-commands-dir` 指向 `${workspaceFolder}`（即项目根目录）。
+5. `.gitignore` 必须忽略 `build/` 与 `compile_commands.json`，避免把生成产物提交。
+
+### 格式化链路
+
+C++ 工作区必须统一使用用户默认的 `.clang-format`：
+
+1. 生成工作区时，若用户 home 目录存在 `~/.clang-format`（Windows 下为 `C:\Users\<User>\.clang-format`），则复制到工作区根目录作为 `.clang-format`。
+2. 若不存在，生成一个最小默认 `.clang-format`，风格为 `BasedOnStyle: Microsoft`，并提示用户后续可自行替换。
+3. `.vscode/settings.json` 开启 `editor.formatOnSave`，`.zed/settings.json` 开启 `format_on_save`。
+4. 两套编辑器任务都提供 `"Format current file"` 任务，调用 `clang-format -i <file>`。
+5. 若编辑器未找到 `clang-format`，任务会失败并提示安装 LLVM/clangd 工具链。
 
 ### 冲突处理
 

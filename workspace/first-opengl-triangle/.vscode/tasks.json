@@ -1,0 +1,38 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Configure + Build",
+            "type": "shell",
+            "command": "bash",
+            "args": [
+                "build.sh"
+            ],
+            "options": {
+                "shell": {
+                    "executable": "C:\\Program Files\\Git\\bin\\bash.exe"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        },
+        {
+            "label": "Format current file",
+            "type": "shell",
+            "command": "clang-format",
+            "args": [
+                "-i",
+                "${file}"
+            ],
+            "options": {
+                "shell": {
+                    "executable": "C:\\Program Files\\Git\\bin\\bash.exe"
+                }
+            },
+            "problemMatcher": []
+        }
+    ]
+}
