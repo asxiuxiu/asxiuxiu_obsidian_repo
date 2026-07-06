@@ -29,7 +29,7 @@ aliases:
 >
 > **本模块增量**：学完这篇笔记后，你能把 Lighting Pass 输出的 HDR 辐射度正确映射到屏幕可显示的 LDR 范围，并理解曝光、Gamma 校正、后处理栈的集成方式。
 >
-> **下一步**：回到 [[Notes/SelfGameEngine/0_RoadMap|SelfGameEngine 构建手册]] 阶段 6（动画/物理/Gameplay），让画面里的东西动起来。阶段九的现代渲染技术主线至此完成。
+> **下一步**：回到 [[Notes/SelfGameEngine/0_RoadMap|SelfGameEngine 构建手册]] 阶段 6（动画/物理/Gameplay），让画面里的东西动起来。阶段八的现代渲染技术主线至此完成。
 
 ---
 
@@ -576,7 +576,7 @@ Bloom 需要 HDR 输入。正确顺序：Bloom → Tone Mapping → FXAA。
 | Gamma 校正位置 | TAA / FXAA 与 Tone Mapping 的顺序 |
 | 后处理栈集成 | 跨帧历史缓冲管理 |
 
-> **下一步**：回到 [[Notes/SelfGameEngine/0_RoadMap|SelfGameEngine 构建手册]] 阶段 6（动画/物理/Gameplay），让画面里的东西动起来。阶段九的现代渲染技术主线至此完成。
+> **下一步**：回到 [[Notes/SelfGameEngine/0_RoadMap|SelfGameEngine 构建手册]] 阶段 6（动画/物理/Gameplay），让画面里的东西动起来。阶段八的现代渲染技术主线至此完成。
 
 ---
 

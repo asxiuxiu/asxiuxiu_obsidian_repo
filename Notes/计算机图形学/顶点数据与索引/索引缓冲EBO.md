@@ -596,7 +596,7 @@ renderDevice->bindIndexBuffer(mesh.indexBuffer, mesh.indexType);
 renderDevice->drawIndexed(mesh.indexCount);
 ```
 
-这就是阶段八 [[Notes/计算机图形学/引擎渲染架构/为什么需要渲染抽象|为什么需要渲染抽象]] 要深入的 RHI 封装。现在你先理解 OpenGL 原语，后续再学怎么抽象成跨 API 接口。
+这就是阶段七 [[Notes/计算机图形学/引擎渲染架构/为什么需要渲染抽象|为什么需要渲染抽象]] 要深入的 RHI 封装。现在你先理解 OpenGL 原语，后续再学怎么抽象成跨 API 接口。
 
 ---
 

@@ -628,7 +628,7 @@ RHIVertexLayoutRef layout = device->createVertexLayout({
 
 OpenGL 后端会把 `VertexLayoutDesc` 翻译成一个 VAO；Vulkan 后端会把它翻译成一个 `VkPipelineVertexInputStateCreateInfo`。上层代码完全不需要知道底层是 VAO 还是 PSO。
 
-> 这就是阶段八 [[Notes/计算机图形学/引擎渲染架构/为什么需要渲染抽象|为什么需要渲染抽象]] 要深入的内容。现在你只需要记住：VAO 是 RHI 中 VertexLayout 的 OpenGL 原语。
+> 这就是阶段七 [[Notes/计算机图形学/引擎渲染架构/为什么需要渲染抽象|为什么需要渲染抽象]] 要深入的内容。现在你只需要记住：VAO 是 RHI 中 VertexLayout 的 OpenGL 原语。
 
 ---
 

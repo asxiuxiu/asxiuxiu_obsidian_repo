@@ -132,12 +132,12 @@ glBufferData(GL_ARRAY_BUFFER,
 
 `GL_ARRAY_BUFFER` 是 OpenGL 的**绑定目标（Binding Target）**，表示"顶点属性数据"。VBO 作为一种 Buffer Object，可以绑到不同目标，表达不同用途：
 
-| 绑定目标 | 用途 | 后续会学到的对象 |
-|---------|------|----------------|
-| `GL_ARRAY_BUFFER` | 顶点属性数据（位置、颜色、法线、UV） | VBO |
-| `GL_ELEMENT_ARRAY_BUFFER` | 顶点索引数据 | EBO |
-| `GL_UNIFORM_BUFFER` | Shader 中的 Uniform 数据块 | UBO |
-| `GL_SHADER_STORAGE_BUFFER` | 通用读写缓冲 | SSBO |
+| 绑定目标                       | 用途                    | 后续会学到的对象 |
+| -------------------------- | --------------------- | -------- |
+| `GL_ARRAY_BUFFER`          | 顶点属性数据（位置、颜色、法线、UV）   | VBO      |
+| `GL_ELEMENT_ARRAY_BUFFER`  | 顶点索引数据                | EBO      |
+| `GL_UNIFORM_BUFFER`        | Shader 中的 Uniform 数据块 | UBO      |
+| `GL_SHADER_STORAGE_BUFFER` | 通用读写缓冲                | SSBO     |
 
 > 同一个 GLuint 名字（比如 `vbo`）可以先绑到 `GL_ARRAY_BUFFER` 上传数据，再绑到别的目标——但通常我们不这么做，因为容易把自己搞混。
 
@@ -147,11 +147,11 @@ glBufferData(GL_ARRAY_BUFFER,
 
 `glBufferData` 的最后一个参数是**使用提示（Usage Hint）**，告诉驱动"我打算怎么用这个数据"：
 
-| 提示 | 含义 | 典型场景 |
-|------|------|---------|
-| `GL_STATIC_DRAW` | 数据上传一次，绘制很多次，内容基本不变 | 静态模型、地形、UI 面板 |
-| `GL_DYNAMIC_DRAW` | 数据会偶尔修改，绘制很多次 | 骨骼动画、粒子系统、动态网格 |
-| `GL_STREAM_DRAW` | 数据几乎每帧都变，但只绘制少数几次 | 调试线框、临时生成的几何 |
+| 提示                | 含义                  | 典型场景           |
+| ----------------- | ------------------- | -------------- |
+| `GL_STATIC_DRAW`  | 数据上传一次，绘制很多次，内容基本不变 | 静态模型、地形、UI 面板  |
+| `GL_DYNAMIC_DRAW` | 数据会偶尔修改，绘制很多次       | 骨骼动画、粒子系统、动态网格 |
+| `GL_STREAM_DRAW`  | 数据几乎每帧都变，但只绘制少数几次   | 调试线框、临时生成的几何   |
 
 > ⚠️ **这只是提示，不是强制约束**。即使你用 `GL_STATIC_DRAW`，之后仍然可以修改数据，不会报错。但驱动会根据这个提示选择显存中的最佳位置（比如 `GL_STATIC_DRAW` 可能放在 GPU 独占显存，`GL_DYNAMIC_DRAW` 可能放在 CPU 可写的共享区域）。选错提示会导致性能下降，而不是错误。
 
@@ -245,12 +245,12 @@ CPU 内存 ──一次──► GPU 显存 ────────► 反复�
 
 **诚实的性能分析**：
 
-| 阶段 | 每帧上传 | VBO |
-|------|---------|-----|
-| 首次上传 | 有 CPU→GPU 拷贝 | 有 CPU→GPU 拷贝 |
-| 后续绘制 | 每帧都拷贝 | 直接从显存读 |
-| CPU 内存占用 | 必须保留副本 | 可以释放 |
-| 驱动优化空间 | 很小 | 很大 |
+| 阶段       | 每帧上传         | VBO          |
+| -------- | ------------ | ------------ |
+| 首次上传     | 有 CPU→GPU 拷贝 | 有 CPU→GPU 拷贝 |
+| 后续绘制     | 每帧都拷贝        | 直接从显存读       |
+| CPU 内存占用 | 必须保留副本       | 可以释放         |
+| 驱动优化空间   | 很小           | 很大           |
 
 > 所以 VBO 不是魔法，它只是把"重复劳动"去掉了一次。但这个优化的收益极其巨大——对于静态模型，后续成千上万帧的绘制都不需要 CPU 再碰一次顶点数据。
 
@@ -455,7 +455,7 @@ GpuBuffer vertexBuffer = device->createBuffer({
 device->upload(vertexBuffer, mesh.vertices.data());
 ```
 
-> 这就是 RHI 抽象层的雏形。现在你先理解 OpenGL 原语，阶段八再学习怎么抽象成跨 API 接口。
+> 这就是 RHI 抽象层的雏形。现在你先理解 OpenGL 原语，阶段七再学习怎么抽象成跨 API 接口。
 
 ---
 

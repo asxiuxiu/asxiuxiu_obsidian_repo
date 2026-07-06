@@ -1,0 +1,10 @@
+# Build outputs
+build/
+out/
+cmake-build-*/
+
+# Compile database
+compile_commands.json
+
+# Generated demo outputs
+*.ppm

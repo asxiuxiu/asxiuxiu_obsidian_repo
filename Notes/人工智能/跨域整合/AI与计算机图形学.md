@@ -20,7 +20,7 @@ aliases:
 
 > 这不是一份论文综述，而是一张"AI 如何在图形学管线里落地"的地图。读完这篇笔记，你应该能回答：**如果我想在自研引擎里接入一个 AI 图形学特性，应该从哪一层开始？代价是什么？**
 >
-> 关于具体技术实现，参见 [[Notes/计算机图形学/Roadmap#阶段十：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段十]]。
+> 关于具体技术实现，参见 [[Notes/计算机图形学/Roadmap#阶段九：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段九]]。
 
 ---
 
@@ -172,4 +172,4 @@ aliases:
 
 ---
 
-> **下一步**：进入 [[Notes/计算机图形学/Roadmap#阶段十：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段十]]，从 [[Notes/计算机图形学/AI驱动的现代渲染技术/3D Gaussian Splatting|3D Gaussian Splatting]] 开始产出第一块可落地的知识。
+> **下一步**：进入 [[Notes/计算机图形学/Roadmap#阶段九：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段九]]，从 [[Notes/计算机图形学/AI驱动的现代渲染技术/3D Gaussian Splatting|3D Gaussian Splatting]] 开始产出第一块可落地的知识。

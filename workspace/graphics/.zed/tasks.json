@@ -1,0 +1,118 @@
+[
+    {
+        "label": "CMake: Configure",
+        "command": "cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Debug",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "CMake: Build All",
+        "command": "cmake --build build --config Debug --parallel",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "CMake: Clean",
+        "command": "rm -rf build",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "Build: pixel-demo",
+        "command": "cmake --build build --target pixel-demo --config Debug --parallel",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "Run: pixel-demo",
+        "command": "python tools/run_demo.py pixel-demo",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "Build: rasterization",
+        "command": "cmake --build build --target rasterization --config Debug --parallel",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "Run: rasterization",
+        "command": "python tools/run_demo.py rasterization",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "always",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    },
+    {
+        "label": "Format Current File",
+        "command": "clang-format -i $ZED_FILE",
+        "cwd": "$ZED_WORKTREE_ROOT",
+        "reveal": "never",
+        "shell": {
+            "program": "C:/Program Files/Git/bin/bash.exe",
+            "args": [
+                "-i",
+                "-c"
+            ]
+        }
+    {
+            "label": "Update compile_commands.json",
+            "command": "cp build/compile_commands.json compile_commands.json",
+            "cwd": "$ZED_WORKTREE_ROOT",
+            "reveal": "never",
+            "shell": {
+                "program": "C:/Program Files/Git/bin/bash.exe",
+                "args": [
+                    "-i",
+                    "-c"
+                ]
+            }
+        }
+    ]
