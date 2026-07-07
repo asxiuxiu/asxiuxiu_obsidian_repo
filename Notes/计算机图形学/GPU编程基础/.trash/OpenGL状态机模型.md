@@ -81,93 +81,30 @@ OpenGL 的**状态**包括一切影响渲染的配置：
 
 ---
 
-## 问题 1.5：状态机的核心——VAO、VBO、EBO、FBO 到底是什么？
+## 问题 1.5：状态机到底在操作哪些对象？
 
-问题 1 里说 Context 是 GPU 的"工作备忘录"，上面记着一堆状态。但这些状态具体对应什么东西？OpenGL 状态机围绕四个核心对象运转，它们全都要先生成（`glGen*`）、再绑定（`glBind*`）才能操作。
+Context 这个"备忘录"上记着的状态很多，但在现代 Core Profile 下，你最常通过 `glBind*` 切换的是这些对象：
 
-### VAO：Vertex Array Object（顶点数组对象）
+- **VBO（顶点缓冲）**：GPU 显存里的一块数组，存顶点数据。后续 [[Notes/计算机图形学/顶点数据与索引/从顶点数组到VBO|从顶点数组到VBO]] 会讲"为什么顶点数据要常驻 GPU"。
+- **VAO（顶点数组对象）**：记录"怎么从 VBO 里取数据"的配置快照。后续 [[Notes/计算机图形学/顶点数据与索引/VAO与顶点属性配置|VAO与顶点属性配置]] 会讲"为什么顶点格式解释要打包复用"。
+- **EBO（索引缓冲）**：告诉 GPU 按什么顺序复用顶点。后续 [[Notes/计算机图形学/顶点数据与索引/索引缓冲EBO|索引缓冲EBO]] 会讲。
+- **FBO（帧缓冲对象）**：把渲染目标从屏幕切换到纹理。后续 [[Notes/计算机图形学/帧缓冲与后处理/离屏渲染与FBO|离屏渲染与FBO]] 会讲。
+- **Shader Program、纹理对象** 等。
 
-**先理解问题**：假设你要画一个 mesh，它有好几个顶点属性——位置、法线、UV。每个属性都要告诉 GPU"数据在哪里、每个分量几个 float、 stride 多大"。如果每次绘制前都重新配置一遍，代码会冗长且低效。
-
-**VAO 就是解决这个问题的"打包快照"**。
-
-当你绑定一个 VAO 后，所有后续的顶点属性配置（`glVertexAttribPointer`）、启用状态（`glEnableVertexAttribArray`）、甚至 `GL_ARRAY_BUFFER` 的绑定关系，都会**记录在这个 VAO 内部**。下次绘制时，只要 `glBindVertexArray(vao)`，所有配置瞬间恢复。
-
-```cpp
-glBindVertexArray(VAO);           // 激活这个"快照"
-glVertexAttribPointer(0, ...);    // 记录到 VAO：属性0长这样
-glEnableVertexAttribArray(0);     // 记录到 VAO：属性0启用
-glBindBuffer(GL_ARRAY_BUFFER, VBO); // 记录到 VAO：属性0的数据来源
-```
-
-> **关键认知**：VAO 本身不存顶点数据，它只存"怎么从 VBO 里取数据"的说明书。数据在 VBO 里，配置在 VAO 里。
-
-### VBO：Vertex Buffer Object（顶点缓冲对象）
-
-**VBO 就是显存里的一块数组**，存的是顶点本身的 raw data——位置、颜色、法线、纹理坐标等。
-
-CPU 侧的顶点数据通过 `glBufferData` 上传到 GPU 显存后，后续绘制不再需要 CPU 参与，GPU 可以直接从显存读取。这是" modern OpenGL"相比固定管线最大的性能改进之一。
+它们共同特点：**先生成 ID，再绑定到某个目标，后续操作都针对"当前绑定的"对象**。
 
 ```cpp
-float vertices[] = { -0.5f, -0.5f, 0.0f,  /* ... */ };
-glBindBuffer(GL_ARRAY_BUFFER, VBO);
-glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+// 以 VBO 为例：生成 → 绑定 → 操作
+GLuint vbo;
+glGenBuffers(1, &vbo);            // 生成一个 VBO ID
+glBindBuffer(GL_ARRAY_BUFFER, vbo); // "接下来操作这个 VBO"
+glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW); // 上传数据
 ```
 
-VBO 和 VAO 的关系：一个 VAO 可以在内部关联多个 VBO（每个属性一个），但绑定 VBO 时真正发生关联的，是 `glVertexAttribPointer` 这条调用——它隐含记录了"当前这个属性用的是当前绑定的 `GL_ARRAY_BUFFER`"。
+绑定本身不产生像素，它只是修改 Context 的"当前操作对象"。真正的像素操作发生在 `glDraw*` 时——那时 GPU 会读取当前 VAO/VBO/Shader 等状态，走完渲染管线。
 
-### EBO：Element Buffer Object（元素缓冲对象）
-
-**先理解问题**：一个正方形由两个三角形组成。如果不用 EBO，VBO 里要写 6 个顶点（大量重复）：
-
-```cpp
-// 无 EBO：6 个顶点，4 个角点重复出现
-float vertices[] = {
-    // 三角形 1
-    -0.5f, -0.5f, 0.0f,  // 左下
-     0.5f, -0.5f, 0.0f,  // 右下
-     0.5f,  0.5f, 0.0f,  // 右上
-    // 三角形 2
-    -0.5f, -0.5f, 0.0f,  // 左下 —— 重复！
-     0.5f,  0.5f, 0.0f,  // 右上 —— 重复！
-    -0.5f,  0.5f, 0.0f   // 左上
-};
-```
-
-**EBO 就是一张"索引表"**。VBO 里只存 4 个不重复的顶点，EBO 里存 6 个整数索引，告诉 GPU 按什么顺序去 VBO 里取顶点：
-
-```cpp
-unsigned int indices[] = { 0, 1, 2,  0, 2, 3 };
-glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-// 绘制时
-glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-```
-
-**性能意义**不只是省显存。GPU 的顶点着色器会对每个顶点执行一次，如果同一个顶点被多个三角形复用，EBO 配合 GPU 的 post-transform cache 可以避免重复计算。
-
-> EBO 的绑定点是 `GL_ELEMENT_ARRAY_BUFFER`，而且这个绑定状态**跟着 VAO 走**。换 VAO 时，EBO 也跟着切换。
-
-### FBO：Framebuffer Object（帧缓冲对象）
-
-**先理解问题**：默认情况下，`glDraw*` 的像素最终都写到屏幕窗口上（系统默认的帧缓冲，也叫 back buffer）。但如果你想做"先画到一张图里，再对这张图做特效（比如模糊、Bloom）"，怎么办？
-
-**FBO 让你把渲染目标从"屏幕"切换到"任意附件"**。
-
-一个 FBO 可以附加多种"目的地"：
-- **纹理附件**：渲染结果直接写到一张纹理里，后续可以采样这张纹理做后处理
-- **渲染缓冲附件（Renderbuffer）**：纯显存缓冲，不能采样，但深度/模板测试用它更快
-
-```cpp
-glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-// 把 color texture 附加到 FBO
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, colorTex, 0);
-// 现在 glDraw* 的结果会写入 colorTex，而不是屏幕
-```
-
-FBO 的典型使用流程是"离屏渲染"：绑 FBO → 画场景到纹理 → 解绑 FBO（回到默认缓冲）→ 把纹理贴到全屏四边形上做后处理。阴影贴图（Shadow Map）也是同样的原理——先把场景从光源视角画到 FBO 的深度纹理里，再用这张深度纹理做阴影判断。
-
-> FBO 是状态机的一部分，所以也有 `glBindFramebuffer(GL_FRAMEBUFFER, ...)` 这个调用。`0` 表示绑定默认帧缓冲（即屏幕）。
+> [!tip] 不要在这里背对象定义
+> 这篇笔记的目标是理解"绑定-配置-绘制"这个状态机模式。VBO/VAO/EBO/FBO 各自解决的像素问题，会在后续阶段逐个展开。如果你现在想提前了解，可以点上面的 wikilink 跳过去，但主线不需要现在背下来。
 
 ---
 
@@ -195,7 +132,7 @@ glEnd();
 OpenGL 的设计假设是：绑定一个对象很快，你可以频繁切换。但现实中——
 
 - 绑定 VAO 需要从驱动读取对象配置，可能有缓存未命中
-					- 绑定 Shader Program 需要切换 GPU 的指令缓存
+- 绑定 Shader Program 需要切换 GPU 的指令缓存
 - 绑定纹理需要更新纹理单元的状态
 
 频繁切换绑定会导致**CPU端的开销**，这也是现代API（Vulkan/D3D12）改用"命令缓冲"模式的原因之一。
