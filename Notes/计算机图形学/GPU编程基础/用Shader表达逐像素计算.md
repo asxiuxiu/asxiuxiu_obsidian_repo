@@ -122,6 +122,31 @@ void main() {
 - `gl_Position`：裁剪空间位置，必须输出
 - `out vec3 vColor`：用户自定义的逐顶点属性，会被光栅化器插值
 
+> [!faq] CPU 上传的 color 和顶点着色器输出的 color，是同一个东西吗？
+> 是——同一份数据在管线不同阶段的位置，不是两个 color。顶点属性只存在于顶点着色器阶段，**片段着色器没有资格直接读顶点缓冲区**，它的输入只能来自顶点着色器的 `out` 经光栅化器插值后的结果。所以顶点着色器必须当"搬运工"，把 `aColor` 写进 `vColor`，数据才能继续流到像素阶段：
+>
+> CPU 顶点缓冲区 → `in aColor`（顶点着色器输入）→ 直通或加工 → `out vColor`（顶点着色器输出）→ 光栅化器插值 → 片段着色器 `in vColor`
+>
+> 输出也不必等于输入。比如 `vColor = computeLighting(aPos)` 就是 Gouraud 着色——光照在顶点阶段算好，由硬件把颜色插值到每个像素。
+>
+> 这个"搬运"规则对**所有**顶点属性都成立，不只是 color。UV、法线、切线……任何片段着色器要用的逐顶点数据，都必须由顶点着色器显式转发（直通，或加工后再输出）：
+>
+> ```glsl
+> // 顶点着色器
+> layout(location = 2) in vec2 aUV;
+> layout(location = 3) in vec3 aNormal;
+> out vec2 vUV;
+> out vec3 vNormal;
+>
+> void main() {
+>     vUV = aUV;                                // 直通
+>     vNormal = normalMatrix * aNormal;         // 加工：法线变换到世界空间
+>     ...
+> }
+> ```
+>
+> 片段着色器想用却忘了在顶点着色器里转发，是新手最常见的"数据去哪了"时刻——数据一直都在显存里，但没有 `out` 这座桥，它永远到不了像素阶段。
+
 ---
 
 ## 问题 3：片段着色器里放什么？
