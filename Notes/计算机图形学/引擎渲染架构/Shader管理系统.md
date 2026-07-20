@@ -20,7 +20,7 @@ aliases:
 
 > [[Notes/计算机图形学/Roadmap|← 返回 图形学路线图]]
 
-> **前置依赖**：[[Notes/计算机图形学/引擎渲染架构/渲染状态管理|渲染状态管理]]、[[Notes/计算机图形学/Shader与光照/GLSL数据流与着色器编译|GLSL数据流与着色器编译]]、[[Notes/计算机图形学/Shader与光照/Uniform与VertexAttribute|Uniform与VertexAttribute]]
+> **前置依赖**：[[Notes/计算机图形学/引擎渲染架构/渲染状态管理|渲染状态管理]]、[[Notes/计算机图形学/Shader与光照/Shader程序与跨阶段数据约定|Shader程序与跨阶段数据约定]]、[[Notes/计算机图形学/Shader与光照/Uniform与VertexAttribute|Uniform与VertexAttribute]]
 > **本模块增量**：学完这篇笔记后，你能把 Shader 从「硬编码字符串」升级为「可加载、可缓存、可热重载的引擎资源」；能设计 UBO 按更新频率分层上传参数；能理解 Shader 变体爆炸的根因与控制手段。
 > **下一步**：[[Notes/计算机图形学/现代渲染技术/PBR基础|PBR基础]] — Shader 管理好了，现代材质（金属/粗糙度工作流）怎么落地？
 
