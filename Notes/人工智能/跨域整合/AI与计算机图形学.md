@@ -20,7 +20,7 @@ aliases:
 
 > 这不是一份论文综述，而是一张"AI 如何在图形学管线里落地"的地图。读完这篇笔记，你应该能回答：**如果我想在自研引擎里接入一个 AI 图形学特性，应该从哪一层开始？代价是什么？**
 >
-> 关于具体技术实现，参见 [[Notes/计算机图形学/Roadmap#阶段九：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段九]]。
+> 关于具体技术实现，参见 [[Notes/计算机图形学/Roadmap#阶段十七：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段十七]]。
 
 ---
 
@@ -137,7 +137,7 @@ aliases:
 | 可微渲染 | 3DGS/NeRF 都依赖渲染梯度回传 | PyTorch3D、Mitsuba 3、redner |
 | 扩散模型 | AI 材质/3D 资产生成的核心 | [[Notes/人工智能/生成式AI与大模型/扩散模型与概率生成|扩散模型与概率生成]] |
 | PyTorch/NumPy | 实验神经网络的基础工具 | PyTorch 官方 60 分钟入门 |
-| 渲染方程与蒙特卡洛 | 理解降噪、路径追踪的数学根基 | [[Notes/计算机图形学/Shader与光照/GPU上的Blinn-Phong光照|GPU上的Blinn-Phong光照]] → Real-Time Rendering |
+| 渲染方程与蒙特卡洛 | 理解降噪、路径追踪的数学根基 | [[Notes/计算机图形学/光照与数据流/让像素响应光|让像素响应光]] → Real-Time Rendering |
 
 ---
 
@@ -172,4 +172,4 @@ aliases:
 
 ---
 
-> **下一步**：进入 [[Notes/计算机图形学/Roadmap#阶段九：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段九]]，从 [[Notes/计算机图形学/AI驱动的现代渲染技术/3D Gaussian Splatting|3D Gaussian Splatting]] 开始产出第一块可落地的知识。
+> **下一步**：进入 [[Notes/计算机图形学/Roadmap#阶段十七：AI 驱动的现代渲染技术|计算机图形学 Roadmap · 阶段十七]]，从 [[Notes/计算机图形学/AI驱动的现代渲染技术/3D Gaussian Splatting|3D Gaussian Splatting]] 开始产出第一块可落地的知识。

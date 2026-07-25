@@ -5,7 +5,8 @@
       "Bash(obsidian file *)",
       "Bash(obsidian read *)",
       "Bash(obsidian eval *)",
-      "WebSearch"
+      "WebSearch",
+      "Skill(claude-api)"
     ]
   }
 }
