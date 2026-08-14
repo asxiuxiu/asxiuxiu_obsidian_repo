@@ -4,5 +4,11 @@
   "enabledCssSnippets": [
     "pic_center"
   ],
-  "accentColor": ""
+  "accentColor": "",
+  "baseFontSize": 16,
+  "interfaceFontFamily": "",
+  "textFontFamily": "",
+  "monospaceFontFamily": "Consolas",
+  "baseFontSizeAction": false,
+  "nativeMenus": true
 }
