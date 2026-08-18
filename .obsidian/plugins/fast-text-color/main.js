@@ -803,7 +803,8 @@ var TextColorViewPlugin = class {
           }
           try {
             handleExpression(node, builder, view.state);
-          } catch (e) {
+          } catch (error) {
+            console.log("there was an error when building decorations: ${error}");
             return true;
           }
           return false;
@@ -1195,18 +1196,30 @@ var FastTextColorPlugin = class extends import_obsidian8.Plugin {
       })
     );
     this.addSettingTab(new FastTextColorPluginSettingTab(this.app, this));
-    this.app.workspace.on("window-open", (_, window2) => {
-      this.styleElements.set(window2, null);
+    this.registerEvent(
+      this.app.workspace.on("window-open", (_, window2) => {
+        this.styleElements.set(window2, null);
+        this.setCssVariables();
+      })
+    );
+    this.registerEvent(
+      this.app.workspace.on("window-close", (_, window2) => {
+        this.styleElements.delete(window2);
+      })
+    );
+    this.app.workspace.onLayoutReady(() => {
+      var _a;
+      const mainWin = (_a = this.app.workspace.containerEl.win) != null ? _a : window;
+      this.styleElements.set(mainWin, null);
       this.setCssVariables();
     });
-    this.app.workspace.on("window-close", (_, window2) => {
-      this.styleElements.delete(window2);
-    });
-    this.styleElements.set(activeWindow, null);
-    this.setCssVariables();
   }
   onunload() {
     this.closeColorMenu();
+    this.styleElements.forEach((styleElement) => {
+      styleElement == null ? void 0 : styleElement.remove();
+    });
+    this.styleElements.clear();
   }
   async loadSettings() {
     const rawSettings = await this.loadData();
@@ -1278,8 +1291,8 @@ var FastTextColorPlugin = class extends import_obsidian8.Plugin {
     if (this.colorMenu) {
       this.colorMenu.remove();
       this.colorMenu = null;
+      this.app.keymap.popScope(this.scope);
     }
-    this.app.keymap.popScope(this.scope);
   }
   constructScope(editor) {
     this.scope = new import_obsidian8.Scope();
