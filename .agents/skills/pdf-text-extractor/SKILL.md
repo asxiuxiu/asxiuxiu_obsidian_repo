@@ -1,3 +1,8 @@
+---
+name: pdf-text-extractor
+description: 从 PDF 文档中提取文字内容、代码片段，支持 OCR 识别扫描版 PDF。当用户需要从 PDF 提取正文/代码块/表格、按关键词搜索页码与上下文、或对扫描版 PDF 做文字识别时触发。依赖 PyMuPDF，OCR 另需 pytesseract 与 Tesseract-OCR 引擎。
+---
+
 # PDF 文本与代码提取 Skill
 
 从 PDF 文档中提取文字内容、代码片段，支持 OCR 识别扫描版 PDF。

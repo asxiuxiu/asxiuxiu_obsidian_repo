@@ -1,3 +1,8 @@
+---
+name: note-refine
+description: 优化笔记叙述、检查笔记质量、用费曼学习法重构笔记。当用户说"优化这篇笔记"、"用费曼学习法改这篇笔记"、"完善笔记叙述"、"检查笔记质量"、"这篇笔记写得不够好"、"重构笔记"、"让这篇笔记更易懂"、"review 这篇笔记"、"笔记叙述需要改进"时触发。提供 vault 内所有笔记产出型 skill（self-game-engine、graphics-journey、agent-source-analysis、game-engine-analysis 等）的通用叙事质量规范，包括问题链驱动、写作策略工具箱和自检清单。
+---
+
 # note-refine
 
 ## 服务定位

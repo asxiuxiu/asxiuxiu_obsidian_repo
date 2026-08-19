@@ -1,10 +1,10 @@
 {
   "theme": "obsidian",
-  "cssTheme": "Minimal",
+  "cssTheme": "",
   "enabledCssSnippets": [
     "pic_center"
   ],
-  "accentColor": "",
+  "accentColor": "#1a87ff",
   "baseFontSize": 16,
   "interfaceFontFamily": "",
   "textFontFamily": "",

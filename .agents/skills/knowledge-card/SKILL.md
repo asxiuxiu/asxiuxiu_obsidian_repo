@@ -1,3 +1,8 @@
+---
+name: knowledge-card
+description: Generate and send a knowledge card from the Obsidian vault. Use when the user asks to 生成知识卡片, generate a morning/afternoon/evening study card, randomly pick a vault note and distill its key points, or send card as a Feishu message. Selects a random vault markdown file (excluding graphics/), extracts key points, formats a greeting + card, and sends it via Feishu.
+---
+
 # knowledge-card
 
 Generate and send a knowledge card from the Obsidian vault.
