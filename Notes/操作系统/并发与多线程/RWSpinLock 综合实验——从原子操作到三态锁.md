@@ -349,7 +349,7 @@ int main() {
 2. **memory_order 不是玄学**：`acquire` = "我要进入临界区，请确保我看到之前 release 的所有修改"；`release` = "我要离开临界区，请确保我的所有修改对后续 acquire 可见"。
 3. **单一原子变量可以编码复杂状态机**：`RWSpinLock` 用 4 字节的 `atomic<int32_t>` 管理三态，这是高性能并发代码的典型模式。
 
-> **下一步**：你的线程池笔记里已经用了 `thread_local` 和 `atomic`。现在带着对 `acquire/release` 和 CAS 的深入理解，重新读一遍 [[Notes/SelfGameEngine/基础工具层/线程池与任务系统]] 的 Work-Stealing 队列实现——你会注意到 `Push` 里的 `atomic_thread_fence(std::memory_order_release)` 和 `Steal` 里的 `compare_exchange_strong(..., seq_cst)` 都是有明确理由的。
+> **下一步**：你的线程池笔记里已经用了 `thread_local` 和 `atomic`。现在带着对 `acquire/release` 和 CAS 的深入理解，重新读一遍 [[Notes/C++编程/并发与内存模型/工作窃取队列与线程池设计]] 的 Work-Stealing 队列实现——你会注意到 `Push` 里的 `atomic_thread_fence(std::memory_order_release)` 和 `Steal` 里的 `compare_exchange_strong(..., seq_cst)` 都是有明确理由的。
 
 ---
 
@@ -357,5 +357,5 @@ int main() {
 > - [[atomic——让操作不可分割]] —— `fetch_add` 和 `compare_exchange_strong` 的语法基础
 > - [[自旋锁——另一种等待方式]] —— TTAS 优化和 `pause`/`yield` 指令
 > - [[Release-Acquire——最实用的跨线程同步]] —— 为什么 acquire/release 配对能保证可见性
-> - [[Notes/SelfGameEngine/基础工具层/线程池与任务系统]] —— 工业级 Work-Stealing 中的 atomic + TLS 综合运用
+> - [[Notes/C++编程/并发与内存模型/工作窃取队列与线程池设计]] —— 工业级 Work-Stealing 中的 atomic + TLS 综合运用
 > - [[Game/第二阶段-基础层/platform-源码解析：线程与同步]] —— chaos `RWSpinLock` 的完整工业实现

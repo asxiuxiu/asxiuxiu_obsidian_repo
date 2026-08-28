@@ -19,3 +19,6 @@ node_modules
 
 # .claude/skills 是 junction 指向 .agents/skills，避免 git 重复追踪
 .claude/skills/
+
+# 本地归档压缩包（图形学/自研引擎笔记封存，不入 git）
+archive/
