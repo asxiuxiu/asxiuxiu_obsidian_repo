@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>欧拉角的两个缺陷 · 交互演示</title>
+<style>
+  :root {
+    --bg: #14161a;
+    --card: #1d2026;
+    --border: #2e323a;
+    --text: #d7dae0;
+    --dim: #8b909a;
+    --accent: #e0a458;
+    --danger: #e05555;
+    --ok: #5cb87a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 32px 20px 64px;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  h2 { font-size: 20px; margin: 0 0 4px; color: var(--accent); }
+  .sub { color: var(--dim); margin: 0 0 28px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px 22px; margin-bottom: 36px;
+  }
+  .explain { color: var(--dim); font-size: 14px; margin: 0 0 16px; }
+  .explain b { color: var(--text); }
+  canvas { display: block; border-radius: 8px; background: #0c0e11; cursor: grab; }
+  canvas:active { cursor: grabbing; }
+  .stage-row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .stage { flex: 1 1 420px; min-width: 0; }
+  .stage .tag {
+    font-size: 13px; padding: 4px 10px; border-radius: 6px;
+    background: #262a31; margin-bottom: 8px; display: inline-block;
+  }
+  .controls { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; margin: 14px 0; }
+  .ctl { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .ctl label { min-width: 86px; color: var(--dim); }
+  .ctl output { min-width: 52px; text-align: right; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 150px; accent-color: var(--accent); }
+  select {
+    background: #262a31; color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: 4px 8px; font-size: 14px;
+  }
+  button {
+    background: var(--accent); color: #1a1a1a; border: none; border-radius: 6px;
+    padding: 7px 16px; font-size: 14px; cursor: pointer; font-weight: 600;
+  }
+  button.ghost { background: #2c313a; color: var(--text); }
+  button:disabled { opacity: .45; cursor: default; }
+  .readout {
+    font-size: 14px; background: #16181d; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 14px; margin-top: 12px;
+  }
+  .readout .num { font-variant-numeric: tabular-nums; }
+  .warn {
+    display: none; margin-top: 12px; padding: 10px 14px; border-radius: 8px;
+    background: rgba(224, 85, 85, .12); border: 1px solid var(--danger);
+    color: #f0a0a0; font-size: 14px; font-weight: 600;
+  }
+  .warn.on { display: block; }
+  .legend { font-size: 13px; color: var(--dim); margin-top: 10px; }
+  .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 4px 0 10px; vertical-align: middle; }
+  .caption { font-size: 14px; color: var(--accent); min-height: 24px; margin-top: 10px; font-weight: 600; }
+  .hint { font-size: 13px; color: var(--dim); margin-top: 6px; }
+  .axis-x { color: #e05555; } .axis-y { color: #5cb87a; } .axis-z { color: #5a8fd0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>欧拉角的两个缺陷 · 交互演示</h1>
+  <p class="sub">配套笔记《旋转的三种表示：欧拉角矩阵与四元数》。拖动画面可旋转视角，滚轮缩放。</p>
+
+  <!-- ============ 缺陷一：顺序敏感 ============ -->
+  <div class="card">
+    <h2>缺陷一：顺序敏感 —— 同样的三个角度，先转谁结果不同</h2>
+    <p class="explain">
+      下面两架飞机接收<b>完全相同</b>的三个角度，唯一的区别是<b>施加顺序</b>。
+      调好角度后点「逐步播放」，看它们一步一步转出不同的最终姿态。
+      试试只把一个轴调成非零 —— 这时顺序无所谓，两边结果一致；只要有<b>两个以上</b>的轴非零，分歧就出现了。
+    </p>
+    <div class="controls">
+      <div class="ctl"><label class="axis-x">绕 X 轴</label><input type="range" id="ax" min="-180" max="180" value="30" step="1"><output id="axv">30°</output></div>
+      <div class="ctl"><label class="axis-y">绕 Y 轴</label><input type="range" id="ay" min="-180" max="180" value="60" step="1"><output id="ayv">60°</output></div>
+      <div class="ctl"><label class="axis-z">绕 Z 轴</label><input type="range" id="az" min="-180" max="180" value="45" step="1"><output id="azv">45°</output></div>
+    </div>
+    <div class="controls">
+      <div class="ctl"><label>左侧顺序</label>
+        <select id="orderL">
+          <option value="XYZ" selected>先 X → 再 Y → 再 Z</option>
+          <option value="YXZ">先 Y → 再 X → 再 Z</option>
+          <option value="XZY">先 X → 再 Z → 再 Y</option>
+          <option value="YZX">先 Y → 再 Z → 再 X</option>
+          <option value="ZXY">先 Z → 再 X → 再 Y</option>
+          <option value="ZYX">先 Z → 再 Y → 再 X</option>
+        </select>
+      </div>
+      <div class="ctl"><label>右侧顺序</label>
+        <select id="orderR">
+          <option value="XYZ">先 X → 再 Y → 再 Z</option>
+          <option value="YXZ" selected>先 Y → 再 X → 再 Z</option>
+          <option value="XZY">先 X → 再 Z → 再 Y</option>
+          <option value="YZX">先 Y → 再 Z → 再 X</option>
+          <option value="ZXY">先 Z → 再 X → 再 Y</option>
+          <option value="ZYX">先 Z → 再 Y → 再 X</option>
+        </select>
+      </div>
+      <button id="play1">逐步播放</button>
+      <button id="reset1" class="ghost">全部归零</button>
+    </div>
+    <div class="stage-row">
+      <div class="stage"><span class="tag" id="tagL">左：先 X → 再 Y → 再 Z</span><canvas id="cvL" width="480" height="380"></canvas></div>
+      <div class="stage"><span class="tag" id="tagR">右：先 Y → 再 X → 再 Z</span><canvas id="cvR" width="480" height="380"></canvas></div>
+    </div>
+    <div class="readout">两侧最终姿态的差异角度：<b class="num" id="diff1">—</b> <span id="diff1msg" class="hint"></span></div>
+  </div>
+
+  <!-- ============ 缺陷二：万向锁 ============ -->
+  <div class="card">
+    <h2>缺陷二：万向锁 —— 中环转到 ±90°，两个环的轴重合了</h2>
+    <p class="explain">
+      这是一个三环万向支架（Gimbal）：<b class="axis-y">外环绕 Y 轴</b>、<b class="axis-x">中环绕 X 轴</b>、<b class="axis-z">内环绕 Z 轴</b>，飞机挂在内环上。
+      把「中环 Pitch」推到 <b>+90°</b> 或 <b>−90°</b>，观察外环和内环的转轴箭头 —— 它们会重合。
+      此时再转外环或内环，飞机的动作<b>一模一样</b>：一个自由度凭空消失了。点「演示锁定」自动复现全过程。
+    </p>
+    <div class="controls">
+      <div class="ctl"><label class="axis-y">外环 Yaw (Y)</label><input type="range" id="gyaw" min="-180" max="180" value="0" step="1"><output id="gyawv">0°</output></div>
+      <div class="ctl"><label class="axis-x">中环 Pitch (X)</label><input type="range" id="gpitch" min="-180" max="180" value="0" step="1"><output id="gpitchv">0°</output></div>
+      <div class="ctl"><label class="axis-z">内环 Roll (Z)</label><input type="range" id="groll" min="-180" max="180" value="0" step="1"><output id="grollv">0°</output></div>
+      <button id="lockDemo">演示锁定</button>
+      <button id="reset2" class="ghost">复位</button>
+    </div>
+    <canvas id="cvG" width="1020" height="520" style="width:100%"></canvas>
+    <div class="legend">
+      转轴箭头：<span class="dot" style="background:#5cb87a"></span>外环 Y 轴（固定不动）
+      <span class="dot" style="background:#e05555"></span>中环 X 轴
+      <span class="dot" style="background:#5a8fd0"></span>内环 Z 轴
+    </div>
+    <div class="warn" id="warnLock">⚠ 万向锁！外环与内环的转轴已重合 —— 现在转外环（Yaw）和转内环（Roll）是同一个动作，丢失了一个自由度。</div>
+    <div class="caption" id="cap2"></div>
+    <div class="readout">当前独立自由度：<b class="num" id="dof">3</b> <span class="hint">（锁定时从 3 降为 2）</span></div>
+  </div>
+</div>
+
+<script src="./three.min.js"></script>
+<script>
+const DEG = Math.PI / 180;
+
+/* ---------------- 简易轨道相机（拖拽旋转 + 滚轮缩放） ---------------- */
+function addOrbit(canvas, camera, target, radius, theta, phi) {
+  const state = { r: radius, t: theta, p: phi };
+  function apply() {
+    camera.position.set(
+      target.x + state.r * Math.sin(state.p) * Math.sin(state.t),
+      target.y + state.r * Math.cos(state.p),
+      target.z + state.r * Math.sin(state.p) * Math.cos(state.t)
+    );
+    camera.lookAt(target);
+  }
+  let drag = false, px = 0, py = 0;
+  canvas.addEventListener('pointerdown', e => { drag = true; px = e.clientX; py = e.clientY; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointermove', e => {
+    if (!drag) return;
+    state.t -= (e.clientX - px) * 0.008;
+    state.p = Math.min(3.0, Math.max(0.15, state.p - (e.clientY - py) * 0.008));
+    px = e.clientX; py = e.clientY; apply();
+  });
+  canvas.addEventListener('pointerup', () => drag = false);
+  canvas.addEventListener('wheel', e => { e.preventDefault(); state.r = Math.min(20, Math.max(2, state.r * (1 + e.deltaY * 0.001))); apply(); }, { passive: false });
+  apply();
+}
+
+/* ---------------- 一架有朝向感的小飞机：机头 +Z，背部 +Y ---------------- */
+function makeAircraft(scale = 1) {
+  const g = new THREE.Group();
+  const matBody = new THREE.MeshStandardMaterial({ color: 0xe0a458, roughness: .5 });
+  const matWing = new THREE.MeshStandardMaterial({ color: 0x7fa3c9, roughness: .6 });
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(0.16, 0.9, 16), matBody);
+  nose.rotation.x = Math.PI / 2; nose.position.z = 0.25; g.add(nose);
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.05, 0.5, 12), matBody);
+  tail.rotation.x = Math.PI / 2; tail.position.z = -0.42; g.add(tail);
+  const wing = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.035, 0.28), matWing);
+  wing.position.z = -0.1; g.add(wing);
+  const fin = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.42, 0.22), matWing);
+  fin.position.set(0, 0.18, -0.5); g.add(fin);
+  g.scale.setScalar(scale);
+  return g;
+}
+
+function makeRenderer(canvas) {
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true });
+  r.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  return r;
+}
+function baseScene() {
+  const s = new THREE.Scene();
+  s.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const d = new THREE.DirectionalLight(0xffffff, 1.4); d.position.set(3, 6, 4); s.add(d);
+  return s;
+}
+
+/* ================= 缺陷一：顺序敏感 ================= */
+const angles = { X: 30, Y: 60, Z: 45 };
+const orderNames = { X: 'X', Y: 'Y', Z: 'Z' };
+
+function makeStage(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  const renderer = makeRenderer(canvas);
+  const scene = baseScene();
+  const camera = new THREE.PerspectiveCamera(45, canvas.width / canvas.height, 0.1, 100);
+  addOrbit(canvas, camera, new THREE.Vector3(0, 0.3, 0), 4.6, 0.9, 1.15);
+  const grid = new THREE.GridHelper(4, 8, 0x333944, 0x23272e); scene.add(grid);
+  scene.add(new THREE.AxesHelper(1.1));
+  const craft = makeAircraft(0.9); craft.position.y = 0.35; scene.add(craft);
+  return { canvas, renderer, scene, camera, craft };
+}
+const stageL = makeStage('cvL');
+const stageR = makeStage('cvR');
+
+function axisQuat(axis, deg) {
+  const a = deg * DEG / 2, s = Math.sin(a), c = Math.cos(a);
+  if (axis === 'X') return new THREE.Quaternion(s, 0, 0, c);
+  if (axis === 'Y') return new THREE.Quaternion(0, s, 0, c);
+  return new THREE.Quaternion(0, 0, s, c);
+}
+// 按顺序依次绕「世界固定轴」旋转：q_total = Q_last * ... * Q_first
+function compose(order, degs) {
+  const q = new THREE.Quaternion();
+  for (const ax of order) q.premultiply(axisQuat(ax, degs[ax]));
+  return q;
+}
+
+const sliders = { X: document.getElementById('ax'), Y: document.getElementById('ay'), Z: document.getElementById('az') };
+const outs = { X: document.getElementById('axv'), Y: document.getElementById('ayv'), Z: document.getElementById('azv') };
+const selL = document.getElementById('orderL'), selR = document.getElementById('orderR');
+const orderText = o => `先 ${o[0]} → 再 ${o[1]} → 再 ${o[2]}`;
+
+function refreshOrder1() {
+  stageL.craft.quaternion.copy(compose(selL.value, angles));
+  stageR.craft.quaternion.copy(compose(selR.value, angles));
+  document.getElementById('tagL').textContent = '左：' + orderText(selL.value);
+  document.getElementById('tagR').textContent = '右：' + orderText(selR.value);
+  // 两姿态的夹角：2·acos(|q1·q2|)
+  const dot = Math.abs(stageL.craft.quaternion.dot(stageR.craft.quaternion));
+  const degDiff = 2 * Math.acos(Math.min(1, dot)) / DEG;
+  document.getElementById('diff1').textContent = degDiff.toFixed(1) + '°';
+  document.getElementById('diff1msg').textContent =
+    degDiff < 0.5 ? '（此刻一致 —— 通常因为只有一个轴非零，或两个顺序恰好等价）' : '（同样的输入，不同的结果）';
+}
+for (const ax of ['X', 'Y', 'Z']) {
+  sliders[ax].addEventListener('input', () => { angles[ax] = +sliders[ax].value; outs[ax].textContent = sliders[ax].value + '°'; refreshOrder1(); });
+}
+selL.addEventListener('change', refreshOrder1);
+selR.addEventListener('change', refreshOrder1);
+document.getElementById('reset1').addEventListener('click', () => {
+  for (const ax of ['X', 'Y', 'Z']) { sliders[ax].value = 0; angles[ax] = 0; outs[ax].textContent = '0°'; }
+  refreshOrder1();
+});
+
+// 逐步播放：每一步绕世界轴从 0 转到目标角
+const tweens = [];
+function tween(dur, onUpdate, onDone) { tweens.push({ t: 0, dur, onUpdate, onDone }); }
+const ease = t => t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+
+document.getElementById('play1').addEventListener('click', () => {
+  const btn = document.getElementById('play1'); btn.disabled = true;
+  const qL0 = new THREE.Quaternion(), qR0 = new THREE.Quaternion();
+  const seq = [];
+  for (let i = 0; i < 3; i++) {
+    const axL = selL.value[i], axR = selR.value[i];
+    seq.push({ axL, axR, qLStart: null, qRStart: null });
+  }
+  let step = 0;
+  stageL.craft.quaternion.identity(); stageR.craft.quaternion.identity();
+  function runStep() {
+    if (step >= 3) { btn.disabled = false; refreshOrder1(); return; }
+    const s = seq[step];
+    s.qLStart = stageL.craft.quaternion.clone();
+    s.qRStart = stageR.craft.quaternion.clone();
+    const qLEnd = axisQuat(s.axL, angles[s.axL]).multiply(s.qLStart);
+    const qREnd = axisQuat(s.axR, angles[s.axR]).multiply(s.qRStart);
+    document.getElementById('tagL').textContent = `左：第 ${step + 1} 步，绕 ${s.axL} 轴转 ${angles[s.axL]}°`;
+    document.getElementById('tagR').textContent = `右：第 ${step + 1} 步，绕 ${s.axR} 轴转 ${angles[s.axR]}°`;
+    tween(0.9, k => {
+      stageL.craft.quaternion.slerpQuaternions(s.qLStart, qLEnd, ease(k));
+      stageR.craft.quaternion.slerpQuaternions(s.qRStart, qREnd, ease(k));
+    }, () => { step++; runStep(); });
+  }
+  runStep();
+});
+
+/* ================= 缺陷二：万向锁 ================= */
+const gCanvas = document.getElementById('cvG');
+const gRenderer = makeRenderer(gCanvas);
+const gScene = baseScene();
+const gCamera = new THREE.PerspectiveCamera(45, gCanvas.width / gCanvas.height, 0.1, 100);
+addOrbit(gCanvas, gCamera, new THREE.Vector3(0, 0.2, 0), 5.6, 0.7, 1.25);
+const gGrid = new THREE.GridHelper(6, 12, 0x333944, 0x23272e); gGrid.position.y = -2; gScene.add(gGrid);
+
+// 三环嵌套：外(Y) → 中(X) → 内(Z) → 飞机
+const outerG = new THREE.Group(), middleG = new THREE.Group(), innerG = new THREE.Group();
+gScene.add(outerG); outerG.add(middleG); middleG.add(innerG);
+const ringMat = { Y: new THREE.MeshStandardMaterial({ color: 0x5cb87a, roughness: .4 }),
+                  X: new THREE.MeshStandardMaterial({ color: 0xe05555, roughness: .4 }),
+                  Z: new THREE.MeshStandardMaterial({ color: 0x5a8fd0, roughness: .4 }) };
+const ringOuter = new THREE.Mesh(new THREE.TorusGeometry(1.5, 0.05, 12, 64), ringMat.Y);
+ringOuter.rotation.x = Math.PI / 2; outerG.add(ringOuter);            // 法线沿 Y
+const ringMid = new THREE.Mesh(new THREE.TorusGeometry(1.2, 0.05, 12, 64), ringMat.X);
+ringMid.rotation.y = Math.PI / 2; middleG.add(ringMid);               // 法线沿 X
+const ringInner = new THREE.Mesh(new THREE.TorusGeometry(0.9, 0.05, 12, 64), ringMat.Z);
+innerG.add(ringInner);                                                // 法线沿 Z
+const gCraft = makeAircraft(0.55); innerG.add(gCraft);
+
+// 三根转轴箭头（世界空间表示，每帧更新）
+function axisArrow(color) {
+  const a = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(), 2.1, color, 0.22, 0.12);
+  gScene.add(a); return a;
+}
+const arrY = axisArrow(0x5cb87a), arrX = axisArrow(0xe05555), arrZ = axisArrow(0x5a8fd0);
+const _q = new THREE.Quaternion();
+function updateAxisArrows() {
+  arrY.setDirection(new THREE.Vector3(0, 1, 0));
+  middleG.getWorldQuaternion(_q); arrX.setDirection(new THREE.Vector3(1, 0, 0).applyQuaternion(_q));
+  innerG.getWorldQuaternion(_q);  arrZ.setDirection(new THREE.Vector3(0, 0, 1).applyQuaternion(_q));
+}
+
+const gSliders = { yaw: document.getElementById('gyaw'), pitch: document.getElementById('gpitch'), roll: document.getElementById('groll') };
+const gOuts = { yaw: document.getElementById('gyawv'), pitch: document.getElementById('gpitchv'), roll: document.getElementById('grollv') };
+const gVal = { yaw: 0, pitch: 0, roll: 0 };
+// 支持 URL 参数预设初始角度，如 index.html?pitch=90 直接打开锁定状态
+const qs = new URLSearchParams(location.search);
+for (const k of ['yaw', 'pitch', 'roll']) if (qs.has(k)) gVal[k] = +qs.get(k) || 0;
+const warnLock = document.getElementById('warnLock');
+
+function refreshGimbal() {
+  outerG.rotation.y = gVal.yaw * DEG;
+  middleG.rotation.x = gVal.pitch * DEG;
+  innerG.rotation.z = gVal.roll * DEG;
+  gScene.updateMatrixWorld(true);
+  // 内环 Z 轴在世界空间的方向 vs 外环固定 Y 轴
+  innerG.getWorldQuaternion(_q);
+  const innerAxis = new THREE.Vector3(0, 0, 1).applyQuaternion(_q);
+  const locked = Math.abs(innerAxis.y) > 0.9995;   // 与 ±Y 几乎重合
+  warnLock.classList.toggle('on', locked);
+  document.getElementById('dof').textContent = locked ? '2（锁定！）' : '3';
+  const cX = locked ? 0xff8080 : 0xe05555, cZ = locked ? 0xff8080 : 0x5a8fd0;
+  arrX.setColor(cX); arrZ.setColor(cZ);
+}
+for (const k of ['yaw', 'pitch', 'roll']) {
+  gSliders[k].addEventListener('input', () => { gVal[k] = +gSliders[k].value; gOuts[k].textContent = gSliders[k].value + '°'; refreshGimbal(); });
+}
+document.getElementById('reset2').addEventListener('click', () => {
+  for (const k of ['yaw', 'pitch', 'roll']) { gSliders[k].value = 0; gVal[k] = 0; gOuts[k].textContent = '0°'; }
+  document.getElementById('cap2').textContent = '';
+  refreshGimbal();
+});
+
+function setG(k, v) { gVal[k] = v; gSliders[k].value = v; gOuts[k].textContent = Math.round(v) + '°'; refreshGimbal(); }
+
+document.getElementById('lockDemo').addEventListener('click', () => {
+  const btn = document.getElementById('lockDemo'); btn.disabled = true;
+  const cap = document.getElementById('cap2');
+  setG('yaw', 0); setG('pitch', 0); setG('roll', 0);
+  cap.textContent = '第 1 步：把中环 Pitch 推到 +90° …';
+  tween(1.2, k => setG('pitch', 90 * ease(k)), () => {
+    cap.textContent = '中环 90°：注意看 —— 内环的蓝色转轴和外环的绿色转轴重合了！';
+    tween(1.6, () => {}, () => {
+      cap.textContent = '第 2 步：转动外环 Yaw（绿），飞机在水平面里转向 …';
+      tween(1.6, k => setG('yaw', 55 * Math.sin(k * Math.PI)), () => {
+        setG('yaw', 0);
+        cap.textContent = '第 3 步：改为转动内环 Roll（蓝）—— 动作竟然完全一样！';
+        tween(1.6, k => setG('roll', 55 * Math.sin(k * Math.PI)), () => {
+          setG('roll', 0);
+          cap.textContent = '两个旋钮控制同一个自由度：这就是万向锁，「歪头」这个方向此刻调不出来。';
+          btn.disabled = false;
+        });
+      });
+    });
+  });
+});
+
+/* ---------------- 渲染循环 ---------------- */
+const clock = new THREE.Clock();
+function loop() {
+  requestAnimationFrame(loop);
+  const dt = clock.getDelta();
+  for (let i = tweens.length - 1; i >= 0; i--) {
+    const tw = tweens[i];
+    tw.t += dt;
+    const k = Math.min(1, tw.t / tw.dur);
+    tw.onUpdate(k);
+    if (k >= 1) { tweens.splice(i, 1); tw.onDone && tw.onDone(); }
+  }
+  updateAxisArrows();
+  stageL.renderer.render(stageL.scene, stageL.camera);
+  stageR.renderer.render(stageR.scene, stageR.camera);
+  gRenderer.render(gScene, gCamera);
+}
+refreshOrder1();
+for (const k of ['yaw', 'pitch', 'roll']) { gSliders[k].value = gVal[k]; gOuts[k].textContent = Math.round(gVal[k]) + '°'; }
+refreshGimbal();
+loop();
+</script>
+</body>
+</html>
