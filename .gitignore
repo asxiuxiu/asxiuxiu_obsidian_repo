@@ -22,3 +22,6 @@ node_modules
 
 # 本地归档压缩包（图形学/自研引擎笔记封存，不入 git）
 archive/
+
+# 调试日志
+debug.log
