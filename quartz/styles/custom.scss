@@ -25,10 +25,13 @@ body {
   max-width: calc(#{map.get($breakpoints, desktop)} + 320px);
 }
 
-// 正文栏：杂志栏宽
-.page > #quartz-body > .center {
-  max-width: var(--base-page-width);
-  margin: 0 auto;
+// 正文栏：杂志栏宽（仅桌面/平板；移动端由移动端网格全权接管，
+// auto 外边距在网格中会禁用 stretch 导致按 max-content 撑宽，绝不能泄漏到移动端）
+@media all and not ($mobile) {
+  .page > #quartz-body > .center {
+    max-width: var(--base-page-width);
+    margin: 0 auto;
+  }
 }
 
 // ============================================================
@@ -282,39 +285,119 @@ table {
 }
 
 // ============================================================
-// 移动端：左侧目录索引默认可见
+// 移动端（≤800px）
+// 设计原则：
+// 1. 版心：单列网格 minmax(0, 1fr) 做硬约束，任何内容的 max-content
+//    都无法把版心撑出视口（桌面那条 720px 杂志栏规则已收编进 not-mobile，
+//    不会泄漏到这里）
+// 2. 顶栏：一行 sticky 工具条——目录 / 站名 / 搜索 / 主题 / 阅读模式，
+//    毛玻璃背景，除此之外不占用任何阅读区
+// 3. 目录：顶栏下沿的下拉面板，折叠时零占位
+// 4. 正文：为阅读收紧标题阶梯、代码字号、面包屑与属性面板
 // ============================================================
-@media all and (max-width: 800px) {
-  // 左侧 sidebar 改为垂直布局，目录和标题/搜索上下排列
-  .page > #quartz-body .sidebar.left:has(.explorer) {
-    padding: 0.75rem 1rem 0.5rem;
-    z-index: 50;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 0.5rem;
+@media all and ($mobile) {
+  // ---- 版心与溢出防线 ----
+  // minmax(0, 1fr)：列宽严格等于容器宽度；
+  // min-width: 0：网格子项默认 min-width:auto，会被长代码/表格顶破轨道
+  .page > #quartz-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0;
 
-    .page-title {
-      margin: 0;
-      font-size: 1.1rem;
+    & > * {
+      min-width: 0;
     }
 
-    .toolbar {
-      margin-bottom: 0.25rem;
+    & > .center,
+    & > footer,
+    & > .sidebar.right {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding-left: 1.1rem;
+      padding-right: 1.1rem;
+      box-sizing: border-box;
     }
   }
 
-  // 汉堡按钮改造成“目录”胶囊按钮
+  // ---- 顶栏：单行 sticky，目录按钮 + 站名 + 工具图标，不占阅读区 ----
+  .page > #quartz-body .sidebar.left:has(.explorer) {
+    padding: 0.4rem 0.9rem;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.5rem;
+    background-color: color-mix(in srgb, var(--light) 85%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--lightgray);
+
+    & > * {
+      margin-bottom: 0;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 1.05rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // 工具组（搜索/暗色/阅读模式）贴右收紧
+    .flex-component {
+      gap: 0.15rem !important;
+      flex-shrink: 0;
+
+      & > div {
+        flex-grow: 0 !important;
+      }
+    }
+  }
+
+  // 搜索按钮移动端收成纯图标（点击后本来就是全屏弹窗）
+  .search {
+    flex-grow: 0;
+    max-width: none;
+    min-width: 0;
+
+    & > .search-button {
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      justify-content: center;
+      border: none;
+      background-color: transparent;
+      backdrop-filter: none;
+
+      & > p {
+        display: none;
+      }
+
+      & svg {
+        margin: 0;
+      }
+    }
+  }
+
+  // ---- 目录：胶囊按钮 + 顶栏下沿的下拉面板，折叠时完全不占位 ----
+  .explorer {
+    order: -1;
+    flex: 0 0 auto;
+    align-self: center;
+    margin: 0;
+    overflow: visible;
+  }
+
   // hide-until-loaded：JS 未加载时也强制可见，慢网络下目录入口不消失
   .explorer button.mobile-explorer,
   .explorer button.mobile-explorer.hide-until-loaded {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.85rem;
+    gap: 0.4rem;
+    padding: 0.38rem 0.75rem;
     border-radius: 999px;
     background-color: var(--lightgray);
     color: var(--darkgray);
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     transition: background-color 0.2s ease, color 0.2s ease;
 
@@ -329,8 +412,8 @@ table {
     }
 
     svg {
-      width: 18px;
-      height: 18px;
+      width: 17px;
+      height: 17px;
       stroke-width: 2.2;
     }
 
@@ -339,62 +422,129 @@ table {
     }
   }
 
-  // 移动端目录内容默认可见，作为页面顶部的一个可折叠面板
-  .explorer,
-  .explorer.collapsed,
-  .explorer:not(.collapsed) {
+  // 面板挂在顶栏底边（sidebar.left 是 sticky，即面板的定位祖先）
+  .explorer .explorer-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
     width: 100%;
     max-width: 100%;
-    flex: 0 0 auto !important;
-    align-self: stretch;
-    margin-top: 0;
-    margin-bottom: 0;
-
-    &.collapsed > .explorer-content,
-    &:not(.collapsed) > .explorer-content {
-      position: relative;
-      transform: none;
-      visibility: visible;
-      width: 100%;
-      max-width: 100%;
-      height: auto;
-      min-height: 0;
-      padding: 0.75rem;
-      margin-top: 0.75rem;
-      background-color: var(--light);
-      border: 1px solid var(--lightgray);
-      border-radius: var(--radius-md);
-      box-shadow: var(--shadow-md);
-      overflow-y: auto;
-      transition: max-height 0.35s ease, opacity 0.25s ease;
-    }
-
-    &.collapsed > .explorer-content {
-      max-height: 28vh;
-      opacity: 1;
-    }
-
-    &:not(.collapsed) > .explorer-content {
-      max-height: 70vh;
-      opacity: 1;
-    }
+    height: auto;
+    margin: 0;
+    padding: 0.5rem 1rem 1rem;
+    background-color: var(--light);
+    border-bottom: 1px solid var(--lightgray);
+    box-shadow: 0 16px 32px -16px rgb(0 0 0 / 0.35);
+    transform: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.25s ease,
+      visibility 0.25s ease;
   }
 
-  .mobile-no-scroll {
+  .explorer.collapsed > .explorer-content {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-width: 0;
+    opacity: 0;
+    visibility: hidden;
     overflow: hidden;
   }
 
-  // 面包屑与 Properties 面板移动端防溢出
+  .explorer:not(.collapsed) > .explorer-content {
+    max-height: calc(100dvh - 3.25rem);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  // ---- 文章头部：面包屑 / 标题 / 属性 / 元信息收紧 ----
   .breadcrumb-container {
     flex-wrap: wrap;
-    row-gap: 0.25rem;
+    row-gap: 0.2rem;
+    column-gap: 0.4rem;
+    font-size: 0.78rem;
+    margin-top: 0.6rem;
+  }
+
+  .article-title {
+    font-size: 1.55rem;
+    line-height: 1.3;
+    margin: 0.35rem 0 0.25rem;
+  }
+
+  .content-meta {
+    font-size: 0.8rem;
+    margin-top: 0;
   }
 
   .note-properties {
     overflow-x: auto;
+    font-size: 0.85rem;
   }
 
-  // 移动端 hero 收紧
+  // ---- 正文字号阶梯 ----
+  article {
+    & > h1 {
+      font-size: 1.55rem;
+      margin-top: 2rem;
+      margin-bottom: 0.9rem;
+    }
+
+    & > h2 {
+      font-size: 1.28rem;
+      margin-top: 2.25rem;
+    }
+
+    & > h3 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      line-height: 1.85;
+      margin-bottom: 1.1rem;
+    }
+  }
+
+  // 代码块字号缩小，一行容纳更多字符，减少横向滚动
+  pre > code {
+    font-size: 0.78rem;
+  }
+
+  // 行内代码与长链接允许断开，防止撑破版心
+  article p code,
+  article li code,
+  article td code,
+  article a {
+    overflow-wrap: anywhere;
+  }
+
+  // KaTeX 块级公式允许横向滚动
+  // （base 里 display: initial 会让 overflow-x 在移动端失效）
+  .katex-display {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  // ---- 右侧栏（Graph / Backlinks）移动端纵向堆叠 ----
+  .page > #quartz-body .sidebar.right {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+
+    & > * {
+      flex: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  // ---- 首页 hero / 卡片收紧 ----
   .hero {
     padding: 2rem 0 1.5rem;
     margin-bottom: 1.5rem;
@@ -407,18 +557,21 @@ table {
   .category-grid {
     grid-template-columns: 1fr;
   }
+
+  footer {
+    margin-top: 2rem;
+  }
 }
 
 // ============================================================
 // 顶部工具栏 / 搜索
 // ============================================================
-#quartz-body > .sidebar.left > .toolbar {
+#quartz-body > .sidebar.left > .flex-component {
   gap: 0.4rem;
 
   button,
   .search-button {
     border-radius: var(--radius-sm);
-    padding: 0.4rem;
     transition: background-color 0.2s ease;
 
     &:hover {
