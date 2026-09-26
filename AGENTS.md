@@ -236,6 +236,12 @@ node scripts/serve-local.mjs 8080
 
 3. **移动端 Explorer 默认被折叠成 34px 宽的汉堡按钮**。要让目录索引默认可见，需要覆盖 `.explorer.collapsed` 的 `flex` 和 `.explorer-content` 的 `transform/visibility/width`。
 
+4. **绝对不要把 `content/` 加进 v5 分支的 `.gitignore`**。Quartz 扫描内容文件时 `globby` 开了 `gitignore: true`，`content/` 被忽略会导致 `Found 0 input files`，构建"成功"但部署上去的是没有首页和笔记的空壳（根路径会落到 RSS 上）。`content/` 保持 untracked 即可。
+
+5. **表格里的 wikilink 必须由 `demote-private-links.mjs` 预处理**。Quartz v5 不吃 Obsidian 的 `\|` 转义，也不处理表格单元格里的 wikilink；脚本会把它们转成 HTML `<a>`（已发布）或降级 span（未发布）。
+
+6. **首页 HTML 卡片里不能放 `h1-h6`**，Quartz 会给标题注入锚点 `<a>`，嵌套 `<a>` 被浏览器拆散导致卡片布局崩坏。卡片标题用 `<span class="card-title">`。
+
 ### 提交顺序
 
 1. 先提交 `v5` 分支的 Quartz 改动
