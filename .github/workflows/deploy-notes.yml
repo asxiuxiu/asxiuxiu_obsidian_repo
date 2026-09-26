@@ -1,6 +1,8 @@
 name: Deploy Notes to GitHub Pages
 
+# workflow_dispatch：v5 分支（Quartz 工程）单独更新时，在 Actions 页面手动触发重新部署
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
