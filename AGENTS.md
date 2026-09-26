@@ -184,7 +184,14 @@ int main() {
 - **站点标题 / 字体 / 配色 / 组件配置** → 改 `v5` 分支的 `quartz.config.yaml`
 - **布局逻辑 / Explorer 排序 / 插件选项覆盖** → 改 `v5` 分支的 `quartz.ts`
 - **样式细节 / 移动端适配 / 设计感** → 改 `v5` 分支的 `quartz/styles/custom.scss`
-- **首页文案 / 部署触发条件** → 改 `main` 分支的 `.github/workflows/deploy-notes.yml`
+- **部署触发条件 / 同步排除规则** → 改 `main` 分支的 `.github/workflows/deploy-notes.yml`
+
+### 首页与链接健康（2026-09 重构）
+
+- **首页是自动生成的**：`v5` 分支 `scripts/generate-index.mjs` 在构建时扫描 `content/Notes/` 的真实文件夹生成 `content/index.md`。**禁止**在 workflow 里手写首页链接（Quartz slug 全小写，手写 `Notes/C++编程/` 这类大写路径必然 404）。分类描述改脚本里的 `CATEGORY_META`。
+- **私有链接自动降级**：`scripts/demote-private-links.mjs` 在构建前处理所有 wikilink——路径失效但笔记还在的自动重写（治愈）；指向 Bevy/UE 等未发布目录的降级为 `<span class="unpublished-link">` 灰色纯文本。
+- **死链是 CI 红线**：`scripts/check-links.mjs` 在构建后扫描 `public/` 全部 HTML，发现站内 404 链接则 deploy 失败。本地迭代时也应跑一遍。
+- 三个脚本的执行顺序：`generate-index` → `demote-private-links` → `quartz build` → `check-links` → `patch-content-index-order`。
 
 ### 分支切换与并发修改
 
@@ -212,11 +219,10 @@ npx quartz build
 ### 本地验证
 
 ```bash
-# 1. 起本地服务
-python3 -m http.server 8080 --directory public
-
-# 2. 用 puppeteer + Chrome 截图看移动端效果
-npx puppeteer-core --...  # 或写脚本用 Chrome headless 截图
+# 必须用项目自带的服务器（模拟 GitHub Pages 的无扩展名 URL 和 /repo 前缀）
+# python -m http.server 会产生大量假 404，不要再用
+node scripts/serve-local.mjs 8080
+# 访问 http://localhost:8080/asxiuxiu_obsidian_repo/
 ```
 
 ### 常见坑

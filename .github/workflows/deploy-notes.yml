@@ -34,55 +34,6 @@ jobs:
           ref: v5
           path: quartz
 
-      - name: Sync Notes and Assets into Quartz content
-        run: |
-          rm -rf quartz/content
-          mkdir -p quartz/content
-          rsync -a --exclude='Agent' --exclude='Bevy' --exclude='UE' vault/Notes/ quartz/content/Notes/
-          cp -r vault/Assets quartz/content/
-          cat > quartz/content/index.md << 'EOF'
-          ---
-          title: 首页
-          ---
-
-          欢迎来到 asxiuxiu 的知识库。
-
-          <div class="category-grid">
-            <div class="category-card">
-              <h3><a href="Notes/C++编程/">C++ 编程</a></h3>
-              <p>从内存模型到并发、模板与标准库原理</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/计算机图形学/">计算机图形学</a></h3>
-              <p>渲染管线、GPU、Shader 与引擎渲染架构</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/操作系统/">操作系统</a></h3>
-              <p>CPU、内存、并发与系统调用</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/构建系统/">构建系统</a></h3>
-              <p>CMake、编译链接与工程化实践</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/数学基础/">数学基础</a></h3>
-              <p>线性代数、微积分、三角函数与复分析</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/人工智能/">人工智能</a></h3>
-              <p>深度学习、具身智能与跨域整合</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/游戏引擎杂谈碎片/">引擎杂谈</a></h3>
-              <p>游戏引擎设计与源码分析碎片</p>
-            </div>
-            <div class="category-card">
-              <h3><a href="Notes/索引/">知识总索引</a></h3>
-              <p>按学习顺序组织的完整索引</p>
-            </div>
-          </div>
-          EOF
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -98,9 +49,31 @@ jobs:
         working-directory: quartz
         run: npx quartz plugin install
 
+      # 首页由脚本扫描真实文件夹生成，禁止改回手写链接（slug 小写规则曾导致首页全灭）
+      - name: Sync Notes and Assets into Quartz content
+        run: |
+          rm -rf quartz/content
+          mkdir -p quartz/content
+          rsync -a --exclude='Agent' --exclude='Bevy' --exclude='UE' vault/Notes/ quartz/content/Notes/
+          cp -r vault/Assets quartz/content/
+          find quartz/content/Assets -name "*.md" -delete
+
+      - name: Generate homepage from real folder structure
+        working-directory: quartz
+        run: node scripts/generate-index.mjs
+
+      - name: Heal and demote links to unpublished notes
+        working-directory: quartz
+        run: node scripts/demote-private-links.mjs
+
       - name: Build Quartz site
         working-directory: quartz
         run: npx quartz build
+
+      # CI 红线：任何站内死链都会让部署失败
+      - name: Verify no broken internal links
+        working-directory: quartz
+        run: node scripts/check-links.mjs
 
       - name: Patch order into content index
         working-directory: quartz
