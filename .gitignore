@@ -10,3 +10,5 @@ private/
 replit.nix
 .quartz/
 quartz/cli/tui/dist/
+content
+_serve

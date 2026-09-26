@@ -1,6 +1,15 @@
 import { loadQuartzConfig, loadQuartzLayout } from "./quartz/plugins/loader/config-loader"
+import { registerCondition } from "./quartz/plugins/loader/conditions"
 import * as ExternalPlugin from "./.quartz/plugins"
 import { componentRegistry } from "./quartz/components/registry"
+
+// 注册「仅首页」条件，供 quartz.config.yaml 中 recent-notes 的 layout.condition 使用。
+registerCondition("index", (props) => props.fileData.slug === "index")
+
+// 首页的「最近更新」不列出首页自身。
+componentRegistry.setOptionOverrides("recent-notes", {
+  filter: (f: any) => f.slug !== "index",
+})
 
 // Explorer 侧边栏按 frontmatter `order` 排序，无 order 的退回到按名称字母序。
 // 注意：sortFn 会被序列化到浏览器端 eval 执行，因此：
@@ -38,7 +47,7 @@ ExternalPlugin.Explorer({
     }
 
     if (orderA !== orderB) return orderA - orderB
-    return a.displayName.localeCompare(b.displayName, "zh-CN")
+    return (a.displayName || "").localeCompare(b.displayName || "", "zh-CN")
   },
 })
 
