@@ -1,0 +1,700 @@
+@use "sass:map";
+@use "./variables.scss" as *;
+
+// ============================================================
+// asxiuxiu 主题 · 极简杂志风
+// 衬线标题 + 暖纸底色 + 大留白，阅读体验优先
+// ============================================================
+
+:root {
+  --base-page-width: 720px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+  --shadow-md: 0 6px 16px -6px rgb(60 50 30 / 0.10);
+}
+
+body {
+  font-feature-settings: "liga" 1, "calt" 1;
+  letter-spacing: 0.01em;
+}
+
+// 页面容器
+.page {
+  max-width: calc(#{map.get($breakpoints, desktop)} + 320px);
+}
+
+// 正文栏：杂志栏宽（仅桌面/平板；移动端由移动端网格全权接管，
+// auto 外边距在网格中会禁用 stretch 导致按 max-content 撑宽，绝不能泄漏到移动端）
+@media all and not ($mobile) {
+  .page > #quartz-body > .center {
+    max-width: var(--base-page-width);
+    margin: 0 auto;
+  }
+}
+
+// ============================================================
+// 首页专属：隐藏阅读元信息（日期/阅读时长对首页是噪音）
+// ============================================================
+body[data-slug="index"] .content-meta {
+  display: none;
+}
+
+// ============================================================
+// 首页 Hero
+// ============================================================
+.hero {
+  text-align: center;
+  padding: 2.5rem 0 2.5rem;
+  margin-bottom: 2.5rem;
+  border-bottom: 1px solid var(--lightgray);
+
+  .hero-eyebrow {
+    font-size: 0.72rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--secondary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .hero-tagline {
+    font-family: var(--headerFont);
+    font-size: 1.35rem;
+    line-height: 2;
+    color: var(--darkgray);
+    margin: 0;
+  }
+}
+
+// 首页分类卡片：细边框 + 衬线标题 + 克制的 hover
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.1rem;
+  margin-bottom: 3rem;
+}
+
+.category-card {
+  display: block;
+  position: relative;
+  border: 1px solid var(--lightgray);
+  border-radius: var(--radius-md);
+  padding: 1.4rem 1.5rem 1.15rem;
+  background-color: transparent;
+  text-decoration: none;
+  transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+
+  // hover 时右上角浮出箭头，强化可点击感
+  &::after {
+    content: "→";
+    position: absolute;
+    top: 1.15rem;
+    right: 1.35rem;
+    color: var(--secondary);
+    opacity: 0;
+    transform: translateX(-4px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+
+  .card-title {
+    display: block;
+    font-family: var(--headerFont);
+    font-size: 1.12rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+    color: var(--dark);
+    letter-spacing: 0.01em;
+  }
+
+  .card-desc {
+    display: block;
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: var(--darkgray);
+    margin: 0 0 1rem;
+  }
+
+  .card-count {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  &:hover {
+    border-color: var(--secondary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+
+    &::after {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .card-title {
+      color: var(--secondary);
+    }
+  }
+}
+
+// ============================================================
+// 文件夹列表页：杂志目录式行排版
+// ============================================================
+.page-listing {
+  .section-ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .section-li {
+    border-bottom: 1px solid var(--lightgray);
+    padding: 0.85rem 0.25rem;
+    margin-bottom: 0;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--highlight);
+    }
+
+    .section {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+
+      .meta {
+        font-size: 0.8rem;
+        color: var(--gray);
+        white-space: nowrap;
+        order: 2;
+        margin-left: auto;
+      }
+
+      .desc > h3 {
+        font-size: 1.02rem;
+        margin: 0;
+      }
+    }
+  }
+}
+
+// ============================================================
+// 链接
+// ============================================================
+a {
+  transition: color 0.2s ease;
+
+  &.internal {
+    border-radius: var(--radius-sm);
+    padding: 0 0.15rem;
+  }
+}
+
+// 指向未发布笔记的降级链接：灰色虚线下划线，不可点击
+.unpublished-link {
+  color: var(--gray);
+  border-bottom: 1px dashed var(--gray);
+  cursor: default;
+  opacity: 0.75;
+}
+
+// ============================================================
+// 排版细节
+// ============================================================
+pre {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--lightgray);
+}
+
+code {
+  font-size: 0.86em;
+  border-radius: var(--radius-sm);
+  padding: 0.12em 0.35em;
+}
+
+blockquote {
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  background: color-mix(in srgb, var(--secondary) 5%, transparent);
+  border-left: 2px solid var(--secondary);
+  padding: 0.6rem 1rem;
+  font-style: italic;
+}
+
+table {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--lightgray);
+}
+
+// ============================================================
+// 左侧边栏
+// ============================================================
+.sidebar.left {
+  padding-top: 2rem;
+
+  & > * {
+    margin-bottom: 1.25rem;
+  }
+
+  .page-title {
+    font-family: var(--titleFont);
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.01em;
+  }
+}
+
+.explorer {
+  .desktop-explorer h2 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--gray);
+    font-weight: 600;
+  }
+
+  .explorer-content {
+    padding-right: 0.5rem;
+  }
+
+  .folder-container div > a,
+  .folder-container div > button span {
+    font-size: 0.92rem;
+    font-weight: 500;
+  }
+
+  .explorer-content ul li > a {
+    font-size: 0.88rem;
+    border-radius: var(--radius-sm);
+    padding: 0.2rem 0.35rem;
+    margin-left: -0.35rem;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover,
+    &.active {
+      background-color: var(--highlight);
+    }
+
+    &.active {
+      color: var(--secondary);
+      font-weight: 600;
+    }
+  }
+}
+
+// ============================================================
+// 移动端（≤800px）
+// 设计原则：
+// 1. 版心：单列网格 minmax(0, 1fr) 做硬约束，任何内容的 max-content
+//    都无法把版心撑出视口（桌面那条 720px 杂志栏规则已收编进 not-mobile，
+//    不会泄漏到这里）
+// 2. 顶栏：一行 sticky 工具条——目录 / 站名 / 搜索 / 主题 / 阅读模式，
+//    毛玻璃背景，除此之外不占用任何阅读区
+// 3. 目录：顶栏下沿的下拉面板，折叠时零占位
+// 4. 正文：为阅读收紧标题阶梯、代码字号、面包屑与属性面板
+// ============================================================
+@media all and ($mobile) {
+  // ---- 版心与溢出防线 ----
+  // minmax(0, 1fr)：列宽严格等于容器宽度；
+  // min-width: 0：网格子项默认 min-width:auto，会被长代码/表格顶破轨道
+  .page > #quartz-body {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 0;
+
+    & > * {
+      min-width: 0;
+    }
+
+    & > .center,
+    & > footer,
+    & > .sidebar.right {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      padding-left: 1.1rem;
+      padding-right: 1.1rem;
+      box-sizing: border-box;
+    }
+  }
+
+  // ---- 顶栏：单行 sticky，目录按钮 + 站名 + 工具图标，不占阅读区 ----
+  .page > #quartz-body .sidebar.left:has(.explorer) {
+    padding: 0.4rem 0.9rem;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.5rem;
+    background-color: color-mix(in srgb, var(--light) 85%, transparent);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--lightgray);
+
+    & > * {
+      margin-bottom: 0;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 1.05rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // 工具组（搜索/暗色/阅读模式）贴右收紧
+    .flex-component {
+      gap: 0.15rem !important;
+      flex-shrink: 0;
+
+      & > div {
+        flex-grow: 0 !important;
+      }
+    }
+  }
+
+  // 搜索按钮移动端收成纯图标（点击后本来就是全屏弹窗）
+  .search {
+    flex-grow: 0;
+    max-width: none;
+    min-width: 0;
+
+    & > .search-button {
+      width: 2rem;
+      height: 2rem;
+      padding: 0;
+      justify-content: center;
+      border: none;
+      background-color: transparent;
+      backdrop-filter: none;
+
+      & > p {
+        display: none;
+      }
+
+      & svg {
+        margin: 0;
+      }
+    }
+  }
+
+  // ---- 目录：胶囊按钮 + 顶栏下沿的下拉面板，折叠时完全不占位 ----
+  .explorer {
+    order: -1;
+    flex: 0 0 auto;
+    align-self: center;
+    margin: 0;
+    overflow: visible;
+  }
+
+  // hide-until-loaded：JS 未加载时也强制可见，慢网络下目录入口不消失
+  .explorer button.mobile-explorer,
+  .explorer button.mobile-explorer.hide-until-loaded {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: 999px;
+    background-color: var(--lightgray);
+    color: var(--darkgray);
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &::after {
+      content: "目录";
+      font-family: var(--headerFont);
+    }
+
+    &:hover {
+      background-color: var(--highlight);
+      color: var(--secondary);
+    }
+
+    svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2.2;
+    }
+
+    .lucide-menu {
+      stroke: currentColor;
+    }
+  }
+
+  // 面板挂在顶栏底边（sidebar.left 是 sticky，即面板的定位祖先）
+  .explorer .explorer-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0.5rem 1rem 1rem;
+    background-color: var(--light);
+    border-bottom: 1px solid var(--lightgray);
+    box-shadow: 0 16px 32px -16px rgb(0 0 0 / 0.35);
+    transform: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    transition:
+      max-height 0.3s ease,
+      opacity 0.25s ease,
+      visibility 0.25s ease;
+  }
+
+  .explorer.collapsed > .explorer-content {
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-bottom-width: 0;
+    opacity: 0;
+    visibility: hidden;
+    overflow: hidden;
+  }
+
+  .explorer:not(.collapsed) > .explorer-content {
+    max-height: calc(100dvh - 3.25rem);
+    opacity: 1;
+    visibility: visible;
+  }
+
+  // ---- 文章头部：面包屑 / 标题 / 属性 / 元信息收紧 ----
+  .breadcrumb-container {
+    flex-wrap: wrap;
+    row-gap: 0.2rem;
+    column-gap: 0.4rem;
+    font-size: 0.78rem;
+    margin-top: 0.6rem;
+  }
+
+  .article-title {
+    font-size: 1.55rem;
+    line-height: 1.3;
+    margin: 0.35rem 0 0.25rem;
+  }
+
+  .content-meta {
+    font-size: 0.8rem;
+    margin-top: 0;
+  }
+
+  .note-properties {
+    overflow-x: auto;
+    font-size: 0.85rem;
+  }
+
+  // ---- 正文字号阶梯 ----
+  article {
+    & > h1 {
+      font-size: 1.55rem;
+      margin-top: 2rem;
+      margin-bottom: 0.9rem;
+    }
+
+    & > h2 {
+      font-size: 1.28rem;
+      margin-top: 2.25rem;
+    }
+
+    & > h3 {
+      font-size: 1.1rem;
+    }
+
+    p {
+      line-height: 1.85;
+      margin-bottom: 1.1rem;
+    }
+  }
+
+  // 代码块字号缩小，一行容纳更多字符，减少横向滚动
+  pre > code {
+    font-size: 0.78rem;
+  }
+
+  // 行内代码与长链接允许断开，防止撑破版心
+  article p code,
+  article li code,
+  article td code,
+  article a {
+    overflow-wrap: anywhere;
+  }
+
+  // KaTeX 块级公式允许横向滚动
+  // （base 里 display: initial 会让 overflow-x 在移动端失效）
+  .katex-display {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  // ---- 右侧栏（Graph / Backlinks）移动端纵向堆叠 ----
+  .page > #quartz-body .sidebar.right {
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 2rem;
+
+    & > * {
+      flex: none;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  }
+
+  // ---- 首页 hero / 卡片收紧 ----
+  .hero {
+    padding: 2rem 0 1.5rem;
+    margin-bottom: 1.5rem;
+
+    .hero-tagline {
+      font-size: 1.05rem;
+    }
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  footer {
+    margin-top: 2rem;
+  }
+}
+
+// ============================================================
+// 顶部工具栏 / 搜索
+// ============================================================
+#quartz-body > .sidebar.left > .flex-component {
+  gap: 0.4rem;
+
+  button,
+  .search-button {
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background-color: var(--highlight);
+    }
+  }
+}
+
+.search-button {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--lightgray);
+  background-color: color-mix(in srgb, var(--light) 80%, transparent);
+  backdrop-filter: blur(4px);
+}
+
+// ============================================================
+// 文章区域：杂志式排版
+// ============================================================
+article {
+  & > h1 {
+    font-size: 2.2rem;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    margin-bottom: 1.5rem;
+  }
+
+  & > h2 {
+    font-size: 1.45rem;
+    margin-top: 2.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--lightgray);
+  }
+
+  & > h3 {
+    font-size: 1.18rem;
+    margin-top: 2rem;
+  }
+
+  p {
+    line-height: 1.9;
+    margin-bottom: 1.2rem;
+  }
+
+  li {
+    line-height: 1.85;
+  }
+}
+
+// ============================================================
+// 右侧边栏（TOC / Graph）：弱化边框，融入纸面
+// ============================================================
+.sidebar.right {
+  padding-top: 2rem;
+
+  .toc-container,
+  .graph-outer {
+    border-radius: var(--radius-md);
+    border: 1px solid var(--lightgray);
+    padding: 1rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
+// ============================================================
+// 最近更新（首页）
+// ============================================================
+.recent-notes {
+  margin-top: 2rem;
+
+  & > h3 {
+    font-family: var(--headerFont);
+    font-size: 1.05rem;
+    letter-spacing: 0.06em;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+
+  & > ul.recent-ul > li.recent-li {
+    margin-bottom: 0.75rem;
+
+    .section > .desc > h3 > a {
+      font-family: var(--headerFont);
+      font-weight: 600;
+    }
+
+    .section > .meta {
+      font-size: 0.8rem;
+      color: var(--gray);
+    }
+  }
+}
+
+// ============================================================
+// 页脚
+// ============================================================
+footer {
+  opacity: 0.75;
+  font-size: 0.82rem;
+  border-top: 1px solid var(--lightgray);
+  padding-top: 1.5rem;
+  margin-top: 3rem;
+}
+
+// ============================================================
+// 暗色模式微调
+// ============================================================
+:root.dark-mode {
+  pre,
+  table,
+  blockquote,
+  .toc-container,
+  .graph-outer,
+  .category-card,
+  .explorer:not(.collapsed) > .explorer-content {
+    border-color: color-mix(in srgb, var(--lightgray) 75%, transparent);
+  }
+
+  .search-button {
+    background-color: color-mix(in srgb, var(--light) 60%, transparent);
+  }
+
+  .category-card:hover {
+    box-shadow: 0 6px 16px -6px rgb(0 0 0 / 0.4);
+  }
+}
